@@ -1,0 +1,7 @@
+name = Commerce Coupon
+description = "Coupon module for the commerce shopping cart."
+dependencies[] = commerce
+package = Commerce
+core = 7.x
+
+files[] = commerce_coupon.module
