@@ -6,7 +6,7 @@
  */
 function commerce_coupon_schema() {
   $schema = array();
-
+  
   $schema['commerce_coupon'] = array(
     'description' => 'The base table for coupons.',
     'fields' => array(
@@ -15,6 +15,13 @@ function commerce_coupon_schema() {
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
+      ),
+      'type' => array(
+        'description' => 'The {commerce_coupon_type}.type of this coupon.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
       ),
       'code' => array(
         'description' => 'The code provided to the customer.',
@@ -34,24 +41,6 @@ function commerce_coupon_schema() {
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0,
-      ),
-      'allowed_uses' => array(
-       'description' => 'Indicates how many this coupon can be used. 0 means unfinite.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 1,
-      ),
-      'valid_start_date' => array(
-        'description' => 'The Unix timestamp when the coupon becomes valid. 0 indicates that the coupon is not limited by time.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,     
-      ),
-      'valid_end_date' => array(
-        'description' => 'The Unix timestamp when the coupon becomes invalid.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,     
       ),
       'is_active' => array(
         'description' => 'Indicates if this coupon is active or not.',
@@ -80,10 +69,55 @@ function commerce_coupon_schema() {
       ),
     ),
     'primary key' => array('coupon_id'),
-    'indexes' => array(
+    'unique keys' => array(
       'code' => array('code'),
     ),
+
   );
+  
+  $schema['commerce_coupon_type'] = array(
+    'description' => 'Stores information about all defined coupon types.',
+    'fields' => array(
+      'type_id' => array(
+        'type' => 'serial',
+        'not null' => TRUE,
+        'description' => 'Primary Key: Unique coupon type ID.',
+      ),
+      'type' => array(
+        'description' => 'The machine-readable name of this coupon type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this coupon type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'The weight of this coupon type in relation to others.',
+      ),
+      'data' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data related to this coupon type.',
+      ),
+    ) + entity_exportable_schema_fields(),
+    'primary key' => array('type_id'),
+    'unique keys' => array(
+      'type' => array('type'),
+    ),
+  );
+  
+  
 
   $schema['commerce_coupon_log'] = array(
     'description' => 'Stores the usage of coupons.',
@@ -108,7 +142,7 @@ function commerce_coupon_schema() {
       ),
       'line_item_id' => array(
         'description' => 'The referenced line item id.',
-        'type' => 'serial',
+        'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
@@ -153,6 +187,8 @@ function commerce_coupon_schema() {
       ),
     ),
   );
+
+
 
 
 

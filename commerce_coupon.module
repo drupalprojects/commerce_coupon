@@ -1,3 +1,404 @@
 <?php
 
+function commerce_coupon_entity_info() {
+  $return = array();
+  
+    
+  $return['commerce_coupon'] = array(
+    'label' => t('Commerce Coupon'),
+    'entity class' => 'CommerceCoupon',
+    'controller class' => 'EntityAPIController',
+    'base table' => 'commerce_coupon',
+    'fieldable' => TRUE,
+
+    'entity keys' => array(
+      'id' => 'coupon_id',
+      'bundle' => 'type',
+      'label' => 'code',
+    ),
+    'bundles' => array(),
+    'bundle keys' => array(
+      'bundle' => 'type',
+    ),
+    'access callback' => 'commerce_coupon_access',
+    'module' => 'commerce_coupon',
+    'save callback' => 'commerce_coupon_save',
+    
+    'admin ui' => array(
+      'path' => 'admin/commerce/coupons',
+      'file' => 'commerce_coupon.admin.inc',
+    ),
+  );
+  
+  $return['commerce_coupon_type'] = array(
+    'label' => t('Commerce Coupon Type'),
+    'entity class' => 'CommerceCouponType',
+    'controller class' => 'EntityAPIController',
+    'base table' => 'commerce_coupon_type',
+    'fieldable' => FALSE,
+    'bundle of' => 'commerce_coupon',
+    'exportable' => TRUE,
+    'entity keys' => array(
+      'id' => 'type',
+      'name' => 'type',
+      'label' => 'label',
+    ),
+    'access callback' => 'commerce_coupon_type_access',
+    'module' => 'commerce_coupon',
+    
+    // Enable the entity API's admin UI.
+    'admin ui' => array(
+      'path' => 'admin/commerce/coupons/types',
+      'file' => 'commerce_coupon.admin.inc',
+    ),
+  );
+
+
+  return $return;
+}
+
+
+function commerce_coupon_menu() {
+  $items = array();
+  
+  foreach (commerce_coupon_get_types() as $type => $info) {
+    $entity = entity_create('commerce_coupon', array('type' => $type));
+    $type_arg = strtr($type, '_', '-');
+    $items['admin/commerce/coupons/add/'.$type_arg] = array(
+      'title' => 'Create @name',
+      'title arguments' => array('@name' => $info->label),
+      'page callback' => 'entity_ui_get_form',
+      'page arguments' => array('commerce_coupon', $entity, 'add'),
+      'file' => 'commerce_coupon.admin.inc',
+      'access callback' => 'commerce_coupon_access',
+      'access arguments' => array('create', $type),
+      'module' => 'commerce_coupon',
+    );
+  }
+  
+  return $items;
+}
+
+function commerce_coupon_menu_alter(&$items) {
+  $items['admin/commerce/coupons/types']['type'] = MENU_LOCAL_TASK;
+  
+  $items['admin/commerce/coupons/list'] = array(
+    'title' => 'Coupons',
+    'description' => 'Manage the coupons.',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -10,
+  ) + $items['admin/commerce/coupons'];
+  
+  $items['admin/commerce/coupons/add'] = array(
+    'title' => 'Create Coupon',
+    'page callback' => 'commerce_coupons_add_page',
+    'access callback' => 'commerce_coupon_access',
+    'access arguments' => array('create'),
+    'module' => 'commerce_coupon',
+  );
+  
+  $items['admin/commerce/coupons/create'] = array(
+    'title' => 'Create Coupon',
+    'page callback' => 'commerce_coupons_create_page',
+    'access callback' => 'commerce_coupon_access',
+    'access arguments' => array('create'),
+    'module' => 'commerce_coupon',
+    'type' => MENU_LOCAL_ACTION,
+  );
+}
+
+function commerce_coupons_create_page() {
+  drupal_goto('admin/commerce/coupons/add');
+}
+
+function commerce_coupons_add_page() {
+  $item = menu_get_item();
+  $content = system_admin_menu_block($item);
+  
+  // Bypass the admin/commerce/coupon/add listing if only one coupon type is
+  // available.
+  if (count($content) == 1) {
+    $item = array_shift($content);
+    drupal_goto($item['href']);
+  }  
+  return theme('commerce_coupon_add_list', array('content' => $content));
+}
+
+
+function commerce_coupon_theme() {
+  return array(
+    'commerce_coupon_add_list' => array(
+      'variables' => array('content' => NULL),
+    )
+  );
+}
+
+
+function theme_commerce_coupon_add_list($variables) {
+  $content = $variables['content'];
+  $output = '';
+
+  if ($content) {
+    $output = '<dl class="commerce-coupon-type-list">';
+    foreach ($content as $item) {
+      $output .= '<dt>' . l($item['title'], $item['href'], $item['localized_options']) . '</dt>';
+      $output .= '<dd>' . filter_xss_admin($item['description']) . '</dd>';
+    }
+    $output .= '</dl>';
+  }
+  else {
+    if (user_access('administer coupon types')) {
+      $output = '<p>' . t('You have not created any coupon types yet. Go to the <a href="@create-coupon-type">coupon type creation page</a> to add a new coupon type.', array('@create-coupon-type' => url('admin/commerce/coupon/types/add'))) . '</p>';
+    }
+    else {
+      $output = '<p>' . t('No coupon type have been created yet for you to use.') . '</p>';
+    }
+  }
+
+  return $output;
+}
+
+
+/**
+ * Implements hook_entity_info_alter().
+ *
+ * Use this hook to specify commerce coupon bundles to avoid a recursion, as loading
+ * the commerce coupon types needs the entity info too.
+ */
+function commerce_coupon_entity_info_alter(&$entity_info) {
+  foreach (commerce_coupon_get_types() as $type => $info) {
+    $entity_info['commerce_coupon']['bundles'][$type] = array(
+      'label' => $info->label,
+      'admin' => array(
+        'path' => 'admin/commerce/coupons/types/manage/%commerce_coupon_type',
+        'real path' => 'admin/commerce/coupons/types/manage/' . $type,
+        'bundle argument' => $type,
+        'access arguments' => array('administer coupon types'),
+      ),
+    );
+  }
+}
+
+
+
+function commerce_coupon_type_access($op, $type = NULL, $account = NULL) {
+  return user_access('administer coupon types', $account);
+}
+
+function commerce_coupon_access($op, $type = NULL, $account = NULL) {
+  return user_access('administer coupons', $account);
+}
+
+
+function commerce_coupon_permission() {
+  $permissions = array(
+    'administer coupon types' => array(
+      'title' => t('Administer Coupon Types'),
+      'description' => t('Allows users to manage coupon types.'),
+    ),
+    'administer coupons' => array(
+      'title' => t('Administer Coupons'),
+      'description' => t('Allows users to manage coupons.'),
+    ),
+  );
+  return $permissions;
+}
+
+
+
+/**
+ * Gets an array of all coupon types, keyed by the type name.
+ *
+ * @param $type_name
+ *   If set, the type with the given name is returned.
+ * @return CouponType[]
+ *   Depending whether $type isset, an array of coupon types or a single one.
+ */
+function commerce_coupon_get_types($type_name = NULL) {
+  $types = entity_load('commerce_coupon_type', isset($type_name) ? array($type_name) : FALSE);
+  return isset($type_name) ? reset($types) : $types;
+}
+
+
+
+/**
+ * Menu argument loader; Load a coupon type by string.
+ *
+ * @param $type
+ *   The machine-readable name of a coupon type to load.
+ * @return
+ *   A commerce coupon type array or FALSE if $type does not exist.
+ */
+function commerce_coupon_type_load($type) {
+  return commerce_coupon_get_types($type);
+}
+
+
+
+/**
+ * Fetch a coupon object.
+ *
+ * @param $coupon_id
+ *   Integer specifying the coupon id.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   A fully-loaded $coupon object or FALSE if it cannot be loaded.
+ *
+ * @see commerce_coupon_load_multiple()
+ */
+function commerce_coupon_load($coupon_id, $reset = FALSE) {
+  $coupons = commerce_coupon_load_multiple(array($coupon_id), array(), $reset);
+  return reset($coupons);
+}
+
+/**
+ * Load multiple coupons based on certain conditions.
+ *
+ * @param $pids
+ *   An array of coupon IDs.
+ * @param $conditions
+ *   An array of conditions to match against the {commerce_coupon} table.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   An array of coupon objects, indexed by pid.
+ *
+ * @see entity_load()
+ * @see commerce_coupon_load()
+ */
+function commerce_coupon_load_multiple($coupon_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('commerce_coupon', $coupon_ids, $conditions, $reset);
+}
+
+
+
+
+
+/**
+ * Deletes a coupon.
+ */
+function commerce_coupon_delete(Coupon $coupon) {
+  $coupon->delete();
+}
+
+/**
+ * Delete multiple coupons.
+ *
+ * @param $pids
+ *   An array of coupon IDs.
+ */
+function commerce_coupon_delete_multiple(array $pids) {
+  entity_get_controller('commerce_coupon')->delete($pids);
+}
+
+/**
+ * Implements hook_user_cancel().
+ */
+function commerce_coupon_user_cancel($edit, $account, $method) {
+  // Delete all coupons of the user in any case.
+  foreach (commerce_coupon_load_by_user($account) as $coupon) {
+    commerce_coupon_delete($coupon);
+  }
+}
+
+/**
+ * Create a new coupon object.
+ */
+function commerce_coupon_create(array $values) {
+  return new CommerceCoupon($values);
+}
+
+/**
+ * Saves a coupon to the database.
+ *
+ * @param $coupon
+ *   The coupon object.
+ */
+function commerce_coupon_save(CommerceCoupon $coupon) {
+  
+  // Generate a code if no is set:
+  if(!isset($coupon->code) || empty($coupon->code)) {
+    $coupon->code = commerce_coupon_generate_coupon_code();
+  }
+  return $coupon->save();
+}
+
+function commerce_coupon_generate_coupon_code($length = NULL) {
+  
+  // We define the possible characters. No 'l','1', 'i' to prevent
+  // reconisation problems.
+  $characters = array(
+    'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J', 'K', 'L', 'M',
+    'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
+    'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm', 'n',
+    'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
+    '2','3','4','5','6','7','8','9'
+  );
+  
+  $numberOfCharacters = count($characters);
+  
+  $codeFound = false;
+  
+  if($length == NULL) {
+    // TODO: Replace this hardcoded value with a setting
+    $length = 8;
+  }
+  
+  // We need to check if the produced coupon code is already in the 
+  // database. We try this for 1000 iteration. If we then not found a
+  // a code, we stop. There must be an error in this case.
+  for($i = 0; $i < 1000 && $codeFound == false; $i++) {
+    
+    $code = '';
+    
+    // Create the code per character
+    for($c = 0; $c < $length; $c++) {
+      $randIndex = mt_rand(0, $numberOfCharacters);
+      $code .= $characters[$randIndex];
+    }
+    
+    // Check in the database if the generated code is already defined.
+    $rs = db_query('SELECT * FROM {commerce_coupon} WHERE code = :code', array(':code' => $code));
+    $codeObject = $rs->fetchObject();
+    
+    if ($codeObject == null) {
+      $codeFound = true;
+    }
+  }
+  return $code;
+}
+
+
+/**
+ * Saves a coupon type to the db.
+ */
+function commerce_coupon_type_save(CommerceCouponType $type) {
+  $type->save();
+}
+
+/**
+ * Deletes a coupon type from.
+ */
+function commerce_coupon_type_delete(CommerceCouponType $type) {
+  $type->delete();
+}
+
+/**
+ * Implements hook_commerce_coupon_load()
+ */
+function commerce_coupon_commerce_coupon_load($coupons) {
+}
+
+/**
+ * Implements hook_commerce_coupon_type_delete()
+ */
+function commerce_coupon_commerce_coupon_type_delete($type) {
+  // Delete all coupons of this type.
+  if ($pids = array_keys(commerce_coupon_load_multiple(FALSE, array('type' => $type->type)))) {
+    commerce_coupon_delete_multiple($pids);
+  }
+  // Rebuild the menu as any (user-category) menu items should be gone now.
+  menu_rebuild();
+}
 

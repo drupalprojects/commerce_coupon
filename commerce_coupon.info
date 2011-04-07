@@ -4,4 +4,8 @@ dependencies[] = commerce
 package = Commerce
 core = 7.x
 
+files[] = classes/commerce_coupon.inc
 files[] = commerce_coupon.module
+files[] = classes/commerce_coupon_type.inc
+
+files[] = commerce_coupon.admin.inc
