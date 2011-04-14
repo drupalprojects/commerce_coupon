@@ -30,6 +30,21 @@ function commerce_coupon_entity_info() {
     ),
   );
   
+  $return['commerce_coupon_log'] = array(
+    'label' => t('Commerce Coupon Log'),
+    'entity class' => 'CommerceCouponLog',
+    'controller class' => 'EntityAPIController',
+    'base table' => 'commerce_coupon_log',
+    'fieldable' => FALSE,
+
+    'entity keys' => array(
+      'id' => 'log_id',
+    ),
+    'access callback' => 'commerce_coupon_access',
+    'module' => 'commerce_coupon',
+    'save callback' => 'commerce_coupon_log_save',
+  );
+  
   $return['commerce_coupon_type'] = array(
     'label' => t('Commerce Coupon Type'),
     'entity class' => 'CommerceCouponType',
@@ -57,6 +72,30 @@ function commerce_coupon_entity_info() {
   return $return;
 }
 
+function commerce_coupon_log_save(CommerceCouponLog $log) {
+  $log->changed = time();
+  return $log->save();
+}
+
+
+/**
+ * Implements hook_commerce_checkout_pane_info().
+ */
+function commerce_coupon_commerce_checkout_pane_info() {
+  $checkout_panes = array();
+
+  $checkout_panes['commerce_coupon'] = array(
+    'title' => t('Coupon'),
+    'page' => 'checkout',
+    'locked' => TRUE,
+    'file' => 'includes/commerce_coupon.checkout_pane.inc',
+    'base' => 'commerce_coupon_pane',
+    'weight' => 9,
+  );
+
+
+  return $checkout_panes;
+}
 
 function commerce_coupon_menu() {
   $items = array();
@@ -272,6 +311,49 @@ function commerce_coupon_load_multiple($coupon_ids = array(), $conditions = arra
 }
 
 
+function commerce_coupon_log_load_multiple($log_ids = array(), $conditions = array(), $reset = FALSE) {
+  return entity_load('commerce_coupon_log', $log_ids, $conditions, $reset);
+}
+
+
+function commerce_coupon_load_by_code($code) {
+  $query = new EntityFieldQuery;
+  $query
+    ->entityCondition('entity_type', 'commerce_coupon')
+    ->entityCondition('is_active', '1', '=')
+    ->entityCondition('code', $code, '=');
+  
+  $coupons = $query->execute();
+  
+  if($coupons == NULL or !is_array($coupons['commerce_coupon'])) {
+    return NULL;
+  }
+  
+  $coupon = reset($coupons['commerce_coupon']);
+  
+  // TODO: Find a better way to load the entity
+  return commerce_coupon_load($coupon->coupon_id);
+}
+
+
+function commerce_coupon_get_coupons_by_order($order_id) {
+  
+  $coupon_raw = db_query('SELECT coupon_id, log_id FROM {commerce_coupon_log} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchAllAssoc('log_id', PDO::FETCH_ASSOC);
+  
+  
+  
+  if(!is_array($coupon_raw) or count($coupon_raw) <= 0) {
+    return array();
+  }
+  
+  $coupon_ids = array();
+  
+  foreach($coupon_raw as $coupon) {
+    $coupon_ids[] = $coupon['coupon_id'];
+  }
+  
+  return commerce_coupon_load_multiple($coupon_ids);  
+}
 
 
 
@@ -307,6 +389,13 @@ function commerce_coupon_user_cancel($edit, $account, $method) {
  */
 function commerce_coupon_create(array $values) {
   return new CommerceCoupon($values);
+}
+
+/**
+ * Create a new coupon object.
+ */
+function commerce_coupon_log_create(array $values) {
+  return new CommerceCouponLog($values);
 }
 
 /**
@@ -359,14 +448,125 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
     }
     
     // Check in the database if the generated code is already defined.
-    $rs = db_query('SELECT * FROM {commerce_coupon} WHERE code = :code', array(':code' => $code));
-    $codeObject = $rs->fetchObject();
-    
-    if ($codeObject == null) {
+    if (commerce_coupon_code_exists($code) == false) {
       $codeFound = true;
     }
   }
   return $code;
+}
+
+function commerce_coupon_code_exists($code) {
+  $rs = db_query('SELECT * FROM {commerce_coupon} WHERE code = :code', array(':code' => $code));
+  $codeObject = $rs->fetchObject();
+  
+  if ($codeObject == null) {
+    return false;
+  }
+  else {
+    return true;
+  }
+}
+
+function commerce_coupon_code_is_active($code) {
+  $rs = db_query('SELECT * FROM {commerce_coupon} WHERE code = :code AND is_active = 1', array(':code' => $code));
+  $codeObject = $rs->fetchObject();
+  
+  if ($codeObject == null) {
+    return false;
+  }
+  else {
+    return true;
+  }
+
+}
+
+function commerce_coupon_code_is_valid($code, $order) {
+  
+  $coupon = commerce_coupon_load_by_code($code);
+    
+  // if no such coupon found, the $code is invalid
+  if(!is_object($coupon)) {
+    return false;
+  }
+  
+  // We use the drupal_static function to generate a global variable.
+  // We set per default the result to true. The rules can modify this values,
+  // by invoking the valid or invalid action.
+  $validation_results = &drupal_static('commerce_coupon_action_validation_results');
+  $validation_results = true;
+  
+  // We invoke the rules. The defined action callback methods sets then the
+  // validation result appropriate.
+  rules_invoke_event('commerce_coupon_validate', $order, $coupon);
+  
+  // We get our global variable and return the result.  
+  return drupal_static('commerce_coupon_action_validation_results');  
+}
+
+
+/**
+ * Implements hook_commerce_price_component_type_info().
+ */
+function commerce_coupon_commerce_price_component_type_info() {
+  $components = array();
+
+  // Add a price component type for each tax rate that specifies it.
+  foreach (commerce_coupon_get_types() as $type => $coupon_type) {
+    $components['commerce_coupon_' . $type] = array(
+      'title' => $coupon_type->label,
+      // TODO: Add addtional field to coupon type
+      'display_title' => $coupon_type->label,
+    );
+  }
+
+  return $components;
+}
+
+
+function commerce_coupon_redeem_coupon($coupon, $order) {
+  
+  if(!isset($order->order_id) or !isset($coupon->coupon_id) ) {
+    drupal_set_message(t('Your coupon code cannot be redeem.'), 'error');
+    return;
+  }
+  global $user;
+  
+  // Log the redemption
+  $log = commerce_coupon_log_create(array(
+    'uid' => $user,
+    'order_id' => $order->order_id,
+    'coupon_id' => $coupon->coupon_id,
+    'is_accepted' => TRUE,
+  ));
+  $log->save();
+  
+  if(!($order instanceof EntityMetadataWrapper)) {
+    $order = entity_metadata_wrapper('commerce_order', $order);
+  }
+  
+  
+  /*$order->commerce_order_total->data = commerce_price_component_add(
+    $order->commerce_order_total->value(),
+    'commerce_coupon_' . $coupon->type,
+    
+    // TODO: Replace the calcuation by a callback method of the type
+    array(
+      'amount' => 55,
+      'currency_code' => $order->commerce_order_total->currency_code->value(),
+      'data' => array(
+        'coupon' => array(
+          'coupon_id' => $coupon->coupon_id,
+          'type' => $coupon->type,
+          'amount' => $amount,
+          'code' => $coupon->code,
+        ),
+      ),
+    ),
+    false
+  );*/
+  
+  
+
 }
 
 
@@ -375,6 +575,11 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
  */
 function commerce_coupon_type_save(CommerceCouponType $type) {
   $type->save();
+  
+  // Ensure the creation of the rules (components)
+  entity_defaults_rebuild();
+  
+  return $type;
 }
 
 /**
@@ -384,11 +589,6 @@ function commerce_coupon_type_delete(CommerceCouponType $type) {
   $type->delete();
 }
 
-/**
- * Implements hook_commerce_coupon_load()
- */
-function commerce_coupon_commerce_coupon_load($coupons) {
-}
 
 /**
  * Implements hook_commerce_coupon_type_delete()

@@ -111,6 +111,7 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
     '#description' => t('Enter here the code of the coupon. When the customer enter this code, he get the reduction indicated by the amount. Leave it empty to auto generate a code.'),
     '#size' => 30,
   );
+  // TODO: add a validation method to check, that the code is not a duplicate!
  
   $form['is_active'] = array(
     '#title' => t('Active'),

@@ -140,8 +140,8 @@ function commerce_coupon_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'line_item_id' => array(
-        'description' => 'The referenced line item id.',
+      'order_id' => array(
+        'description' => 'The referenced order id.',
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
@@ -177,9 +177,9 @@ function commerce_coupon_schema() {
         'table' => 'commerce_coupon',
         'columns' => array('coupon_id' => 'coupon_id'),
       ),
-      'line_item' => array(
-        'table' => 'commerce_line_item',
-        'columns' => array('line_item_id' => 'line_item_id'),
+      'order' => array(
+        'table' => 'commerce_order',
+        'columns' => array('order_id' => 'order_id'),
       ),
       'user' => array(
         'table' => 'users',
