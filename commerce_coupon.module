@@ -3,7 +3,6 @@
 function commerce_coupon_entity_info() {
   $return = array();
   
-    
   $return['commerce_coupon'] = array(
     'label' => t('Commerce Coupon'),
     'entity class' => 'CommerceCoupon',
@@ -187,7 +186,7 @@ function theme_commerce_coupon_add_list($variables) {
   }
   else {
     if (user_access('administer coupon types')) {
-      $output = '<p>' . t('You have not created any coupon types yet. Go to the <a href="@create-coupon-type">coupon type creation page</a> to add a new coupon type.', array('@create-coupon-type' => url('admin/commerce/coupon/types/add'))) . '</p>';
+      $output = '<p>' . t('You have not created any coupon types yet. Go to the <a href="@create-coupon-type">coupon type creation page</a> to add a new coupon type.', array('@create-coupon-type' => url('admin/commerce/coupons/types/add'))) . '</p>';
     }
     else {
       $output = '<p>' . t('No coupon type have been created yet for you to use.') . '</p>';
@@ -317,22 +316,19 @@ function commerce_coupon_log_load_multiple($log_ids = array(), $conditions = arr
 
 
 function commerce_coupon_load_by_code($code) {
-  $query = new EntityFieldQuery;
-  $query
-    ->entityCondition('entity_type', 'commerce_coupon')
-    ->entityCondition('is_active', '1', '=')
-    ->entityCondition('code', $code, '=');
-  
-  $coupons = $query->execute();
-  
-  if($coupons == NULL or !is_array($coupons['commerce_coupon'])) {
+  $coupon = db_select('commerce_coupon')
+    ->fields('commerce_coupon')
+    ->condition('is_active', '1','=')
+    ->condition('code', $code,'=')
+    ->execute()
+    ->fetchAssoc();
+    
+  if($coupon == NULL or !is_array($coupon)) {
     return NULL;
   }
-  
-  $coupon = reset($coupons['commerce_coupon']);
-  
+
   // TODO: Find a better way to load the entity
-  return commerce_coupon_load($coupon->coupon_id);
+  return commerce_coupon_load($coupon['coupon_id']);
 }
 
 
@@ -456,6 +452,8 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
 }
 
 function commerce_coupon_code_exists($code) {
+  
+  // TODO: Replace this query with drupal 7 api
   $rs = db_query('SELECT * FROM {commerce_coupon} WHERE code = :code', array(':code' => $code));
   $codeObject = $rs->fetchObject();
   
@@ -468,6 +466,8 @@ function commerce_coupon_code_exists($code) {
 }
 
 function commerce_coupon_code_is_active($code) {
+
+  // TODO: Replace this query with drupal 7 api
   $rs = db_query('SELECT * FROM {commerce_coupon} WHERE code = :code AND is_active = 1', array(':code' => $code));
   $codeObject = $rs->fetchObject();
   
@@ -524,12 +524,13 @@ function commerce_coupon_commerce_price_component_type_info() {
 
 
 function commerce_coupon_redeem_coupon($coupon, $order) {
+  global $user;
   
   if(!isset($order->order_id) or !isset($coupon->coupon_id) ) {
     drupal_set_message(t('Your coupon code cannot be redeem.'), 'error');
     return;
   }
-  global $user;
+  
   
   // Log the redemption
   $log = commerce_coupon_log_create(array(
@@ -544,29 +545,13 @@ function commerce_coupon_redeem_coupon($coupon, $order) {
     $order = entity_metadata_wrapper('commerce_order', $order);
   }
   
+  if (!$coupon->is_percentage) {
+    $line_item = commerce_coupon_line_item_new($coupon, $order->order_id->value());
+    commerce_line_item_save($line_item);
+    $order->commerce_line_items[] = $line_item;
+    $order->save();
+  }
   
-  /*$order->commerce_order_total->data = commerce_price_component_add(
-    $order->commerce_order_total->value(),
-    'commerce_coupon_' . $coupon->type,
-    
-    // TODO: Replace the calcuation by a callback method of the type
-    array(
-      'amount' => 55,
-      'currency_code' => $order->commerce_order_total->currency_code->value(),
-      'data' => array(
-        'coupon' => array(
-          'coupon_id' => $coupon->coupon_id,
-          'type' => $coupon->type,
-          'amount' => $amount,
-          'code' => $coupon->code,
-        ),
-      ),
-    ),
-    false
-  );*/
-  
-  
-
 }
 
 
@@ -601,4 +586,180 @@ function commerce_coupon_commerce_coupon_type_delete($type) {
   // Rebuild the menu as any (user-category) menu items should be gone now.
   menu_rebuild();
 }
+
+
+
+
+
+
+
+
+/**
+ * Implements hook_commerce_line_item_type_info().
+ */
+function commerce_coupon_commerce_line_item_type_info() {
+  return array(
+    'coupon' => array(
+      'type' => 'coupon',
+      'name' => t('Coupon'),
+      'description' => t('Coupon line item for fixed coupon amounts.'),
+      'add_form_submit_value' => t('Add coupon'),
+      'base' => 'commerce_coupon_line_item',
+      'callbacks' => array(
+        'configuration' => 'commerce_coupon_configure_line_item',
+      ),
+    ),
+  );
+}
+
+
+
+/**
+ * Returns an appropriate title for this line item.
+ */
+function commerce_coupon_line_item_title($line_item) {
+  // TODO: Implement this method, get coupon code
+  
+  $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+  
+  
+  
+  return t('Coupon');
+}
+
+
+/**
+ * Returns the elements necessary to add a product line item through a line item
+ * manager widget.
+ */
+function commerce_coupon_line_item_add_form($form_state) {
+  // TODO: Implement this method correct
+  
+  $order = $form_state['commerce_order'];
+  $form = array();
+
+  $form['amount'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Amount'),
+    '#default_value' => $default_amount,
+    '#size' => 10,
+  );
+
+  // Build a currency options list from all enabled currencies.
+  $options = array();
+  foreach (commerce_currencies(TRUE) as $currency_code => $currency) {
+    $options[$currency_code] = check_plain($currency['code']);
+  }
+
+  $form['currency_code'] = array(
+    '#type' => 'select',
+    '#title' => t('Currency'),
+    '#options' => $options,
+    '#default_value' => commerce_default_currency(),
+  );
+
+  return $form;
+}
+
+/**
+ * Adds the selected shippng information to a line item added via a line item
+ *   manager widget.
+ *
+ * @param $line_item
+ *   The newly created line item object.
+ * @param $element
+ *   The array representing the widget form element.
+ * @param $form_state
+ *   The present state of the form upon the latest submission.
+ * @param $form
+ *   The actual form array.
+ *
+ * @return
+ *   NULL if all is well or an error message if something goes wrong.
+ */
+function commerce_coupon_line_item_add_form_submit(&$line_item, $element, &$form_state, $form) {
+  // TODO: Implement this method correct
+  
+  $order = $form_state['commerce_order'];
+
+  // Populate the line item with the product data.
+  $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+  //$line_item_wrapper->shipping_method = $element['actions']['shipping_method']['#value'];
+  $line_item_wrapper->commerce_unit_price->amount = $element['actions']['amount']['#value'];
+  $line_item_wrapper->commerce_unit_price->currency_code = $element['actions']['currency_code']['#value'];
+  $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
+    $line_item_wrapper->commerce_unit_price->value(),
+    'base_price',
+    $line_item_wrapper->commerce_unit_price->value(),
+    TRUE
+  );
+}
+
+
+/**
+ * Creates a new product line item populated with the proper product values.
+ *
+ * @param $coupon
+ *   The fully loaded coupon to add.
+ * @param $order_id
+ *   Order to add this coupon.
+ *
+ * @return
+ *   Line item object with default values.
+ */
+function commerce_coupon_line_item_new($coupon, $order_id) {
+  // Create the new line item.
+  $line_item = entity_create('commerce_line_item', array(
+    'type' => 'coupon',
+    'order_id' => $order_id,
+    'quantity' => 1,
+  ));
+  // TODO: Implement this function
+
+  $line_item->sku = $coupon->type . '_' . $coupon->coupon_id;
+    
+  // If it is a percentage coupon dont set any unit price
+  if ($coupon->is_percentage) {
+    return $line_item;
+  }
+  
+  
+  $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
+
+  // Set the unit price on the line item object.
+  $line_item_wrapper->commerce_unit_price->amount = $coupon->amount * -1 * 100;
+  
+ // print_r($coupon->amount);
+
+  // Add the base price to the components array.
+  if (!commerce_price_component_load($line_item_wrapper->commerce_unit_price->value(), 'coupon')) {
+    $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
+      $line_item_wrapper->commerce_unit_price->value(),
+      'commerce_coupon_' . $coupon->type,
+      $line_item_wrapper->commerce_unit_price->value(),
+      TRUE
+    );
+  }
+
+
+  // Return the line item.
+  return $line_item;
+}
+
+
+/**
+ * Ensures the product line item type contains a product reference field.
+ *
+ * This function is called by the line item module when it is enabled or this
+ * module is enabled. It invokes this function using the configuration_callback
+ * as specified above.
+ */
+function commerce_coupon_configure_line_item() {
+  
+}
+
+
+
+
+
 

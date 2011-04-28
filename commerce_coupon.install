@@ -70,7 +70,7 @@ function commerce_coupon_schema() {
     ),
     'primary key' => array('coupon_id'),
     'unique keys' => array(
-      'code' => array('code'),
+    	'code' => array('code'),
     ),
 
   );

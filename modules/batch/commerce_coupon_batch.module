@@ -1,0 +1,79 @@
+<?php
+
+function commerce_coupon_batch_menu() {
+  $items = array();
+
+
+  $items['admin/commerce/coupons/batch_task'] = array(
+    'title' => 'Batch Creation',
+    //'title arguments' => array('@name' => $info->label),
+    /*'page callback' => 'entity_ui_get_form',
+    'page arguments' => array('commerce_coupon', $entity, 'add'),
+    'file' => 'commerce_coupon.admin.inc',*/
+    //'access callback' => 'commerce_coupon_access',
+    'page callback' => 'commerce_coupon_batch_task_page',
+    'access arguments' => array('commerce coupon batch creation'),
+    'module' => 'commerce_coupon_batch',
+    'type' => MENU_LOCAL_TASK,
+  );
+  
+  $items['admin/commerce/coupons/batch'] = array(
+    'title' => 'Batch Creation',
+    //'title arguments' => array('@name' => $info->label),
+    /*'page callback' => 'entity_ui_get_form',
+    'page arguments' => array('commerce_coupon', $entity, 'add'),
+    'file' => 'commerce_coupon.admin.inc',*/
+    //'access callback' => 'commerce_coupon_access',
+    'page callback' => 'commerce_coupon_batch_overview_page',
+    'access arguments' => array('commerce coupon batch creation'),
+    'module' => 'commerce_coupon_batch',
+  );
+
+  
+  foreach (commerce_coupon_get_types() as $type => $info) {
+    $entity = entity_create('commerce_coupon', array('type' => $type));
+    $type_arg = strtr($type, '_', '-');
+    $items['admin/commerce/coupons/batch/'.$type_arg] = array(
+      'title' => 'Batch create @name',
+      'title arguments' => array('@name' => $info->label),
+      'page callback' => 'entity_ui_get_form',
+      'page arguments' => array('commerce_coupon', $entity, 'add'),
+      'file' => 'includes/commerce_coupon_batch.form.inc',
+      'access callback' => 'commerce_coupon_access',
+      'access arguments' => array('create', $type),
+      'module' => 'commerce_coupon_batch',
+    );
+  }
+  
+  return $items;
+
+}
+
+function commerce_coupon_batch_task_page() {
+  drupal_goto('admin/commerce/coupons/batch');
+}
+
+function commerce_coupon_batch_permission() {
+  $permissions = array(
+    'commerce coupon batch creation' => array(
+      'title' => t('Commerce Coupon Batch Creation'),
+      'description' => t('Allows users to create coupons by a batch.'),
+    ),
+  );
+  return $permissions;
+}
+
+
+function commerce_coupon_batch_overview_page() {
+  $item = menu_get_item();
+  $content = system_admin_menu_block($item);
+  
+  
+  // Bypass the admin/commerce/coupon/add listing if only one coupon type is
+  // available.
+  if (count($content) == 1) {
+    $item = array_shift($content);
+    drupal_goto($item['href']);
+  }  
+  return theme('commerce_coupon_add_list', array('content' => $content));
+}
