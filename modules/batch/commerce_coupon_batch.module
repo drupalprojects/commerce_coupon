@@ -6,11 +6,6 @@ function commerce_coupon_batch_menu() {
 
   $items['admin/commerce/coupons/batch_task'] = array(
     'title' => 'Batch Creation',
-    //'title arguments' => array('@name' => $info->label),
-    /*'page callback' => 'entity_ui_get_form',
-    'page arguments' => array('commerce_coupon', $entity, 'add'),
-    'file' => 'commerce_coupon.admin.inc',*/
-    //'access callback' => 'commerce_coupon_access',
     'page callback' => 'commerce_coupon_batch_task_page',
     'access arguments' => array('commerce coupon batch creation'),
     'module' => 'commerce_coupon_batch',
@@ -19,11 +14,6 @@ function commerce_coupon_batch_menu() {
   
   $items['admin/commerce/coupons/batch'] = array(
     'title' => 'Batch Creation',
-    //'title arguments' => array('@name' => $info->label),
-    /*'page callback' => 'entity_ui_get_form',
-    'page arguments' => array('commerce_coupon', $entity, 'add'),
-    'file' => 'commerce_coupon.admin.inc',*/
-    //'access callback' => 'commerce_coupon_access',
     'page callback' => 'commerce_coupon_batch_overview_page',
     'access arguments' => array('commerce coupon batch creation'),
     'module' => 'commerce_coupon_batch',
@@ -68,12 +58,11 @@ function commerce_coupon_batch_overview_page() {
   $item = menu_get_item();
   $content = system_admin_menu_block($item);
   
-  
   // Bypass the admin/commerce/coupon/add listing if only one coupon type is
   // available.
   if (count($content) == 1) {
     $item = array_shift($content);
     drupal_goto($item['href']);
   }  
-  return theme('commerce_coupon_add_list', array('content' => $content));
+  return theme('commerce_coupon_ui_add_list', array('content' => $content));
 }

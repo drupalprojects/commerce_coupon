@@ -1,7 +1,7 @@
 name = Coupon Batch
 description = Enables the mass generation of coupons.
 package = Commerce Coupon
-dependencies[] = commerce_coupon
+dependencies[] = commerce_coupon_ui
 core = 7.x
 
 ; Rules

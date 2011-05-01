@@ -15,27 +15,9 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
   $form['batch_size'] = array(
     '#title' => t('Batch Size'),
     '#type' => 'textfield',
-    '#default_value' => $coupon->code,
     '#description' => t('Enter the number of coupons which should be generated.'),
     '#size' => 30,
   );
-
-  $form['amount'] = array(
-    '#title' => t('Amount'),
-    '#type' => 'textfield',
-    '#default_value' => $coupon->amount,
-    '#description' => t('The amount of the coupon.'),
-    '#required' => TRUE,
-    '#size' => 30,
-  );
- 
-  $form['is_percentage'] = array(
-    '#title' => t('Percentage'),
-    '#type' => 'checkbox',
-    '#default_value' => $coupon->is_percentage,
-    '#description' => t('Indicates if the amount is a percentage of the order or a fixed amount.'),
-  );
-  
  
   $form['is_active'] = array(
     '#title' => t('Active'),
@@ -48,6 +30,10 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
   // Add the field related form elements.
   $form_state['commerce_coupon'] = $coupon;
   field_attach_form('commerce_coupon', $coupon, $form, $form_state);
+  
+  // Hide the coupon code field:
+  
+  $form['commerce_coupon_code']['#type'] = 'hidden';
 
   $form['data']['#tree'] = TRUE;
   
@@ -58,15 +44,6 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
     '#weight' => 40,
   );
 
-  if ($op != 'add') {
-    $form['actions']['delete'] = array(
-      '#type' => 'submit',
-      '#value' => t('Delete coupon'),
-      '#weight' => 45,
-      '#limit_validation_errors' => array(),
-      '#submit' => array('commerce_coupon_form_submit_delete')
-    );
-  }
   return $form;
 }
 

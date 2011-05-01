@@ -1,6 +1,10 @@
 name = Commerce Coupon
 description = "Coupon module for the commerce shopping cart."
 dependencies[] = commerce
+dependencies[] = commerce_checkout
+dependencies[] = commerce_price
+dependencies[] = commerce_line_item
+dependencies[] = commerce_order
 package = Commerce Coupon
 core = 7.x
 
@@ -10,4 +14,11 @@ files[] = classes/commerce_coupon.inc
 files[] = classes/commerce_coupon_log.inc
 files[] = classes/commerce_coupon_type.inc
 
-files[] = commerce_coupon.admin.inc
+
+
+; Views Handler
+files[] = includes/views/handlers/commerce_coupon_handler_field_amount.inc
+files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_operations.inc
+
+; CRUD Handlers
+files[] = includes/commerce_coupon_type.crud.inc

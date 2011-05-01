@@ -2,9 +2,6 @@
 
 class CommerceCoupon extends Entity {
 
-  public $amount;
-  public $code;
-  public $is_percentage;
   public $is_active = true;
   public $type;
   
