@@ -1,0 +1,7 @@
+name = Commerce Coupon UI
+description = "Coupon module for the commerce shopping cart."
+dependencies[] = commerce_coupon
+package = Commerce Coupon
+core = 7.x
+
+files[] = includes/commerce_coupon_ui.forms.inc
