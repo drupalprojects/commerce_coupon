@@ -22,3 +22,7 @@ files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_operation
 
 ; CRUD Handlers
 files[] = includes/commerce_coupon_type.crud.inc
+
+
+; Feed Importer
+files[] = includes/FeedsCommerceCouponProcessor.inc

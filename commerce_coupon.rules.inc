@@ -11,7 +11,11 @@ function commerce_coupon_rules_event_info() {
         'type' => 'commerce_coupon',
         'label' => t('commerce coupon to validate')
       ),
-    ) + commerce_order_rules_event_variables(t('Order', array(), array('context' => 'a drupal commerce order'))),
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'label' => t('Order'),
+      ),
+    ),
     'access callback' => 'commerce_order_rules_access',
   );
 
@@ -27,7 +31,11 @@ function commerce_coupon_rules_event_info() {
         'type' => 'commerce_coupon_log',
         'label' => t('commerce coupon log')
       ),
-    ) + commerce_order_rules_event_variables(t('Order', array(), array('context' => 'a drupal commerce order'))),
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'label' => t('Order'),
+      ),
+    ),
     'access callback' => 'commerce_order_rules_access',
   );
 

@@ -62,7 +62,7 @@ function commerce_coupon_entity_info() {
   $return['commerce_coupon_type'] = array(
     'label' => t('Commerce Coupon Type'),
     'entity class' => 'CommerceCouponType',
-    'controller class' => 'EntityAPIController',
+    'controller class' => 'EntityAPIControllerExportable',
     'base table' => 'commerce_coupon_type',
     'fieldable' => FALSE,
     'bundle of' => 'commerce_coupon',
@@ -92,11 +92,35 @@ function commerce_coupon_entity_info_alter(&$entity_info) {
   }
 }
 
+/** 
+ * Implementation of hook_feeds_plugins()
+ */ 
+function commerce_coupon_feeds_plugins() {
+ 
+  $info = array();
+  $info['FeedsCommerceCouponProcessor'] = array(
+    'name' => 'Commerce Coupon processor',
+    'description' => 'Create and update coupons.',
+    'help' => 'Create and update coupons from parsed content.',
+    'handler' => array(
+      'parent' => 'FeedsProcessor',
+      'class' => 'FeedsCommerceCouponProcessor',
+      'file' => 'FeedsCommerceCouponProcessor.inc',
+      'path' => drupal_get_path('module', 'commerce_coupon'),
+    ),
+  );
+  
+  return $info; 
+}
+
+
 /**
  * Implements hook_enable
  */
 function commerce_coupon_enable() {
   commerce_coupon_log_configure();
+  //clear the cache to display in Feeds as available plugin.
+  cache_clear_all('plugins:feeds:plugins', 'cache');
 }
 
 /**
