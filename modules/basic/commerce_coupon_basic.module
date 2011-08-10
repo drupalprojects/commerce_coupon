@@ -4,177 +4,177 @@
  * Implements hook_commerce_coupon_type_configure().
  */
 function commerce_coupon_basic_commerce_coupon_type_configure($bundle, $reset = FALSE) {
-	// Skip all $bundles except the basic coupon type
-	if ($bundle != 'basic_coupon') {
-		return;
-	}
+  // Skip all $bundles except the basic coupon type
+  if ($bundle != 'basic_coupon') {
+    return;
+  }
 
-	$entity_type = 'commerce_coupon';
+  $entity_type = 'commerce_coupon';
 
-	// If a field type we know should exist isn't found, clear the Field cache.
-	if (!field_info_field_types('commerce_price')) {
-		field_cache_clear();
-	}
+  // If a field type we know should exist isn't found, clear the Field cache.
+  if (!field_info_field_types('commerce_price')) {
+    field_cache_clear();
+  }
 
-	// Look for or add the specified fixed amount
-	$field_name = 'commerce_coupon_fixed_amount';
-	$field = field_info_field($field_name);
-	$instance = field_info_instance($entity_type, $field_name, $bundle);
-	$weight = 0;
+  // Look for or add the specified fixed amount
+  $field_name = 'commerce_coupon_fixed_amount';
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($entity_type, $field_name, $bundle);
+  $weight = 0;
 
-	if (empty($field) || $reset) {
-		$field_data = array(
-			'field_name' => $field_name,
-			'type' => 'commerce_price',
-			'label' => t('Fixed Amount'),
-			'cardinality' => 1,
-			'entity_types' => array($entity_type),
-			'translatable' => FALSE,
-			'locked' => FALSE,
-		);
+  if (empty($field) || $reset) {
+    $field_data = array(
+      'field_name' => $field_name,
+      'type' => 'commerce_price',
+      'label' => t('Fixed Amount'),
+      'cardinality' => 1,
+      'entity_types' => array($entity_type),
+      'translatable' => FALSE,
+      'locked' => FALSE,
+    );
 
-		if (empty($field)) {
-			$field = field_create_field($field_data);
-		}
-		else {
-			$field = field_update_field($field_data);
-		}
-	}
+    if (empty($field)) {
+      $field = field_create_field($field_data);
+    }
+    else {
+      $field = field_update_field($field_data);
+    }
+  }
 
-	if (empty($instance) || $reset) {
-		$instance_data = array(
-			'field_name' => $field_name,
-			'entity_type' => $entity_type,
-			'bundle' => $bundle,
+  if (empty($instance) || $reset) {
+    $instance_data = array(
+      'field_name' => $field_name,
+      'entity_type' => $entity_type,
+      'bundle' => $bundle,
 
-			'label' => t('Fixed Amount'),
-			'required' => FALSE,
-			'settings' => array(),
+      'label' => t('Fixed Amount'),
+      'required' => FALSE,
+      'settings' => array(),
 
-			// Because this widget is locked, we need it to use the full price widget
-			// since the currency option can't be adjusted at the moment.
-			'widget' => array(
-				'type' => 'commerce_price_full',
-				'weight' => $weight,
-				'settings' => array(
-					'currency_code' => 'default',
-				),
-			),
+      // Because this widget is locked, we need it to use the full price widget
+      // since the currency option can't be adjusted at the moment.
+      'widget' => array(
+        'type' => 'commerce_price_full',
+        'weight' => $weight,
+        'settings' => array(
+          'currency_code' => 'default',
+        ),
+      ),
 
-			'display' => array(),
-		);
+      'display' => array(),
+    );
 
-		if (empty($instance)) {
-			field_create_instance($instance_data);
-		}
-		else {
-			field_update_instance($instance_data);
-		}
-	}
-
-
-
-	// Look for or add the specified percentage amount
-	$field_name = 'commerce_coupon_percent_amount';
-	$field = field_info_field($field_name);
-	$instance = field_info_instance($entity_type, $field_name, $bundle);
-
-	if (empty($field) || $reset) {
-		$field_data = array(
-			'field_name' => $field_name,
-			'type' => 'number_float',
-			'label' => t('Percentage Amount'),
-			'cardinality' => 1,
-			'entity_types' => array($entity_type),
-			'translatable' => FALSE,
-			'locked' => FALSE,
-			'settings' => array(
-				'decimal_separator' => '.',
-			),
-		);
-
-		if (empty($field)) {
-			$field = field_create_field($field_data);
-		}
-		else {
-			$field = field_update_field($field_data);
-		}
-	}
-
-	if (empty($instance) || $reset) {
-		$instance_data = array(
-			'field_name' => $field_name,
-			'entity_type' => $entity_type,
-			'bundle' => $bundle,
-
-			'label' => t('Percentage Amount'),
-			'required' => FALSE,
-			'display' => array(),
-			'settings' => array(
-				'min' => '0',
-				'max' => '100',
-			),
-		);
-
-		if (empty($instance)) {
-			field_create_instance($instance_data);
-		}
-		else {
-			field_update_instance($instance_data);
-		}
-	}
+    if (empty($instance)) {
+      field_create_instance($instance_data);
+    }
+    else {
+      field_update_instance($instance_data);
+    }
+  }
 
 
-	// Look for or add the specified percentage amount
-	$field_name = 'commerce_coupon_number_of_uses';
-	$field = field_info_field($field_name);
-	$instance = field_info_instance($entity_type, $field_name, $bundle);
 
-	if (empty($field) || $reset) {
-		$field_data = array(
-			'field_name' => $field_name,
-			'type' => 'number_integer',
-			'label' => t('Number of Uses'),
-			'cardinality' => 1,
-			'entity_types' => array($entity_type),
-			'translatable' => FALSE,
-			'locked' => FALSE,
-			'settings' => array(),
-		);
+  // Look for or add the specified percentage amount
+  $field_name = 'commerce_coupon_percent_amount';
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($entity_type, $field_name, $bundle);
 
-		if (empty($field)) {
-			$field = field_create_field($field_data);
-		}
-		else {
-			$field = field_update_field($field_data);
-		}
-	}
+  if (empty($field) || $reset) {
+    $field_data = array(
+      'field_name' => $field_name,
+      'type' => 'number_float',
+      'label' => t('Percentage Amount'),
+      'cardinality' => 1,
+      'entity_types' => array($entity_type),
+      'translatable' => FALSE,
+      'locked' => FALSE,
+      'settings' => array(
+        'decimal_separator' => '.',
+      ),
+    );
 
-	if (empty($instance) || $reset) {
-		$instance_data = array(
-			'field_name' => $field_name,
-			'entity_type' => $entity_type,
-			'bundle' => $bundle,
+    if (empty($field)) {
+      $field = field_create_field($field_data);
+    }
+    else {
+      $field = field_update_field($field_data);
+    }
+  }
 
-			'label' => t('Number of Uses'),
-			'required' => FALSE,
-			'display' => array(),
-			'settings' => array(
-				'min' => '0',
-			),
-			'default_value' => array(
-				0 => array(
-					'value' => 1
-				)
-			),
-		);
+  if (empty($instance) || $reset) {
+    $instance_data = array(
+      'field_name' => $field_name,
+      'entity_type' => $entity_type,
+      'bundle' => $bundle,
+
+      'label' => t('Percentage Amount'),
+      'required' => FALSE,
+      'display' => array(),
+      'settings' => array(
+        'min' => '0',
+        'max' => '100',
+      ),
+    );
+
+    if (empty($instance)) {
+      field_create_instance($instance_data);
+    }
+    else {
+      field_update_instance($instance_data);
+    }
+  }
 
 
-		if (empty($instance)) {
-			field_create_instance($instance_data);
-		}
-		else {
-			field_update_instance($instance_data);
-		}
-	}
+  // Look for or add the specified percentage amount
+  $field_name = 'commerce_coupon_number_of_uses';
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($entity_type, $field_name, $bundle);
+
+  if (empty($field) || $reset) {
+    $field_data = array(
+      'field_name' => $field_name,
+      'type' => 'number_integer',
+      'label' => t('Number of Uses'),
+      'cardinality' => 1,
+      'entity_types' => array($entity_type),
+      'translatable' => FALSE,
+      'locked' => FALSE,
+      'settings' => array(),
+    );
+
+    if (empty($field)) {
+      $field = field_create_field($field_data);
+    }
+    else {
+      $field = field_update_field($field_data);
+    }
+  }
+
+  if (empty($instance) || $reset) {
+    $instance_data = array(
+      'field_name' => $field_name,
+      'entity_type' => $entity_type,
+      'bundle' => $bundle,
+
+      'label' => t('Number of Uses'),
+      'required' => FALSE,
+      'display' => array(),
+      'settings' => array(
+        'min' => '0',
+      ),
+      'default_value' => array(
+        0 => array(
+          'value' => 1
+        )
+      ),
+    );
+
+
+    if (empty($instance)) {
+      field_create_instance($instance_data);
+    }
+    else {
+      field_update_instance($instance_data);
+    }
+  }
 }
