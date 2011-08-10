@@ -191,7 +191,8 @@ function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount
       $commerce_coupon_log->commerce_granted_amount->value(),
       'commerce_coupon_' . $coupon->type,
       $commerce_coupon_log->commerce_granted_amount->value(),
-      TRUE
+      TRUE,
+      FALSE
     );
   }
   
@@ -222,7 +223,8 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
       $line_item_wrapper->commerce_unit_price->value(),
       'commerce_coupon_' . $commerce_coupon->type,
       $line_item_wrapper->commerce_unit_price->value(),
-      TRUE
+      TRUE,
+      FALSE
     );
   }  
   

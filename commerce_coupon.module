@@ -1050,7 +1050,8 @@ function commerce_coupon_line_item_add_form_submit(&$line_item, $element, &$form
     $line_item_wrapper->commerce_unit_price->value(),
     'base_price',
     $line_item_wrapper->commerce_unit_price->value(),
-    TRUE
+    TRUE,
+    FALSE
   );
 }
 
