@@ -113,16 +113,6 @@ function commerce_coupon_feeds_plugins() {
   return $info; 
 }
 
-
-/**
- * Implements hook_enable
- */
-function commerce_coupon_enable() {
-  commerce_coupon_log_configure();
-  //clear the cache to display in Feeds as available plugin.
-  cache_clear_all('plugins:feeds:plugins', 'cache');
-}
-
 /**
  * Implements hook_views_api().
  */
@@ -795,21 +785,6 @@ function commerce_coupon_log_create(array $values) {
   $log =  new CommerceCouponLog($values);
   $log->created = REQUEST_TIME;
   return $log;
-}
-
-/**
- * Configure the commerce coupon log entity.  
- */
-function commerce_coupon_log_configure() {
-  $entity_type = 'commerce_coupon_log';
-  $bundle = 'commerce_coupon_log';
-  $field_name = 'commerce_granted_amount';
-  
-  $instance = field_read_instance($entity_type, $field_name, $bundle);
-  
-  if (empty($instance)) {
-    commerce_price_create_instance($field_name, $entity_type, $bundle, t('Coupon Granted Amount'));
-  }
 }
 
 

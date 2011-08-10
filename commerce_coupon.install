@@ -1,12 +1,11 @@
 <?php
 
-
 /**
  * Implements hook_schema().
  */
 function commerce_coupon_schema() {
   $schema = array();
-  
+
   $schema['commerce_coupon'] = array(
     'description' => 'The base table for coupons.',
     'fields' => array(
@@ -51,7 +50,7 @@ function commerce_coupon_schema() {
     ),
     'primary key' => array('coupon_id'),
   );
-  
+
   $schema['commerce_coupon_type'] = array(
     'description' => 'Stores information about all defined coupon types.',
     'fields' => array(
@@ -93,8 +92,6 @@ function commerce_coupon_schema() {
       'type' => array('type'),
     ),
   );
-  
-  
 
   $schema['commerce_coupon_log'] = array(
     'description' => 'Stores the usage of coupons.',
@@ -167,7 +164,6 @@ function commerce_coupon_schema() {
   return $schema;
 }
 
-
 /**
  * Implements hook_field_schema().
  */
@@ -192,6 +188,33 @@ function commerce_coupon_reference_field_schema($field) {
   );
 }
 
+/**
+ * Implements hook_install().
+ */
+function commerce_coupon_install() {
+  // Create the required fields.
+  $entity_type = 'commerce_coupon_log';
+  $bundle = 'commerce_coupon_log';
+  $field_name = 'commerce_granted_amount';
 
+  $instance = field_read_instance($entity_type, $field_name, $bundle);
+  if (empty($instance)) {
+    commerce_price_create_instance($field_name, $entity_type, $bundle, t('Coupon Granted Amount'));
+  }
 
+  // Clear the cache to display in Feeds as available plugin.
+  cache_clear_all('plugins:feeds:plugins', 'cache');
+}
 
+/**
+ * Implements hook_uninstall().
+ */
+function commerce_coupon_uninstall() {
+  // Make sure commerce.module is loaded so that commerce_delete_instances()
+  // is available.
+  drupal_load('module', 'commerce');
+
+  // Delete all fields that belong to the module's entity types.
+  commerce_delete_instances('commerce_coupon_log');
+  commerce_delete_instances('commerce_coupon');
+}
