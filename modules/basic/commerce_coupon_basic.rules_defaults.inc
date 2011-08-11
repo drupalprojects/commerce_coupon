@@ -118,7 +118,7 @@ function commerce_coupon_basic_default_rules_configuration() {
   );
   
   $rule->action('drupal_message', array(
-    'message' => 'The coupon is already too often used.',
+    'message' => 'Your voucher has been redeemed too often.',
     'type' => 'error',
   ));
   
