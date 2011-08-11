@@ -107,7 +107,8 @@ function commerce_coupon_basic_apply_to_item_line($line_item, $coupon) {
             ),
           ),
         ),
-        false
+        FALSE,
+        FALSE
       );
     
     }
@@ -136,7 +137,8 @@ function commerce_coupon_basic_apply_to_item_line($line_item, $coupon) {
         $commerce_coupon_log->commerce_granted_amount->value(),
         'commerce_coupon_' . $coupon->type->value(),
         $commerce_coupon_log->commerce_granted_amount->value(),
-        TRUE
+        TRUE,
+        FALSE
       );
     }
   
