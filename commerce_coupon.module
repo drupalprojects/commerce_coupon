@@ -138,8 +138,6 @@ function commerce_coupon_commerce_checkout_pane_info() {
     'weight' => 9,
   );
   
-  // TODO: Add the checkout pane review view to the "default_view" file
-
   return $checkout_panes;
 }
 
@@ -249,6 +247,7 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
  *   Returns TRUE if the code is valid else FALSE.
  */
 function commerce_coupon_code_is_valid($code, $order) {
+  global $commerce_coupon_validation_error_message;
   
   $coupon = commerce_coupon_load_by_code($code, TRUE);
     
@@ -263,12 +262,13 @@ function commerce_coupon_code_is_valid($code, $order) {
     ->fields('c')
     ->condition('order_id', $order->order_id, '=')
     ->condition('coupon_id', $coupon->coupon_id, '=')
+   // ->condition('is_processed', 1, '=')
     ->execute()
     ->fetchAssoc();
-  
+
   if (isset($log['log_id'])) {
-    // TODO: Reactivate this:
-    //return FALSE;
+    $commerce_coupon_validation_error_message = t('Sorry, you can only apply a coupon once per order.');
+    return FALSE;
   }
   
   // We use the drupal_static function to generate a global variable.
@@ -282,7 +282,7 @@ function commerce_coupon_code_is_valid($code, $order) {
   rules_invoke_event('commerce_coupon_validate', $coupon, $order);
   
   // We get our global variable and return the result.  
-  return drupal_static('commerce_coupon_action_validation_results');  
+  return drupal_static('commerce_coupon_action_validation_results'); 
 }
 
 /**
@@ -302,22 +302,18 @@ function commerce_coupon_redeem_coupon($coupon, $order) {
     drupal_set_message(t('Your coupon code cannot be redeem.'), 'error');
     return;
   }
-  
-  // TODO: Improve this function
-  //       - Set granted amount for percentage amounts
-  //       - Sum up percentage amounts to assign it to the log entry
-  
+    
   // Check if the coupon is already applied to this order. In any case we
   // never want that a coupon is applied twice.
   $log = db_select('commerce_coupon_log', 'c')
     ->fields('c')
     ->condition('order_id', $order->order_id, '=')
     ->condition('coupon_id', $coupon->coupon_id, '=')
+    //->condition('is_processed', 1, '=')
     ->execute()
     ->fetchAssoc();
   
   if (isset($log['log_id'])) {
-  // TODO: activate this:
     return FALSE;
   }
   

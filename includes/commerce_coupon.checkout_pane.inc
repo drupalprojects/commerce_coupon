@@ -26,6 +26,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
 }
 
 function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
+  global $commerce_coupon_validation_error_message;
   
   // Check if it is empty
   if (empty($form_state['values']['commerce_coupon']['coupon_code'])) {
@@ -37,7 +38,14 @@ function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $check
     return TRUE;
   }
   else {
-    form_set_error('commerce_coupon][coupon_code', t('Your coupon code is not valid.'));
+    if (isset($commerce_coupon_validation_error_message)) {
+      $message = $commerce_coupon_validation_error_message;
+    }
+    else {
+      $message = t('Your coupon code is not valid.');
+    }
+    
+    form_set_error('commerce_coupon][coupon_code', $message);
     return FALSE;
   }
   

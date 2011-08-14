@@ -21,17 +21,7 @@ function commerce_coupon_basic_rules_action_info() {
         'label' => t('Coupon'),
       ),
     ),
-    'group' => t('Commerce Coupon'),
-  );
-
-  $actions['commerce_coupon_basic_calculate_percentage_amount'] = array(
-    'label' => t('Calculates a percentage coupon amount'),
-    'parameter' => array(
-      'line_item' => array(
-        'type' => 'commerce_line_item',
-        'label' => t('Line item'),
-      ),
-    ),
+    'base' => 'commerce_coupon_basic_apply_percentage_coupon_to_item_line',
     'group' => t('Commerce Coupon'),
   );
   
@@ -39,35 +29,9 @@ function commerce_coupon_basic_rules_action_info() {
 }
 
 
-
-function commerce_coupon_basic_calculate_percentage_amount($line_item) {
+function commerce_coupon_basic_apply_percentage_coupon_to_item_line($line_item, $coupon) {
   
-  $order_id = $line_item->order_id;
-  $coupons = commerce_coupon_get_coupons_by_order($order_id);
-  $components = rules_get_components(FALSE, 'action');
-  
-  foreach ($coupons as $coupon) {
-    $coupon = entity_metadata_wrapper('commerce_coupon', $coupon);
-    $component_name = 'commerce_coupon_apply_' . $coupon->type->value() . '_to_item_line';
-  
-  
-    $fields = $coupon->getPropertyInfo();
-    if (isset($fields['commerce_coupon_percent_amount']) 
-        && $coupon->commerce_coupon_percent_amount->value() > 0
-        && isset($components[$component_name])
-        ) {
-      // Invoke it with the line item.
-      rules_invoke_component($component_name, $line_item, $coupon);      
-    }
-    
-    
-  }
-}
-
-
-function commerce_coupon_basic_apply_to_item_line($line_item, $coupon) {
-  
-  static $amounts = array();
+  $amounts = &drupal_static(__FUNCTION__);
   
   if(!($coupon instanceof EntityMetadataWrapper)) {
     $coupon = entity_metadata_wrapper('commerce_coupon', $coupon);
@@ -87,32 +51,7 @@ function commerce_coupon_basic_apply_to_item_line($line_item, $coupon) {
     
     // Calculate the total granted amount for this line item
     $amount = $line_item_wrapper->commerce_total->amount->value() * $rate * -1;
-    
-    // Ensure the coupon is applied only once
-    if (!isset($amounts[$line_item->order_id][$coupon->coupon_id->value()][$line_item->line_item_id])) {
-      // Update the data array with the coupon component.
-      $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
-        $line_item_wrapper->commerce_unit_price->value(),
-        'commerce_coupon_' . $coupon->type->value(),
-      
-        array(
-          'amount' => $amount,
-          'currency_code' => $line_item_wrapper->commerce_unit_price->currency_code->value(),
-          'data' => array(
-            'coupon' => array(
-              'coupon_id' => $coupon->coupon_id->value(),
-              'type' => $coupon->type->value(),
-              'rate' => $rate,
-              'code' => $coupon->commerce_coupon_code->value(),
-            ),
-          ),
-        ),
-        FALSE,
-        FALSE
-      );
-    
-    }
-    
+        
     // Save the amount for later use:
     $amounts[$line_item->order_id][$coupon->coupon_id->value()][$line_item->line_item_id] = $amount;
       
@@ -127,7 +66,7 @@ function commerce_coupon_basic_apply_to_item_line($line_item, $coupon) {
     $commerce_coupon_log = entity_metadata_wrapper('commerce_coupon_log', $log);  
     
     // Set the unit price on the line item object.
-    $commerce_coupon_log->commerce_granted_amount->amount = $total_amount;
+    $commerce_coupon_log->commerce_granted_amount->amount = -1 * $total_amount;
     $commerce_coupon_log->commerce_granted_amount->currency_code = $line_item_wrapper->commerce_total->currency_code->value();
 
   

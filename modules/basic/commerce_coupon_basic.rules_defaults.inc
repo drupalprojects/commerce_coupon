@@ -31,31 +31,15 @@ function commerce_coupon_basic_default_rules_configuration() {
       ), 
     ));
 
-    $rule->label = t('Calculate @title amount', array('@title' => $coupon_type->label));
+    $rule->label = t('Apply a percentage @title amount', array('@title' => $coupon_type->label));
 
-    // Add the action to apply the current tax.
+    // Add the action to apply the percentage coupons
     $rule->action('commerce_coupon_basic_apply_to_item_line', array(
       'line_item:select' => 'line-item',
       'coupon:select' => 'coupon',
     ));
     $rules['commerce_coupon_apply_' . $type . '_to_item_line'] = $rule;
     
-    
-    // Create a new product pricing rule.
-    $rule = rules_reaction_rule();
-
-    $rule->label = t('Calculate coupon amount: @title', array('@title' => $coupon_type->label));
-    $rule->active = TRUE;
-
-    // Add the action to invoke every coupon component matching this type.
-    $rule
-      ->event('commerce_product_calculate_sell_price')
-      ->action('commerce_coupon_basic_calculate_percentage_amount', array(
-        'line_item:select' => 'commerce-line-item',
-      )
-    );
-
-    $rules['commerce_coupon_calculate_' . $type . '_amount'] = $rule;
   }
   
   
@@ -75,6 +59,7 @@ function commerce_coupon_basic_default_rules_configuration() {
   $rule
   ->event('commerce_coupon_redeem')
   ->condition('entity_has_field', array('entity:select' => 'coupon', 'field' => 'commerce_coupon_fixed_amount'))
+  ->condition(rules_and()->condition('data_is_empty', array('data:select' => 'coupon:commerce-coupon-fixed-amount'))->negate() )
   ->condition('data_is', array('data:select' => 'coupon:commerce-coupon-fixed-amount:amount', 'op' => '>', 'value' => 0))
   ->action('commerce_coupon_action_create_coupon_line_item', array(
     'commerce_coupon:select' => 'coupon',
@@ -89,11 +74,7 @@ function commerce_coupon_basic_default_rules_configuration() {
   ));
   
   $rules['commerce_coupon_basic_fixed_amount'] = $rule;
-  
-  
-  
-  
-  
+    
   
   // Add validation rule component to check the number of uses of a coupon
   $rule = rule(array(
