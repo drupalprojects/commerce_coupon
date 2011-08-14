@@ -13,6 +13,15 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
     '#description' => t('Enter here your coupon code.'),
   );
 
+  // Extract the View and display keys from the cart contents pane setting.
+  list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|default'));
+  if (!empty($view_id) && !empty($display_id)) {
+    $pane_form['redeemed_coupons'] = array(
+      '#type' => 'markup',
+      '#markup' => commerce_embed_view($view_id, $display_id, array($order->order_id)),
+    );
+  }
+
   return $pane_form;
 }
 
@@ -78,10 +87,18 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
 
   $form['commerce_coupon_review_pane_view'] = array(
     '#type' => 'select',
-    '#title' => t('Cart contents View'),
+    '#title' => t('Coupons Review Pane View'),
     '#description' => t('Specify the View to use in the review pane to display the coupons.'),
     '#options' => $options,
     '#default_value' => variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|default'),
+  );
+  
+  $form['commerce_coupon_checkout_pane_view'] = array(
+    '#type' => 'select',
+    '#title' => t('Coupons Checkout Pane View'),
+    '#description' => t('Specify the View to use in the checkout pane under the coupon form. Leave empty to do not display anything.'),
+    '#options' => $options,
+    '#default_value' => variable_get('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|default'),
   );
 
   return $form;

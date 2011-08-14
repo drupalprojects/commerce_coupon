@@ -51,7 +51,7 @@ function commerce_coupon_basic_default_rules_configuration() {
     $rule
       ->event('commerce_product_calculate_sell_price')
       ->action('commerce_coupon_basic_calculate_percentage_amount', array(
-        'line_item:select' => 'line-item',
+        'line_item:select' => 'commerce-line-item',
       )
     );
 
