@@ -1,6 +1,12 @@
 <?php
 
 /**
+ * @file
+ * Coupon views alter
+ *
+ */
+
+/**
  * Alter the views data to enable some additional features for coupons in views
  */
 function commerce_coupon_views_data_alter(&$data) {
@@ -25,7 +31,7 @@ function commerce_coupon_views_data_alter(&$data) {
       );
     }
   }
-  if (isset($data['commerce_coupon'])){
+  if (isset($data['commerce_coupon'])) {
     $data['commerce_coupon']['operations'] = array(
       'field' => array(
         'title' => t('Operations links'),

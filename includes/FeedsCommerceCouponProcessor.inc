@@ -125,7 +125,7 @@ class FeedsCommerceCouponProcessor extends FeedsProcessor {
         $coupon_user->created = feeds_to_unixtime($value, REQUEST_TIME);
         break;
       default:
-        parent::setTargetElement($source,$coupon_user, $target_element, $value);
+        parent::setTargetElement($source, $coupon_user, $target_element, $value);
         break;
     }
   }

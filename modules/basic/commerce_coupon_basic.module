@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
+
+/**
  * Implements hook_commerce_coupon_type_configure().
  */
 function commerce_coupon_basic_commerce_coupon_type_configure($bundle, $reset = FALSE) {

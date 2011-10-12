@@ -2,6 +2,13 @@
 
 /**
  * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
+
+/**
+ * @file
  * Commerce Coupon type editing UI.
  */
 

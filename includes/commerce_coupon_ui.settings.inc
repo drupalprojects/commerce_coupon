@@ -1,5 +1,11 @@
 <?php
 
+/**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
 
 function commerce_coupon_ui_settings_form($form, &$form_state) {
   $form['commerce_coupon_default_code_size'] = array(

@@ -1,6 +1,11 @@
 <?php
 
-
+/**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
 
 /**
  * Implements hook_rules_action_info().
@@ -33,7 +38,7 @@ function commerce_coupon_basic_apply_percentage_coupon_to_item_line($line_item, 
 
   $amounts = &drupal_static(__FUNCTION__);
 
-  if(!($coupon instanceof EntityMetadataWrapper)) {
+  if (!($coupon instanceof EntityMetadataWrapper)) {
     $coupon = entity_metadata_wrapper('commerce_coupon', $coupon);
   }
 

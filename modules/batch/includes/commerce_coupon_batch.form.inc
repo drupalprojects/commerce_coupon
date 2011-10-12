@@ -1,6 +1,11 @@
 <?php
 
-
+/**
+ * @file
+ * Coupon Batch forms for Drupal Commerce
+ *
+ * This file contains form data for...
+ */
 
 /**
  * Generates the commerce coupon editing form.

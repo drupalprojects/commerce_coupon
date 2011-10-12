@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * @file
+ * Basic coupon install
+ *
+ * This file contains...
+ */
+
+/**
  * Implements hook_install().
  */
 function commerce_coupon_basic_install() {

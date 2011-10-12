@@ -1,6 +1,11 @@
 <?php
 
-
+/**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
 
 class CommerceCouponType extends Entity {
 

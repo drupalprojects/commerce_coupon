@@ -1,6 +1,9 @@
 <?php
 
 /**
+ * @file
+ * Coupon..
+ *
  * Views for the default order UI.
  */
 

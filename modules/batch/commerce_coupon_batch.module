@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
+
 function commerce_coupon_batch_menu() {
   $items = array();
 

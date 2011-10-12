@@ -1,6 +1,16 @@
 <?php
 
+/**
+ * @file
+ * Coupon User Interface for Drupal Commerce
+ *
+ * This file contains all the user interface functionality for the coupon system
+ * built on Drupal Commerce.
+ */
 
+/**
+ * Implements hook_entity_info_alter().
+ */
 function commerce_coupon_ui_entity_info_alter(&$entity_info) {
   // Alter the entity for enabeling the admin UI
   $entity_info['commerce_coupon']['admin ui'] = array(
@@ -24,7 +34,9 @@ function commerce_coupon_ui_entity_info_alter(&$entity_info) {
   }
 }
 
-
+/**
+ * Implements hook_menu().
+ */
 function commerce_coupon_ui_menu() {
   $items = array();
 
@@ -34,7 +46,7 @@ function commerce_coupon_ui_menu() {
     foreach (commerce_coupon_get_types() as $type => $info) {
       $entity = entity_create('commerce_coupon', array('type' => $type));
       $type_arg = strtr($type, '_', '-');
-      $items['admin/commerce/coupons/add/'.$type_arg] = array(
+      $items['admin/commerce/coupons/add/' . $type_arg] = array(
         'title' => 'Create @name',
         'title arguments' => array('@name' => $info->label),
         'page callback' => 'entity_ui_get_form',
@@ -48,8 +60,8 @@ function commerce_coupon_ui_menu() {
   }
 
   $items['admin/commerce/coupons/settings'] = array(
-    'title' => t('Settings'),
-    'description' => t('Global configuration for coupons.'),
+    'title' => 'Settings',
+    'description' => 'Global configuration for coupons.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_coupon_ui_settings_form'),
     'file' => 'includes/commerce_coupon_ui.settings.inc',
@@ -58,19 +70,22 @@ function commerce_coupon_ui_menu() {
     'weight' => 50,
   );
 
-
-
   return $items;
 }
 
+/**
+ * Implements hook_menu_alter().
+ */
 function commerce_coupon_menu_alter(&$items) {
   $items['admin/commerce/coupons/types']['type'] = MENU_LOCAL_TASK;
+  $items['admin/commerce/coupons/types']['title'] = 'Types';
 
   // On uninstall we need to be sure that this item is set as array.
   if (!isset($items['admin/commerce/coupons'])) {
     $items['admin/commerce/coupons'] = array();
   }
 
+  //@todo Any harm in the following up to hook_menu()?
   $items['admin/commerce/coupons/list'] = array(
     'title' => 'Coupons',
     'description' => 'Manage the coupons.',
@@ -116,13 +131,7 @@ function commerce_coupon_menu_alter(&$items) {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );*/
-
-
-  $items['admin/commerce/coupons/types']['title'] = t('Types');
-
-
 }
-
 
 /**
  * Implements hook_views_api().
@@ -133,8 +142,6 @@ function commerce_coupon_ui_views_api() {
     'path' => drupal_get_path('module', 'commerce_coupon_ui') . '/includes/views',
   );
 }
-
-
 
 function commerce_coupon_ui_create_page() {
   drupal_goto('admin/commerce/coupons/add');
@@ -166,7 +173,9 @@ function commerce_coupon_ui_add_page($type = NULL) {
   }
 }
 
-
+/**
+ * Implements hook_theme().
+ */
 function commerce_coupon_theme() {
   return array(
     'commerce_coupon_ui_add_list' => array(

@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
+
+/**
  * Payment pane: form callback.
  */
 function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane, $order) {
@@ -26,6 +33,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
 }
 
 function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
+  //@todo I think global function should start and end with an underscore
   global $commerce_coupon_validation_error_message;
 
   // Check if it is empty
@@ -88,7 +96,7 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
     // Only include line item Views.
     if ($view_value->base_table == 'commerce_coupon_log') {
        foreach ($view_value->display as $display_id => $display_value) {
-        $options[check_plain($view_id)][$view_id .'|'. $display_id] = check_plain($display_value->display_title);
+        $options[check_plain($view_id)][$view_id . '|' . $display_id] = check_plain($display_value->display_title);
       }
      }
    }

@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @file
+ * Coupon rules
+ *
+ * This file contains...
+ */
+
 function commerce_coupon_rules_event_info() {
   $events = array();
 
@@ -41,9 +48,6 @@ function commerce_coupon_rules_event_info() {
 
   return $events;
 }
-
-
-
 
 /**
  * Implements hook_rules_action_info().
@@ -156,21 +160,21 @@ function commerce_coupon_rules_action_info() {
 }
 
 
-function commerce_coupon_action_is_valid_coupon($override = false) {
+function commerce_coupon_action_is_valid_coupon($override = FALSE) {
   $validation_results = &drupal_static('commerce_coupon_action_validation_results');
 
-  if (isset($validation_results) && $override == false) {
-    $validation_results = $validation_results && true;
+  if (isset($validation_results) && $override == FALSE) {
+    $validation_results = $validation_results && TRUE;
   }
   else {
-    $validation_results[$commerce_coupon->coupon_id] = true;
+    $validation_results[$commerce_coupon->coupon_id] = TRUE;
   }
 
 }
 
 function commerce_coupon_action_is_invalid_coupon() {
   $validation_results = &drupal_static('commerce_coupon_action_validation_results');
-  $validation_results = false;
+  $validation_results = FALSE;
 }
 
 function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount, $currency_code) {
@@ -240,6 +244,3 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
 function commerce_coupon_action_get_coupon_uses($commerce_coupon) {
   return array('number_of_uses' => commerce_coupon_get_number_of_uses($commerce_coupon->coupon_id));
 }
-
-
-

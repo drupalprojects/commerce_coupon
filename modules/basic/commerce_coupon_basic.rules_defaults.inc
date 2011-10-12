@@ -1,6 +1,11 @@
 <?php
 
-
+/**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
 
 /**
  * Implements hook_default_rules_configuration().

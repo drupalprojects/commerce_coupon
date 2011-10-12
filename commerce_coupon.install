@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Install, update and uninstall functions for the commerce_coupon module.
@@ -203,7 +204,7 @@ function commerce_coupon_install() {
 
   $instance = field_read_instance($entity_type, $field_name, $bundle);
   if (empty($instance)) {
-    commerce_price_create_instance($field_name, $entity_type, $bundle, t('Coupon Granted Amount'));
+    commerce_price_create_instance($field_name, $entity_type, $bundle, st('Coupon Granted Amount'));
   }
 
   // Clear the cache to display in Feeds as available plugin.

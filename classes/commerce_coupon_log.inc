@@ -1,5 +1,12 @@
 <?php
 
+/**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
+
 class CommerceCouponLog extends Entity {
 
   public $log_id;
@@ -16,4 +23,3 @@ class CommerceCouponLog extends Entity {
     parent::__construct($values, 'commerce_coupon_log');
   }
 }
-

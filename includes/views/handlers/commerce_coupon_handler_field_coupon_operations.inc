@@ -1,6 +1,13 @@
 <?php
 
 /**
+ * @file
+ * Coupon..
+ *
+ * This file contains...
+ */
+
+/**
  * Field handler to present an order's operations links.
  */
 class commerce_coupon_handler_field_coupon_operations extends views_handler_field {
