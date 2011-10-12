@@ -11,7 +11,7 @@
 // TODO: Set log entry as proceed after order complete
 
 /**
- * Implements hook_entity_info()
+ * Implements hook_entity_info().
  *
  * This function provides informations about the coupon entities.
  */
@@ -93,7 +93,7 @@ function commerce_coupon_entity_info_alter(&$entity_info) {
 }
 
 /**
- * Implementation of hook_feeds_plugins()
+ * Implements of hook_feeds_plugins().
  */
 function commerce_coupon_feeds_plugins() {
 
@@ -159,7 +159,7 @@ function commerce_coupon_access($op, $type = NULL, $account = NULL) {
 }
 
 /**
- * Implements hook_permission()
+ * Implements hook_permission().
  *
  * Provides the basic access objects
  */
@@ -202,7 +202,7 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
     'N', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z',
     'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'j', 'k', 'm', 'n',
     'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
-    '2','3','4','5','6','7','8','9'
+    '2', '3', '4', '5', '6', '7', '8', '9',
   );
 
   $numberOfCharacters = count($characters);
@@ -410,7 +410,7 @@ function commerce_coupon_type_delete(CommerceCouponType $type) {
 }
 
 /**
- * Implements hook_commerce_coupon_type_delete()
+ * Implements hook_commerce_coupon_type_delete().
  */
 function commerce_coupon_commerce_coupon_type_delete($type) {
   // Delete all coupons of this type.
@@ -610,13 +610,13 @@ function commerce_coupon_get_coupons_by_order($order_id) {
   // TODO: Use the Drupal 7 query API
   $coupon_raw = db_query('SELECT coupon_id, log_id FROM {commerce_coupon_log} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchAllAssoc('log_id', PDO::FETCH_ASSOC);
 
-  if(!is_array($coupon_raw) or count($coupon_raw) <= 0) {
+  if (!is_array($coupon_raw) or count($coupon_raw) <= 0) {
     return array();
   }
 
   $coupon_ids = array();
 
-  foreach($coupon_raw as $coupon) {
+  foreach ($coupon_raw as $coupon) {
     $coupon_ids[] = $coupon['coupon_id'];
   }
 
@@ -740,7 +740,7 @@ function commerce_coupon_code_is_active($code) {
   $rs = db_query('SELECT * FROM {commerce_coupon} WHERE code = :code AND is_active = 1', array(':code' => $code));
   $codeObject = $rs->fetchObject();
 
-  if ($codeObject == null) {
+  if ($codeObject == NULL) {
     return FALSE;
   }
   else {
@@ -787,7 +787,7 @@ function commerce_coupon_log_load_by_order_and_coupon($order_id, $coupon_id) {
   // TODO: Use the Drupal 7 query API
   $coupon_raw = db_query('SELECT log_id FROM {commerce_coupon_log} WHERE order_id = :order_id AND coupon_id = :coupon_id', array(':order_id' => $order_id, ':coupon_id' => $coupon_id))->fetchAllAssoc('log_id', PDO::FETCH_ASSOC);
 
-  if(!is_array($coupon_raw) or count($coupon_raw) <= 0) {
+  if (!is_array($coupon_raw) or count($coupon_raw) <= 0) {
     return NULL;
   }
   $log = reset($coupon_raw);
@@ -831,7 +831,7 @@ function commerce_coupon_log_create(array $values) {
 
 
 /**
- * Implements hook_field_info()
+ * Implements hook_field_info().
  */
 function commerce_coupon_field_info() {
   return array(
@@ -861,7 +861,7 @@ function commerce_coupon_field_formatter_info() {
 }
 
 /**
- * Implements hook_field_is_empty()
+ * Implements hook_field_is_empty().
  */
 function commerce_coupon_field_is_empty($item, $field) {
   // set_id = 0 is empty too, which is exactly what we want.
@@ -869,12 +869,12 @@ function commerce_coupon_field_is_empty($item, $field) {
 }
 
 /**
- * Implements hook_field_formatter_view
+ * Implements hook_field_formatter_view().
  */
 function commerce_coupon_field_formatter_view($entity_type, $object, $field, $instance, $langcode, $items, $display) {
   $result = array();
 
-  if($display['type'] == 'commerce_coupon_reference_code') {
+  if ($display['type'] == 'commerce_coupon_reference_code') {
     foreach ($items as $delta => $item) {
 
       $coupon = commerce_coupon_load($item['coupon_id']);
@@ -913,7 +913,7 @@ function commerce_coupon_field_widget_info() {
  */
 function commerce_coupon_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
 
-  if($instance['widget']['type'] == 'commerce_coupon_autocomplete_widget') {
+  if ($instance['widget']['type'] == 'commerce_coupon_autocomplete_widget') {
 
 
     $element['coupon_id'] = $element + array(

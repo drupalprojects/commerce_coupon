@@ -9,7 +9,7 @@ function commerce_coupon_basic_default_rules_configuration() {
   $rules = array();
 
   // Define rules for percentage amounts
-  foreach(commerce_coupon_get_types() as $type => $coupon_type) {
+  foreach (commerce_coupon_get_types() as $type => $coupon_type) {
 
     $instance = field_info_instance('commerce_coupon', 'commerce_coupon_percent_amount', $type);
 

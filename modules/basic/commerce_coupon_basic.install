@@ -6,7 +6,7 @@
 function commerce_coupon_basic_install() {
   $values = array(
     'type' => 'basic_coupon',
-    'label' => t('Coupon'),
+    'label' => st('Coupon'),
   );
 
   $coupon_type = commerce_coupon_type_create($values);

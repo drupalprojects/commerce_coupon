@@ -54,7 +54,7 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
   $size = (int)$form_state['values']['batch_size'];
   $commerce_coupon = entity_ui_form_submit_build_entity($form, $form_state);
 
-  if($size > 0) {
+  if ($size > 0) {
     for ($i = 0; $i < $size; $i++) {
       $coupon = clone $commerce_coupon;
       $coupon->code = commerce_coupon_generate_coupon_code();
