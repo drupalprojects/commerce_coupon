@@ -57,7 +57,7 @@ function commerce_coupon_rules_action_info() {
       'override' => array(
         'type' => 'boolean',
         'label' => t('Override'),
-        'description' => t('Normaly the validation result is concatenated by an AND operator. Here you can bypass this and set the value to true.'), 
+        'description' => t('Normaly the validation result is concatenated by an AND operator. Here you can bypass this and set the value to true.'),
       ),
     ),
     'group' => t('Commerce Coupon'),
@@ -75,7 +75,7 @@ function commerce_coupon_rules_action_info() {
       'execute' => 'commerce_coupon_action_is_invalid_coupon',
     ),
   );
-  
+
   $actions['commerce_coupon_action_set_granted_amount'] = array(
     'label' => t('Set granted coupon amount'),
     'parameter' => array(
@@ -98,7 +98,7 @@ function commerce_coupon_rules_action_info() {
       'execute' => 'commerce_coupon_action_set_granted_amount',
     ),
   );
-  
+
   $actions['commerce_coupon_action_create_coupon_line_item'] = array(
     'label' => t('Create coupon line item'),
     'parameter' => array(
@@ -131,8 +131,8 @@ function commerce_coupon_rules_action_info() {
       'execute' => 'commerce_coupon_action_create_coupon_line_item',
     ),
       );
-  
-  
+
+
   $actions['commerce_coupon_action_get_coupon_uses'] = array(
     'label' => t('Get the redemption number of a coupon'),
     'parameter' => array(
@@ -150,22 +150,22 @@ function commerce_coupon_rules_action_info() {
       ),
     ),
   );
-  
-  
+
+
   return $actions;
 }
 
 
 function commerce_coupon_action_is_valid_coupon($override = false) {
   $validation_results = &drupal_static('commerce_coupon_action_validation_results');
-  
+
   if (isset($validation_results) && $override == false) {
     $validation_results = $validation_results && true;
   }
   else {
     $validation_results[$commerce_coupon->coupon_id] = true;
   }
-  
+
 }
 
 function commerce_coupon_action_is_invalid_coupon() {
@@ -177,14 +177,14 @@ function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount
   if (!($commerce_coupon_log instanceof EntityMetadataWrapper)) {
     $commerce_coupon_log = entity_metadata_wrapper('commerce_coupon_log', $commerce_coupon_log);
   }
-  
+
   $coupon = commerce_coupon_load($commerce_coupon_log->coupon_id->value());
 
   // Set the unit price on the line item object.
   $commerce_coupon_log->commerce_granted_amount->amount = $amount;
   $commerce_coupon_log->commerce_granted_amount->currency_code = $currency_code;
 
-  
+
   // Add the base price to the components array.
   if (!commerce_price_component_load($commerce_coupon_log->commerce_granted_amount->value(), 'commerce_coupon_' . $coupon->type)) {
     $commerce_coupon_log->commerce_granted_amount->data = commerce_price_component_add(
@@ -195,27 +195,27 @@ function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount
       FALSE
     );
   }
-  
+
   commerce_coupon_log_save($commerce_coupon_log->value());
-  
+
 
 }
 
 function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $commerce_order, $amount, $currency_code) {
-  
+
   if (!($commerce_order instanceof EntityMetadataWrapper)) {
     $commerce_order = entity_metadata_wrapper('commerce_order', $commerce_order);
   }
-  
-  
+
+
   $line_item = commerce_coupon_line_item_new($commerce_coupon, $commerce_order->order_id->value());
-  
+
   $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
 
   // Set the unit price on the line item object.
   $line_item_wrapper->commerce_unit_price->amount = $amount * -1;
   $line_item_wrapper->commerce_unit_price->currency_code = $currency_code;
-  
+
 
   // Add the base price to the components array.
   if (!commerce_price_component_load($line_item_wrapper->commerce_unit_price->value(), 'commerce_coupon_' . $commerce_coupon->type)) {
@@ -226,13 +226,13 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
       TRUE,
       FALSE
     );
-  }  
-  
+  }
+
   commerce_line_item_save($line_item);
-  
+
   $commerce_order->commerce_line_items[] = $line_item;
   $commerce_order->save();
-  
+
   return array('commerce_coupon_line_item' => $line_item);
 }
 

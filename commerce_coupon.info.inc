@@ -20,7 +20,7 @@ function commerce_coupon_entity_property_info() {
     'description' => t('The internal numeric ID of the coupon.'),
     'schema field' => 'coupon_id',
   );
-  
+
   $properties['type'] = array(
     'type' => 'text',
     'label' => t('Type'),
@@ -47,37 +47,37 @@ function commerce_coupon_entity_property_info() {
     'description' => t('The internal numeric ID of the coupon.'),
     'schema field' => 'coupon_id',
   );
-  
+
   $properties['uid'] = array(
     'type' => 'integer',
     'label' => t('User ID'),
     'description' => t('The user id of the user which redeemed the coupon.'),
     'schema field' => 'uid',
   );
-  
+
   $properties['order_id'] = array(
     'type' => 'integer',
     'label' => t('Order ID'),
     'description' => t('The order id on which this coupon log relies on.'),
     'schema field' => 'order_id',
   );
-  
+
   $properties['is_accepted'] = array(
     'type' => 'boolean',
     'label' => t('Is Accepted'),
     'description' => t('Indicates if this coupon is accepted in this context (order / coupon).'),
     'schema field' => 'is_accepted',
   );
-   
+
   $properties['is_processed'] = array(
     'type' => 'boolean',
     'label' => t('Is Processed'),
     'description' => t('If this coupon log is processed, this means it is final / the order is complete. It can not be removed any more.'),
     'schema field' => 'is_processed',
   );
-  
-  
-  
+
+
+
 
   return $info;
 }

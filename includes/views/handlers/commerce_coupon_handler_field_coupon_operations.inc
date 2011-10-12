@@ -18,7 +18,7 @@ class commerce_coupon_handler_field_coupon_operations extends views_handler_fiel
   function render($values) {
     $coupon_id = $this->get_value($values, 'coupon_id');
     $links = menu_contextual_links('commerce-coupon', 'admin/commerce/coupons/manage', array($coupon_id));
-    
+
     //return print_r($links, 1);
 
     if (!empty($links)) {

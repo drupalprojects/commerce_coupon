@@ -10,9 +10,9 @@ function commerce_coupon_basic_default_rules_configuration() {
 
   // Define rules for percentage amounts
   foreach(commerce_coupon_get_types() as $type => $coupon_type) {
-  
+
     $instance = field_info_instance('commerce_coupon', 'commerce_coupon_percent_amount', $type);
-    
+
     // Check if a percenatage field is assigned to this type
     if (empty($instance)) {
       // Skip this type if no percentage field is defined
@@ -28,7 +28,7 @@ function commerce_coupon_basic_default_rules_configuration() {
       'coupon' => array(
         'type' => 'commerce_coupon',
         'label' => t('Coupon'),
-      ), 
+      ),
     ));
 
     $rule->label = t('Apply a percentage @title amount', array('@title' => $coupon_type->label));
@@ -39,12 +39,12 @@ function commerce_coupon_basic_default_rules_configuration() {
       'coupon:select' => 'coupon',
     ));
     $rules['commerce_coupon_apply_' . $type . '_to_item_line'] = $rule;
-    
+
   }
-  
-  
-  
-  
+
+
+
+
   // Create fixed amount rule
   $rule = rules_reaction_rule(array(), array(
     'commerce_coupon_line_item' => array(
@@ -55,7 +55,7 @@ function commerce_coupon_basic_default_rules_configuration() {
 
   $rule->label = t('Calculate coupon with fixed amount');
   $rule->active = TRUE;
-  
+
   $rule
   ->event('commerce_coupon_redeem')
   ->condition('entity_has_field', array('entity:select' => 'coupon', 'field' => 'commerce_coupon_fixed_amount'))
@@ -72,10 +72,10 @@ function commerce_coupon_basic_default_rules_configuration() {
     'amount:select' => 'coupon:commerce-coupon-fixed-amount:amount',
     'currency_code:select' => 'coupon:commerce-coupon-fixed-amount:currency-code'
   ));
-  
+
   $rules['commerce_coupon_basic_fixed_amount'] = $rule;
-    
-  
+
+
   // Add validation rule component to check the number of uses of a coupon
   $rule = rule(array(
     'commerce_coupon' => array(
@@ -85,7 +85,7 @@ function commerce_coupon_basic_default_rules_configuration() {
     'number_of_redemptions' => array(
       'type' => 'integer',
       'label' => t('Number Of Redemptions'),
-    ), 
+    ),
   ));
 
   $rule->label = t('Coupon Validation: Set the coupon as invalid if number of uses is reached');
@@ -97,12 +97,12 @@ function commerce_coupon_basic_default_rules_configuration() {
       ->condition('data_is', array('data:select' => 'commerce_coupon:commerce-coupon-number-of-uses', 'value:select' => 'number-of-redemptions'))
     )
   );
-  
+
   $rule->action('drupal_message', array(
     'message' => 'Sorry, the maximum number of redemptions for this coupon has been reached.',
     'type' => 'error',
   ));
-  
+
   $rule->action('commerce_coupon_action_is_invalid_coupon', array());
   $rules['commerce_coupon_basic_validate_uses_of_coupon_component'] = $rule;
 
@@ -114,7 +114,7 @@ function commerce_coupon_basic_default_rules_configuration() {
   $rule = rules_reaction_rule();
   $rule->label = t('Coupon Validation: Check the number of redemptions');
   $rule->active = TRUE;
-  
+
   $rule
   ->event('commerce_coupon_validate')
   ->condition('entity_has_field', array('entity:select' => 'coupon', 'field' => 'commerce_coupon_number_of_uses'))
@@ -123,9 +123,9 @@ function commerce_coupon_basic_default_rules_configuration() {
     'commerce_coupon:select' => 'coupon',
     'number_of_redemptions:select' => 'number-of-uses'
   ));
-  
+
   $rules['commerce_coupon_basic_validate_uses_of_coupon'] = $rule;
-  
+
   return $rules;
 }
 

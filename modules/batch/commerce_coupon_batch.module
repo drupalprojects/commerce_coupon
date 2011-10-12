@@ -11,7 +11,7 @@ function commerce_coupon_batch_menu() {
     'module' => 'commerce_coupon_batch',
     'type' => MENU_LOCAL_TASK,
   );
-  
+
   $items['admin/commerce/coupons/batch'] = array(
     'title' => 'Batch Creation',
     'page callback' => 'commerce_coupon_batch_overview_page',
@@ -19,7 +19,7 @@ function commerce_coupon_batch_menu() {
     'module' => 'commerce_coupon_batch',
   );
 
-  
+
   foreach (commerce_coupon_get_types() as $type => $info) {
     $entity = entity_create('commerce_coupon', array('type' => $type));
     $type_arg = strtr($type, '_', '-');
@@ -34,7 +34,7 @@ function commerce_coupon_batch_menu() {
       'module' => 'commerce_coupon_batch',
     );
   }
-  
+
   return $items;
 
 }
@@ -57,12 +57,12 @@ function commerce_coupon_batch_permission() {
 function commerce_coupon_batch_overview_page() {
   $item = menu_get_item();
   $content = system_admin_menu_block($item);
-  
+
   // Bypass the admin/commerce/coupon/add listing if only one coupon type is
   // available.
   if (count($content) == 1) {
     $item = array_shift($content);
     drupal_goto($item['href']);
-  }  
+  }
   return theme('commerce_coupon_ui_add_list', array('content' => $content));
 }

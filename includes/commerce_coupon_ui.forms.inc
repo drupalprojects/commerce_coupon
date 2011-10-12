@@ -23,7 +23,7 @@ function commerce_coupon_type_form($form, &$form_state, $coupon_type, $op = 'edi
     '#required' => TRUE,
     '#size' => 30,
   );
-  
+
   // Machine-readable type name.
   $form['type'] = array(
     '#type' => 'machine_name',
@@ -36,7 +36,7 @@ function commerce_coupon_type_form($form, &$form_state, $coupon_type, $op = 'edi
     ),
     '#description' => t('A unique machine-readable name for this coupon type. It must only contain lowercase letters, numbers, and underscores.'),
   );
-  
+
   if ($op != 'add') {
     $form['reset'] = array(
       '#type' => 'checkbox',
@@ -46,14 +46,14 @@ function commerce_coupon_type_form($form, &$form_state, $coupon_type, $op = 'edi
   }
 
   $form['data']['#tree'] = TRUE;
-  
+
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
     '#value' => t('Save coupon type'),
     '#weight' => 40,
   );
-  
+
 
   if (!$coupon_type->isLocked() && $op != 'add') {
     $form['actions']['delete'] = array(
@@ -72,14 +72,14 @@ function commerce_coupon_type_form($form, &$form_state, $coupon_type, $op = 'edi
  */
 function commerce_coupon_type_form_submit(&$form, &$form_state) {
   $commerce_coupon_type = entity_ui_form_submit_build_entity($form, $form_state);
-  
+
   if (isset($form_state['values']['reset']) && $form_state['values']['reset']) {
     $reset = TRUE;
   }
   else {
     $reset = FALSE;
   }
-  
+
   // Save and go back.
   $commerce_coupon_type = commerce_coupon_type_save($commerce_coupon_type, $reset);
   $form_state['redirect'] = 'admin/commerce/coupons/types';
@@ -106,12 +106,12 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
   }
 
   // TODO: add a validation method to check, that the code is not a duplicate!
- 
+
 
   // Add the field related form elements.
   $form_state['commerce_coupon'] = $coupon;
   field_attach_form('commerce_coupon', $coupon, $form, $form_state);
- 
+
   $form['is_active'] = array(
     '#title' => t('Active'),
     '#type' => 'checkbox',
@@ -122,7 +122,7 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
   );
 
   $form['data']['#tree'] = TRUE;
-  
+
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
@@ -139,7 +139,7 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
       '#submit' => array('commerce_coupon_form_submit_delete')
     );
   }
-  
+
   return $form;
 }
 
@@ -154,9 +154,9 @@ function commerce_coupon_form_validate(&$form, &$form_state) {
       if (!empty($coupon_code) && commerce_coupon_code_exists($coupon_code)) {
         form_set_error('commerce_coupon_code][' . $lang_code, t('This coupon code is already in use.'));
       }
-    }  
+    }
   }
-  
+
   field_attach_form_validate('commerce_coupon', $form_state['commerce_coupon'], $form, $form_state);
 
 }

@@ -11,14 +11,14 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
     $coupon_type->label .= ' (cloned)';
     $coupon_type->type = '';
   }
-  
+
   $form['batch_size'] = array(
     '#title' => t('Batch Size'),
     '#type' => 'textfield',
     '#description' => t('Enter the number of coupons which should be generated.'),
     '#size' => 30,
   );
- 
+
   $form['is_active'] = array(
     '#title' => t('Active'),
     '#type' => 'checkbox',
@@ -30,13 +30,13 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
   // Add the field related form elements.
   $form_state['commerce_coupon'] = $coupon;
   field_attach_form('commerce_coupon', $coupon, $form, $form_state);
-  
+
   // Hide the coupon code field:
-  
+
   $form['commerce_coupon_code']['#type'] = 'hidden';
 
   $form['data']['#tree'] = TRUE;
-  
+
   $form['actions'] = array('#type' => 'actions');
   $form['actions']['submit'] = array(
     '#type' => 'submit',
@@ -53,13 +53,13 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
 function commerce_coupon_form_submit(&$form, &$form_state) {
   $size = (int)$form_state['values']['batch_size'];
   $commerce_coupon = entity_ui_form_submit_build_entity($form, $form_state);
-  
+
   if($size > 0) {
     for ($i = 0; $i < $size; $i++) {
       $coupon = clone $commerce_coupon;
       $coupon->code = commerce_coupon_generate_coupon_code();
-      
-      // Save 
+
+      // Save
       commerce_coupon_save($coupon);
     }
   }

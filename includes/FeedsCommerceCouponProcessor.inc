@@ -112,7 +112,7 @@ class FeedsCommerceCouponProcessor extends FeedsProcessor {
       '#default_value' => $this->config['type'],
       '#options' => $types,
     );
-    
+
     return $form;
   }
 
@@ -157,18 +157,18 @@ class FeedsCommerceCouponProcessor extends FeedsProcessor {
       switch ($target) {
         case 'code':
           $query = new EntityFieldQuery();
-          $query->entityCondition('entity_type', 'commerce_coupon')            
+          $query->entityCondition('entity_type', 'commerce_coupon')
             ->fieldCondition('commerce_coupon_code', 'value', $value, '=');
-  
-  
+
+
           $coupon = $query->execute();
-      
+
           if ($coupon == NULL || !isset($coupon['commerce_coupon']) || !is_array($coupon['commerce_coupon'])) {
             return NULL;
           }
-  
+
           $coupon = reset($coupon['commerce_coupon']);
-  
+
           if (isset($coupon) && isset($coupon->coupon_id)) {
             return $coupon->coupon_id;
           }
