@@ -17,8 +17,8 @@ class CommerceCouponLog extends Entity {
   public $is_processed;
   public $created;
   public $changed;
-  
-  
+
+
   public function __construct($values = array()) {
     parent::__construct($values, 'commerce_coupon_log');
   }

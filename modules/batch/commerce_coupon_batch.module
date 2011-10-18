@@ -63,6 +63,7 @@ function commerce_coupon_batch_permission() {
 
 function commerce_coupon_batch_overview_page() {
   $item = menu_get_item();
+
   $content = system_admin_menu_block($item);
 
   // Bypass the admin/commerce/coupon/add listing if only one coupon type is
@@ -71,5 +72,6 @@ function commerce_coupon_batch_overview_page() {
     $item = array_shift($content);
     drupal_goto($item['href']);
   }
-  return theme('commerce_coupon_ui_add_list', array('content' => $content));
+
+  return theme('admin_block_content', array('content' => $content));
 }
