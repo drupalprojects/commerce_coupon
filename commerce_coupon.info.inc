@@ -76,8 +76,19 @@ function commerce_coupon_entity_property_info() {
     'schema field' => 'is_processed',
   );
 
+  $properties['created'] = array(
+    'type' => 'date',
+    'label' => t('Creation date'),
+    'description' => t('When the log entry was created.'),
+    'schema field' => 'created',
+  );
 
-
+  $properties['changed'] = array(
+    'type' => 'date',
+    'label' => t('Changed date'),
+    'description' => t('When the log entry was last updated.'),
+    'schema field' => 'changed',
+  );
 
   return $info;
 }
