@@ -648,10 +648,10 @@ function commerce_coupon_save(CommerceCoupon $coupon) {
  * Deletes a coupon.
  *
  * @param $coupon
- *   Coupon object to delete
+ *   CommerceCoupon object to delete
  * @return void
  */
-function commerce_coupon_delete(Coupon $coupon) {
+function commerce_coupon_delete(CommerceCoupon $coupon) {
   $coupon->delete();
 }
 
