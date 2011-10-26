@@ -633,7 +633,11 @@ function commerce_coupon_save(CommerceCoupon $coupon) {
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
   $code = $coupon_wrapper->commerce_coupon_code->value();
 
-  // TODO: Check if the coupon code is unique, when the coupon is created
+  if (!isset($coupon->created) || empty($coupon->created)) {
+    $coupon->created = REQUEST_TIME;
+  }
+
+  // @TODO: Check if the coupon code is unique, when the coupon is created
   // commerce_coupon_code_exists()
 
   // Generate a code if no is set:
