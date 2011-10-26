@@ -670,10 +670,31 @@ function commerce_coupon_delete_multiple(array $coupon_ids) {
  * Implements hook_user_cancel().
  */
 function commerce_coupon_user_cancel($edit, $account, $method) {
-  // Delete all coupons of the user in any case.
-  foreach (commerce_coupon_load_by_user($account) as $coupon) {
-    commerce_coupon_delete($coupon);
+  // No action required for the user_cancel_block and user_cancel_block_unpublish
+  // These do not remove the user from the site.
+
+  // In case of user_cancel_reassign (delete the user and
+  // reassign his/her content to the anonymous user), we change the coupon logs
+  // so they no longer reference the delete user.
+  if ($method == 'user_cancel_reassign') {
+    // Fetch commerce coupon log entities that reference the cancelled account.
+    $query = new EntityFieldQuery;
+    $query->entityCondition('entity_type', 'commerce_coupon_log');
+    $query->propertyCondition('uid', $account->uid);
+    $result = $query->execute();
+
+    // Update the commerce coupon log entities, replacing the cancelled user
+    // with the anonymous user.
+    if (!empty($result)) {
+      $log_entities = entity_load('commerce_coupon_log', array_keys($result['commerce_coupon_log']));
+      foreach ($log_entities as $commerce_coupon_log) {
+        //Issue #1280210 - Do we really want to reassign the log entries to uid 0?
+        $commerce_coupon_log->uid = 0;
+        commerce_coupon_log_save($commerce_coupon_log);
+      }
+    }
   }
+  //@TODO Assign to anon when "Delete the account and its content."?
 }
 
 /**
