@@ -9,8 +9,6 @@
  * Implements hook_schema().
  */
 function commerce_coupon_schema() {
-  $schema = array();
-
   $schema['commerce_coupon'] = array(
     'description' => 'The base table for coupons.',
     'fields' => array(

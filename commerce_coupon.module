@@ -16,15 +16,12 @@
  * This function provides informations about the coupon entities.
  */
 function commerce_coupon_entity_info() {
-  $return = array();
-
-  $return['commerce_coupon_log'] = array(
+  $entity_info['commerce_coupon_log'] = array(
     'label' => t('Commerce Coupon Log'),
     'entity class' => 'CommerceCouponLog',
     'controller class' => 'EntityAPIController',
     'base table' => 'commerce_coupon_log',
     'fieldable' => TRUE,
-
     'entity keys' => array(
       'id' => 'log_id',
     ),
@@ -38,13 +35,12 @@ function commerce_coupon_entity_info() {
     ),
   );
 
-  $return['commerce_coupon'] = array(
+  $entity_info['commerce_coupon'] = array(
     'label' => t('Commerce Coupon'),
     'entity class' => 'CommerceCoupon',
     'controller class' => 'EntityAPIController',
     'base table' => 'commerce_coupon',
     'fieldable' => TRUE,
-
     'entity keys' => array(
       'id' => 'coupon_id',
       'bundle' => 'type',
@@ -59,7 +55,7 @@ function commerce_coupon_entity_info() {
     'save callback' => 'commerce_coupon_save',
   );
 
-  $return['commerce_coupon_type'] = array(
+  $entity_info['commerce_coupon_type'] = array(
     'label' => t('Commerce Coupon Type'),
     'entity class' => 'CommerceCouponType',
     'controller class' => 'EntityAPIControllerExportable',
@@ -75,20 +71,18 @@ function commerce_coupon_entity_info() {
     'access callback' => 'commerce_coupon_type_access',
     'module' => 'commerce_coupon',
   );
-  return $return;
+  return $entity_info;
 }
 
 /**
  * Implements hook_entity_info_alter().
  *
- * Use this hook to specify commerce coupon bundles to avoid a recursion, as loading
- * the commerce coupon types needs the entity info too.
+ * Use this hook to specify commerce coupon bundles to avoid a recursion, as
+ * loading the commerce coupon types needs the entity info too.
  */
 function commerce_coupon_entity_info_alter(&$entity_info) {
   foreach (commerce_coupon_get_types() as $type => $info) {
-    $entity_info['commerce_coupon']['bundles'][$type] = array(
-      'label' => $info->label,
-    );
+    $entity_info['commerce_coupon']['bundles'][$type]['label'] = $info->label;
   }
 }
 
@@ -96,9 +90,7 @@ function commerce_coupon_entity_info_alter(&$entity_info) {
  * Implements of hook_feeds_plugins().
  */
 function commerce_coupon_feeds_plugins() {
-
-  $info = array();
-  $info['FeedsCommerceCouponProcessor'] = array(
+  $plugins['FeedsCommerceCouponProcessor'] = array(
     'name' => 'Commerce Coupon processor',
     'description' => 'Create and update coupons.',
     'help' => 'Create and update coupons from parsed content.',
@@ -110,7 +102,7 @@ function commerce_coupon_feeds_plugins() {
     ),
   );
 
-  return $info;
+  return $plugins;
 }
 
 /**
@@ -127,8 +119,6 @@ function commerce_coupon_views_api() {
  * Implements hook_commerce_checkout_pane_info().
  */
 function commerce_coupon_commerce_checkout_pane_info() {
-  $checkout_panes = array();
-
   $checkout_panes['commerce_coupon'] = array(
     'title' => t('Coupons'),
     'page' => 'checkout',
@@ -140,9 +130,6 @@ function commerce_coupon_commerce_checkout_pane_info() {
 
   return $checkout_panes;
 }
-
-
-
 
 /**
  * Access callback for coupon types.
@@ -181,10 +168,6 @@ function commerce_coupon_permission() {
   return $permissions;
 }
 
-
-
-
-
 /**
  * Generates a new unique coupon code.
  *
@@ -194,7 +177,6 @@ function commerce_coupon_permission() {
  *   The new coupon code.
  */
 function commerce_coupon_generate_coupon_code($length = NULL) {
-
   // We define the possible characters. No 'l','1', 'i' to prevent
   // reconisation problems.
   $characters = array(
@@ -206,9 +188,7 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
   );
 
   $numberOfCharacters = count($characters);
-
   $codeFound = FALSE;
-
   if ($length == NULL) {
     $length = variable_get('commerce_coupon_default_code_size', 8);
   }
@@ -217,7 +197,6 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
   // database. We try this for 1000 iteration. If we then not found a
   // a code, we stop. There must be an error in this case.
   for ($i = 0; $i < 1000 && $codeFound == FALSE; $i++) {
-
     $code = '';
 
     // Create the code per character
@@ -231,13 +210,16 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
       $codeFound = TRUE;
     }
   }
+
   return $code;
 }
-
 
 /**
  * Checks if a given coupon is valid for a given order. The validation is done
  * by the rules engine.
+ *
+ * @TODO: We can throw exception with error message, instead of set the error
+ *  message to a global variable.
  *
  * @param $code
  *   The coupon code to validate.
@@ -262,7 +244,7 @@ function commerce_coupon_code_is_valid($code, $order) {
     ->fields('c')
     ->condition('order_id', $order->order_id, '=')
     ->condition('coupon_id', $coupon->coupon_id, '=')
-   // ->condition('is_processed', 1, '=')
+    # ->condition('is_processed', 1, '=')
     ->execute()
     ->fetchAssoc();
 
@@ -293,7 +275,6 @@ function commerce_coupon_code_is_valid($code, $order) {
  * @param $order
  *   The order at which the coupon should be redeem.
  * @return void
- *
  */
 function commerce_coupon_redeem_coupon($coupon, $order) {
   global $user;
@@ -329,16 +310,7 @@ function commerce_coupon_redeem_coupon($coupon, $order) {
   // We invoke the rule. The defined action callback methods sets then the
   // coupon value appropriate.
   rules_invoke_event('commerce_coupon_redeem', $coupon, $log, $order);
-
 }
-
-
-
-
-
-
-
-
 
 /**
  * Create a new type coupon object.
@@ -389,7 +361,6 @@ function commerce_coupon_type_load($type) {
  *   The stored CommerceCouponType object.
  */
 function commerce_coupon_type_save(CommerceCouponType $type, $reset = FALSE) {
-
   // Store the entity, must be done before they are configured
   $type->save();
 
@@ -474,9 +445,7 @@ function commerce_coupon_type_configure($bundle, $reset) {
 
   // Allow other modules to configure coupon types:
   module_invoke_all('commerce_coupon_type_configure', $bundle, $reset);
-
 }
-
 
 /**
  * Returns the name of the specified coupon type or all names keyed by type if no
