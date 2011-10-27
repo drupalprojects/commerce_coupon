@@ -16,7 +16,6 @@
  * Generates the commerce coupon type editing form.
  */
 function commerce_coupon_type_form($form, &$form_state, $coupon_type, $op = 'edit') {
-
   if ($op == 'clone') {
     $coupon_type->label .= ' (cloned)';
     $coupon_type->type = '';

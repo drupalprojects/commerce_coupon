@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @file
  * Hooks provided by Commerce Coupon module.
@@ -12,6 +11,7 @@
 
 /**
  * This hook called when a coupon type deleted.
+ * 
  * @param string $type Coupon type.
  */
 function hook_commerce_coupon_type_delete($type) {

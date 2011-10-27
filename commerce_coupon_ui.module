@@ -38,8 +38,6 @@ function commerce_coupon_ui_entity_info_alter(&$entity_info) {
  * Implements hook_menu().
  */
 function commerce_coupon_ui_menu() {
-  $items = array();
-
   // When deinstalling and the commerce_coupon module is already disabled
   // the commerce_coupon_get_types function cannot be called.
   if (function_exists('commerce_coupon_get_types')) {
@@ -265,4 +263,3 @@ function theme_commerce_coupon_ui_add_list($variables) {
 
   return $output;
 }
-

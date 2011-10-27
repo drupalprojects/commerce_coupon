@@ -10,7 +10,6 @@
  * Alter the views data to enable some additional features for coupons in views
  */
 function commerce_coupon_views_data_alter(&$data) {
-
   if (isset($data['commerce_coupon_log'])) {
     if (isset($data['commerce_coupon_log']['coupon_id'])) {
       $data['commerce_coupon_log']['coupon_id']['relationship'] = array(

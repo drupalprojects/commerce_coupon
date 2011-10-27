@@ -197,9 +197,6 @@ function commerce_coupon_basic_commerce_coupon_type_configure($bundle, $reset = 
   }
 }
 
-
-
-
 /**
  * Implementation of hook_entity_presave()
  */
@@ -213,13 +210,11 @@ function commerce_coupon_basic_entity_presave($entity, $type) {
   }
 }
 
-
 /**
  * Apply percentage amounts to an order.
  *
  */
 function commerce_coupon_basic_apply_percentage_amounts($commerce_order) {
-
   if (!($commerce_order instanceof EntityMetadataWrapper)) {
     $commerce_order = entity_metadata_wrapper('commerce_order', $commerce_order);
   }
@@ -232,7 +227,6 @@ function commerce_coupon_basic_apply_percentage_amounts($commerce_order) {
     $currency_code = $commerce_order->commerce_order_total->currency_code->value();
   }
 
-
   // We calculate for each coupon the percentage amount, and update / insert
   // a corresponding line item.
   foreach ($coupons as $coupon) {
@@ -244,7 +238,7 @@ function commerce_coupon_basic_apply_percentage_amounts($commerce_order) {
 
     $fields = $coupon->getPropertyInfo();
 
-    $component_name = 'commerce_coupon_apply_' . $coupon->type->value() . '_to_item_line';
+    $component_name = 'commerce_coupon_apply_' . $coupon->type->type->value() . '_to_item_line';
     if (isset($fields['commerce_coupon_percent_amount'])
       && $coupon->commerce_coupon_percent_amount->value() > 0
       && isset($components[$component_name])
@@ -277,8 +271,6 @@ function commerce_coupon_basic_apply_percentage_amounts($commerce_order) {
         $line_item_is_new = TRUE;
       }
 
-
-
       if (!($coupon_line_item instanceof EntityMetadataWrapper)) {
         $coupon_line_item = entity_metadata_wrapper('commerce_line_item', $coupon_line_item);
       }
@@ -310,17 +302,4 @@ function commerce_coupon_basic_apply_percentage_amounts($commerce_order) {
 
     }
   }
-
-
-
-
 }
-
-
-
-
-
-
-
-
-

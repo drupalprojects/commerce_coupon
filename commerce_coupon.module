@@ -8,7 +8,9 @@
  * to the Drupal Commerce system.
  */
 
-// TODO: Set log entry as proceed after order complete
+# @TODO: Set log entry as proceed after order complete
+# @TODO: Double check {commerce_coupon_type} columns.
+# @TODO: Coupon Clone is not working.
 
 /**
  * Implements hook_entity_info().
@@ -71,6 +73,7 @@ function commerce_coupon_entity_info() {
     'access callback' => 'commerce_coupon_type_access',
     'module' => 'commerce_coupon',
   );
+
   return $entity_info;
 }
 
@@ -335,7 +338,7 @@ function commerce_coupon_type_create(array $values) {
  */
 function commerce_coupon_get_types($type_name = NULL) {
   $types = entity_load('commerce_coupon_type', isset($type_name) ? array($type_name) : FALSE);
-  return isset($type_name) ? reset($types) : $types;
+  return isset($type_name) ? $types[$type_name] : $types;
 }
 
 /**
@@ -487,9 +490,6 @@ function commerce_coupon_type_options_list() {
   return commerce_coupon_type_get_name();
 }
 
-
-
-
 /**
  * Fetch a coupon object.
  *
@@ -535,7 +535,6 @@ function commerce_coupon_load_multiple($coupon_ids = array(), $conditions = arra
  *   A coupon object corresponding to the coupon code.
  */
 function commerce_coupon_load_by_code($code, $must_be_active = FALSE) {
-
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_coupon')
     ->fieldCondition('commerce_coupon_code', 'value', $code, '=');
@@ -553,17 +552,13 @@ function commerce_coupon_load_by_code($code, $must_be_active = FALSE) {
     return NULL;
   }
 
-
-  // TODO: Find a better way to load the entity
+  # @TODO: Find a better way to load the entity
   $coupon = commerce_coupon_load($coupon->coupon_id);
-
 
   if ($must_be_active && $coupon->is_active == FALSE) {
     return NULL;
   }
-  else {
-    return $coupon;
-  }
+  return $coupon;
 }
 
 /**
@@ -575,8 +570,7 @@ function commerce_coupon_load_by_code($code, $must_be_active = FALSE) {
  *   A list of coupons
  */
 function commerce_coupon_get_coupons_by_order($order_id) {
-
-  // TODO: Use the Drupal 7 query API
+  # @TODO: Use the Drupal 7 query API
   $coupon_raw = db_query('SELECT coupon_id, log_id FROM {commerce_coupon_log} WHERE order_id = :order_id', array(':order_id' => $order_id))->fetchAllAssoc('log_id', PDO::FETCH_ASSOC);
 
   if (!is_array($coupon_raw) or count($coupon_raw) <= 0) {
@@ -638,7 +632,6 @@ function commerce_coupon_delete_multiple(array $coupon_ids) {
   entity_get_controller('commerce_coupon')->delete($coupon_ids);
 }
 
-
 /**
  * Implements hook_user_cancel().
  */
@@ -667,7 +660,8 @@ function commerce_coupon_user_cancel($edit, $account, $method) {
       }
     }
   }
-  //@TODO Assign to anon when "Delete the account and its content."?
+  
+  # @TODO: Assign to anon when "Delete the account and its content."?
 }
 
 /**
@@ -682,7 +676,6 @@ function commerce_coupon_create(array $values) {
   return new CommerceCoupon($values);
 }
 
-
 /**
  * Checks if a given coupon code exists.
  *
@@ -692,32 +685,26 @@ function commerce_coupon_create(array $values) {
  *   Returns TRUE if the coupon exists else FALSE.
  */
 function commerce_coupon_code_exists($code) {
-
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_coupon')
     ->fieldCondition('commerce_coupon_code', 'value', $code, '=');
-
 
   $result = $query->execute();
 
   if (!is_array($result) || count($result) <= 0) {
     return FALSE;
   }
-  else {
-    return TRUE;
-  }
+  return TRUE;
 }
 
 /**
  * Returns the number of uses for this coupon
  */
 function commerce_coupon_get_number_of_uses($coupon_id) {
-  // TODO: Use the Drupal 7 query API
+  # @TODO: Use the Drupal 7 query API
   $coupon_logs = db_query('SELECT log_id FROM {commerce_coupon_log} WHERE coupon_id = :coupon_id', array(':coupon_id' => $coupon_id))->fetchAllAssoc('log_id', PDO::FETCH_ASSOC);
   return count($coupon_logs);
 }
-
-
 
 
 /**
@@ -729,21 +716,15 @@ function commerce_coupon_get_number_of_uses($coupon_id) {
  *   Returns TRUE if it is active else FALSE
  */
 function commerce_coupon_code_is_active($code) {
-
-  // TODO: Replace this query with drupal 7 query API
+  # @TODO: Replace this query with drupal 7 query API
   $rs = db_query('SELECT * FROM {commerce_coupon} WHERE code = :code AND is_active = 1', array(':code' => $code));
   $codeObject = $rs->fetchObject();
 
   if ($codeObject == NULL) {
     return FALSE;
   }
-  else {
-    return TRUE;
-  }
+  return TRUE;
 }
-
-
-
 
 /**
  * Load multiple coupon logs based on certain conditions.
@@ -763,7 +744,6 @@ function commerce_coupon_log_load_multiple($log_ids = array(), $conditions = arr
   return entity_load('commerce_coupon_log', $log_ids, $conditions, $reset);
 }
 
-
 /**
  * Load a coupon log entry by order and coupon. It is not possible that one
  * coupon is assigned multiple to one order. So this two entities builds the
@@ -777,8 +757,7 @@ function commerce_coupon_log_load_multiple($log_ids = array(), $conditions = arr
  *   A list of coupons
  */
 function commerce_coupon_log_load_by_order_and_coupon($order_id, $coupon_id) {
-
-  // TODO: Use the Drupal 7 query API
+  # @TODO: Use the Drupal 7 query API
   $coupon_raw = db_query('SELECT log_id FROM {commerce_coupon_log} WHERE order_id = :order_id AND coupon_id = :coupon_id', array(':order_id' => $order_id, ':coupon_id' => $coupon_id))->fetchAllAssoc('log_id', PDO::FETCH_ASSOC);
 
   if (!is_array($coupon_raw) or count($coupon_raw) <= 0) {
@@ -816,120 +795,6 @@ function commerce_coupon_log_create(array $values) {
   return $log;
 }
 
-
-
-
-
-
-
-
-
-/**
- * Implements hook_field_info().
- */
-function commerce_coupon_field_info() {
-  return array(
-    'commerce_coupon_reference' => array(
-      'label' => t('Coupon Reference'),
-      'description' => t('This field stores the ID of the coupon.'),
-      'settings' => array(),
-      'instance_settings' => array(),
-      'default_widget' => 'commerce_coupon_autocomplete_widget',
-      'default_formatter' => 'commerce_coupon_reference_code',
-    ),
-  );
-}
-
-
-/**
- * Implements hook_field_formatter_info().
- */
-function commerce_coupon_field_formatter_info() {
-  return array(
-    'commerce_coupon_reference_code' => array(
-      'label' => t('Coupon Code'),
-      'description' => t('Display the coupon code of the referenced coupon.'),
-      'field types' => array('commerce_coupon_reference'),
-    ),
-  );
-}
-
-/**
- * Implements hook_field_is_empty().
- */
-function commerce_coupon_field_is_empty($item, $field) {
-  // set_id = 0 is empty too, which is exactly what we want.
-  return empty($item['coupon_id']);
-}
-
-/**
- * Implements hook_field_formatter_view().
- */
-function commerce_coupon_field_formatter_view($entity_type, $object, $field, $instance, $langcode, $items, $display) {
-  $result = array();
-
-  if ($display['type'] == 'commerce_coupon_reference_code') {
-    foreach ($items as $delta => $item) {
-
-      $coupon = commerce_coupon_load($item['coupon_id']);
-      $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-
-      $result[$delta] = array(
-        '#markup' => $coupon_wrapper->commerce_coupon_code->value(),
-      );
-    }
-  }
-  return $result;
-}
-
-/**
- * Implements hook_field_widget_info().
- *
- * Defines widgets available for use with field types as specified in each
- * widget's $info['field types'] array.
- */
-function commerce_coupon_field_widget_info() {
-  $widgets = array();
-
-  // Define an autocomplete textfield widget for product referencing that works
-  // like the Term Reference autocomplete widget.
-  $widgets['commerce_coupon_autocomplete_widget'] = array(
-    'label' => t('Coupon Autocomplete'),
-    'description' => t('Coupon autocomplete field.'),
-    'field types' => array('commerce_coupon_reference'),
-  );
-
-  return $widgets;
-}
-
-/**
- * Implements hook_field_widget_form().
- */
-function commerce_coupon_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
-
-  if ($instance['widget']['type'] == 'commerce_coupon_autocomplete_widget') {
-
-
-    $element['coupon_id'] = $element + array(
-      '#type' => 'textfield',
-      '#title' => t('Coupon Code'),
-      '#maxlength' => 60,
-      // TODO: Implement the autocomplete callback
-      //'#autocomplete_path' => 'coupon_commerce/autocomplete',
-      '#default_value' => isset($items[$delta]['coupon_id']) ? $items[$delta]['coupon_id'] : NULL,
-      '#attributes' => array('class' => array('commerce-coupon-reference')),
-    );
-  }
-
-  return $element;
-}
-
-
-
-
-
-
-
 /**
  * Implements hook_commerce_price_component_type_info().
  */
@@ -946,11 +811,6 @@ function commerce_coupon_commerce_price_component_type_info() {
 
   return $components;
 }
-
-
-
-
-
 
 /**
  * Implements hook_commerce_line_item_type_info().
@@ -974,7 +834,6 @@ function commerce_coupon_commerce_line_item_type_info() {
  * Returns an appropriate title for this line item.
  */
 function commerce_coupon_line_item_title($line_item) {
-
   $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
 
   $fields = $line_item_wrapper->getPropertyInfo();
@@ -992,12 +851,12 @@ function commerce_coupon_line_item_title($line_item) {
 }
 
 /**
+ * @TODO: Implement this method correct
+ * 
  * Returns the elements necessary to add a product line item through a line item
  * manager widget.
  */
 function commerce_coupon_line_item_add_form($form_state) {
-  // TODO: Implement this method correct
-
   $order = $form_state['commerce_order'];
   $form = array();
 
@@ -1090,7 +949,6 @@ function commerce_coupon_line_item_new($coupon, $order_id) {
   return $line_item_wrapper->value();
 }
 
-
 /**
  * Ensures the coupon line item type contains a coupon reference field.
  *
@@ -1133,6 +991,104 @@ function commerce_coupon_configure_line_item() {
     );
     field_create_instance($instance);
   }
-
 }
 
+
+/**
+ * Implements hook_field_info().
+ */
+function commerce_coupon_field_info() {
+  return array(
+    'commerce_coupon_reference' => array(
+      'label' => t('Coupon Reference'),
+      'description' => t('This field stores the ID of the coupon.'),
+      'settings' => array(),
+      'instance_settings' => array(),
+      'default_widget' => 'commerce_coupon_autocomplete_widget',
+      'default_formatter' => 'commerce_coupon_reference_code',
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_formatter_info().
+ */
+function commerce_coupon_field_formatter_info() {
+  return array(
+    'commerce_coupon_reference_code' => array(
+      'label' => t('Coupon Code'),
+      'description' => t('Display the coupon code of the referenced coupon.'),
+      'field types' => array('commerce_coupon_reference'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_field_is_empty().
+ */
+function commerce_coupon_field_is_empty($item, $field) {
+  // set_id = 0 is empty too, which is exactly what we want.
+  return empty($item['coupon_id']);
+}
+
+/**
+ * Implements hook_field_formatter_view().
+ */
+function commerce_coupon_field_formatter_view($entity_type, $object, $field, $instance, $langcode, $items, $display) {
+  $result = array();
+
+  if ($display['type'] == 'commerce_coupon_reference_code') {
+    foreach ($items as $delta => $item) {
+
+      $coupon = commerce_coupon_load($item['coupon_id']);
+      $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+
+      $result[$delta] = array(
+        '#markup' => $coupon_wrapper->commerce_coupon_code->value(),
+      );
+    }
+  }
+  return $result;
+}
+
+/**
+ * Implements hook_field_widget_info().
+ *
+ * Defines widgets available for use with field types as specified in each
+ * widget's $info['field types'] array.
+ */
+function commerce_coupon_field_widget_info() {
+  $widgets = array();
+
+  // Define an autocomplete textfield widget for product referencing that works
+  // like the Term Reference autocomplete widget.
+  $widgets['commerce_coupon_autocomplete_widget'] = array(
+    'label' => t('Coupon Autocomplete'),
+    'description' => t('Coupon autocomplete field.'),
+    'field types' => array('commerce_coupon_reference'),
+  );
+
+  return $widgets;
+}
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function commerce_coupon_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+
+  if ($instance['widget']['type'] == 'commerce_coupon_autocomplete_widget') {
+
+
+    $element['coupon_id'] = $element + array(
+      '#type' => 'textfield',
+      '#title' => t('Coupon Code'),
+      '#maxlength' => 60,
+      // TODO: Implement the autocomplete callback
+      //'#autocomplete_path' => 'coupon_commerce/autocomplete',
+      '#default_value' => isset($items[$delta]['coupon_id']) ? $items[$delta]['coupon_id'] : NULL,
+      '#attributes' => array('class' => array('commerce-coupon-reference')),
+    );
+  }
+
+  return $element;
+}
