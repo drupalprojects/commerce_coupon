@@ -27,8 +27,8 @@ function commerce_coupon_entity_property_info() {
     'label' => t('Type'),
     'description' => t('The human readable name of the coupon type.'),
     'setter callback' => 'entity_property_verbatim_set',
-    'options list' => 'entity_metadata_status_options_list',
-    'required' => TRUE,
+    'options list' => 'commerce_coupon_type_options_list',
+    'required' => FALSE,
     'schema field' => 'type',
   );
 

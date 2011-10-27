@@ -478,9 +478,7 @@ function commerce_coupon_type_get_name($type = NULL) {
   if (empty($names[$type])) {
     return check_plain($type);
   }
-  else {
-    return $names[$type];
-  }
+  return $names[$type];
 }
 
 /**
