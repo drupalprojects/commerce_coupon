@@ -238,7 +238,7 @@ function commerce_coupon_basic_apply_percentage_amounts($commerce_order) {
 
     $fields = $coupon->getPropertyInfo();
 
-    $component_name = 'commerce_coupon_apply_' . $coupon->type->type->value() . '_to_item_line';
+    $component_name = 'commerce_coupon_apply_' . $coupon->value()->type . '_to_item_line';
     if (isset($fields['commerce_coupon_percent_amount'])
       && $coupon->commerce_coupon_percent_amount->value() > 0
       && isset($components[$component_name])
@@ -280,14 +280,14 @@ function commerce_coupon_basic_apply_percentage_amounts($commerce_order) {
       $coupon_line_item->commerce_unit_price->amount = $coupon_amount;
       $coupon_line_item->commerce_unit_price->currency_code = $currency_code;
 
-      if (commerce_price_component_load($coupon_line_item->commerce_unit_price->value(), 'commerce_coupon_' . $coupon->type->value())) {
-        commerce_price_component_delete($coupon_line_item->commerce_unit_price->value(), 'commerce_coupon_' . $coupon->type->value());
+      if (commerce_price_component_load($coupon_line_item->commerce_unit_price->value(), 'commerce_coupon_' . $coupon->value()->type)) {
+        commerce_price_component_delete($coupon_line_item->commerce_unit_price->value(), 'commerce_coupon_' . $coupon->value()->type);
       }
 
 
       $coupon_line_item->commerce_unit_price->data = commerce_price_component_add(
         $coupon_line_item->commerce_unit_price->value(),
-        'commerce_coupon_' . $coupon->type->value(),
+        'commerce_coupon_' . $coupon->value()->type,
         $coupon_line_item->commerce_unit_price->value(),
         TRUE,
         FALSE

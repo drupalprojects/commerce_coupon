@@ -839,7 +839,7 @@ function commerce_coupon_line_item_title($line_item) {
     $coupon_id = $line_item_wrapper->commerce_coupon_reference->value();
     $coupon = commerce_coupon_load($coupon_id);
     $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-    $type = commerce_coupon_get_types($coupon_wrapper->type->value());
+    $type = commerce_coupon_get_types($coupon_wrapper->value()->type);
     if (is_object($type)) {
       return $type->label . ': ' . $coupon_wrapper->commerce_coupon_code->value();
     }
