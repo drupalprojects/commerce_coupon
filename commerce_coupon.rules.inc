@@ -182,7 +182,7 @@ function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount
     $commerce_coupon_log = entity_metadata_wrapper('commerce_coupon_log', $commerce_coupon_log);
   }
 
-  $coupon = commerce_coupon_load($commerce_coupon_log->coupon_id->value());
+  $coupon = $commerce_coupon_log->coupon;
 
   // Set the unit price on the line item object.
   $commerce_coupon_log->commerce_granted_amount->amount = $amount;
