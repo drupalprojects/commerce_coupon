@@ -54,7 +54,6 @@ function commerce_coupon_entity_info() {
     ),
     'access callback' => 'commerce_coupon_access',
     'module' => 'commerce_coupon',
-    'save callback' => 'commerce_coupon_save',
   );
 
   $entity_info['commerce_coupon_type'] = array(
@@ -582,31 +581,6 @@ function commerce_coupon_get_coupons_by_order($order_id) {
   }
 
   return commerce_coupon_load_multiple($coupon_ids);
-}
-
-/**
- * Saves a coupon to the database.
- *
- * @param $coupon
- *   The coupon object.
- */
-function commerce_coupon_save(CommerceCoupon $coupon) {
-  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-  $code = $coupon_wrapper->commerce_coupon_code->value();
-
-  if (!isset($coupon->created) || empty($coupon->created)) {
-    $coupon->created = REQUEST_TIME;
-  }
-
-  // @TODO: Check if the coupon code is unique, when the coupon is created
-  // commerce_coupon_code_exists()
-
-  // Generate a code if no is set:
-  if (!isset($code) || empty($code)) {
-    $coupon_wrapper->commerce_coupon_code = commerce_coupon_generate_coupon_code();
-  }
-
-  return $coupon_wrapper->save();
 }
 
 /**
