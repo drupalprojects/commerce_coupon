@@ -7,5 +7,3 @@ core = 7.x
 
 configure = admin/commerce/coupons/add/basic-coupon
 
-files[] = commerce_coupon_basic.module
-

@@ -62,8 +62,8 @@ function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $check
 
 function commerce_coupon_pane_checkout_form_submit($form, &$form_state, $checkout_pane, $order) {
   if ($code = $form_state['values']['commerce_coupon']['coupon_code']) {
-    $coupon = commerce_coupon_load_by_code($code);
-    commerce_coupon_redeem_coupon($coupon, $order);
+    $commerce_coupon = commerce_coupon_load_by_code($code);
+    commerce_coupon_redeem_coupon($commerce_coupon, $order);
   }
 }
 

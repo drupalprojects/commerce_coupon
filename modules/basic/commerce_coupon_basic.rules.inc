@@ -33,7 +33,6 @@ function commerce_coupon_basic_rules_action_info() {
   return $actions;
 }
 
-
 function commerce_coupon_basic_apply_percentage_coupon_to_item_line($line_item, $coupon) {
 
   $amounts = &drupal_static(__FUNCTION__);
@@ -45,7 +44,7 @@ function commerce_coupon_basic_apply_percentage_coupon_to_item_line($line_item, 
   $fields = $coupon->getPropertyInfo();
   if (isset($fields['commerce_coupon_percent_amount'])
       && $coupon->commerce_coupon_percent_amount->value() > 0
-      ) {
+  ) {
     $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
 
     $rate = $coupon->commerce_coupon_percent_amount->value();
@@ -74,15 +73,14 @@ function commerce_coupon_basic_apply_percentage_coupon_to_item_line($line_item, 
     $commerce_coupon_log->commerce_granted_amount->amount = -1 * $total_amount;
     $commerce_coupon_log->commerce_granted_amount->currency_code = $line_item_wrapper->commerce_total->currency_code->value();
 
-
     // Add the base price to the components array.
-    if (!commerce_price_component_load($commerce_coupon_log->commerce_granted_amount->value(), 'commerce_coupon_' . $coupon->type->value())) {
+    if (!commerce_price_component_load($commerce_coupon_log->commerce_granted_amount->value(), 'commerce_coupon_' . $coupon->value()->type)) {
       $commerce_coupon_log->commerce_granted_amount->data = commerce_price_component_add(
-        $commerce_coupon_log->commerce_granted_amount->value(),
-        'commerce_coupon_' . $coupon->type->value(),
-        $commerce_coupon_log->commerce_granted_amount->value(),
-        TRUE,
-        FALSE
+              $commerce_coupon_log->commerce_granted_amount->value(),
+              'commerce_coupon_' . $coupon->value()->type,
+              $commerce_coupon_log->commerce_granted_amount->value(),
+              TRUE,
+              FALSE
       );
     }
 

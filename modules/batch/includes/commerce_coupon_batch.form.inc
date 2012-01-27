@@ -10,10 +10,10 @@
 /**
  * Generates the commerce coupon editing form.
  */
-function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
+function commerce_coupon_form($form, &$form_state, $commerce_coupon, $op = 'edit') {
   if ($op === 'clone') {
-    $coupon_type->label .= ' (cloned)';
-    $coupon_type->type = '';
+    $commerce_coupon_type->label .= ' (cloned)';
+    $commerce_coupon_type->type = '';
   }
 
   $form['batch_size'] = array(
@@ -44,17 +44,16 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
   $form['is_active'] = array(
     '#title' => t('Active'),
     '#type' => 'checkbox',
-    '#default_value' => $coupon->is_active,
+    '#default_value' => $commerce_coupon->is_active,
     '#description' => t('Indicates if the coupon can be used or not.'),
     '#size' => 30,
   );
 
   // Add the field related form elements.
-  $form_state['commerce_coupon'] = $coupon;
-  field_attach_form('commerce_coupon', $coupon, $form, $form_state);
+  $form_state['commerce_coupon'] = $commerce_coupon;
+  field_attach_form('commerce_coupon', $commerce_coupon, $form, $form_state);
 
   // Hide the coupon code field:
-
   $form['commerce_coupon_code']['#type'] = 'hidden';
 
   $form['data']['#tree'] = TRUE;
@@ -122,10 +121,10 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
     $length -= strlen($suffix);
 
     for ($i = 0; $i < $size; $i++) {
-      $coupon = clone $commerce_coupon;
-      $coupon->code = commerce_coupon_generate_coupon_code($length);
-      $coupon->code = "{$prefix}{$coupon->code}{$suffix}";
-      commerce_coupon_save($coupon);
+      $new_commerce_coupon = clone $commerce_coupon;
+      $code = commerce_coupon_generate_coupon_code($length);
+      $new_commerce_coupon->commerce_coupon_code[LANGUAGE_NONE][0]['value'] = "{$prefix}{$code}{$suffix}";
+      commerce_coupon_save($new_commerce_coupon);
     }
   }
 

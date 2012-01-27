@@ -173,7 +173,7 @@ function commerce_coupon_form_validate(&$form, &$form_state) {
 function commerce_coupon_form_submit(&$form, &$form_state) {
   $commerce_coupon = entity_ui_form_submit_build_entity($form, $form_state);
   // Save and go back.
-  $commerce_coupon->save();
+  commerce_coupon_save($commerce_coupon);
   $form_state['redirect'] = 'admin/commerce/coupons';
 }
 
