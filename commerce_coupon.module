@@ -87,25 +87,6 @@ function commerce_coupon_entity_info_alter(&$entity_info) {
 }
 
 /**
- * Implements of hook_feeds_plugins().
- */
-function commerce_coupon_feeds_plugins() {
-  $plugins['FeedsCommerceCouponProcessor'] = array(
-    'name' => 'Commerce Coupon processor',
-    'description' => 'Create and update coupons.',
-    'help' => 'Create and update coupons from parsed content.',
-    'handler' => array(
-      'parent' => 'FeedsProcessor',
-      'class' => 'FeedsCommerceCouponProcessor',
-      'file' => 'FeedsCommerceCouponProcessor.inc',
-      'path' => drupal_get_path('module', 'commerce_coupon'),
-    ),
-  );
-
-  return $plugins;
-}
-
-/**
  * Implements hook_views_api().
  */
 function commerce_coupon_views_api() {
@@ -447,34 +428,36 @@ function commerce_coupon_type_configure($bundle, $reset) {
 }
 
 /**
- * Returns the name of the specified coupon type or all names keyed by type if no
- *   type is specified.
+ * Returns the name of the specified coupon type or all names keyed by type if
+ *  no type is specified.
  *
  * @param $type
- *   The order type whose name should be returned; corresponds to the bundle key
- *     in the coupon entity definition.
+ *   Optional parameter specifying the type whose name to return.
  *
  * @return
  *   Either the specified name, defaulting to the type itself if the name is not
  *     found, or an array of all names keyed by type if no type is passed in.
  */
 function commerce_coupon_type_get_name($type = NULL) {
-  $names = array();
+  $coupon_types = commerce_coupon_get_types();
 
-  $entity = entity_get_info('commerce_coupon');
-
-  foreach ($entity['bundles'] as $key => $value) {
-    $names[$key] = $value['label'];
+  // Return a type name if specified and it exists.
+  if (!empty($type)) {
+    if (isset($coupon_types[$type])) {
+      return $coupon_types[$type]->label;
+    }
+    else {
+      // Return FALSE if it does not exist.
+      return FALSE;
+    }
   }
 
-  if (empty($type)) {
-    return $names;
+  // Otherwise turn the array values into the type name only.
+  foreach ($coupon_types as $key => $value) {
+    $coupon_types[$key] = $value->label;
   }
 
-  if (empty($names[$type])) {
-    return check_plain($type);
-  }
-  return $names[$type];
+  return $coupon_types;
 }
 
 /**

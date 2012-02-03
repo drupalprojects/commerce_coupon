@@ -204,9 +204,6 @@ function commerce_coupon_install() {
   if (empty($instance)) {
     commerce_price_create_instance($field_name, $entity_type, $bundle, st('Coupon Granted Amount'));
   }
-
-  // Clear the cache to display in Feeds as available plugin.
-  cache_clear_all('plugins:feeds:plugins', 'cache');
 }
 
 /**
