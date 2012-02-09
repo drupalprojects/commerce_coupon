@@ -908,6 +908,8 @@ function commerce_coupon_line_item_new($commerce_coupon, $order_id) {
       ));
 
   $line_item->sku = $commerce_coupon->type . '_' . $commerce_coupon->coupon_id;
+  $commerce_coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $commerce_coupon);
+  $line_item->line_item_label = $commerce_coupon->label . ':' . $commerce_coupon_wrapper->commerce_coupon_code->value();
 
   if (!($line_item instanceof EntityMetadataWrapper)) {
     $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
