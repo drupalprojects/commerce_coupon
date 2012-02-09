@@ -301,7 +301,7 @@ function commerce_coupon_redeem_coupon($commerce_coupon, $order) {
  * @return CommerceCoupon
  *   The new CommerceCouponType object.
  */
-function commerce_coupon_type_create(array $values) {
+function commerce_coupon_type_create(array $values = array()) {
   $values['is_new'] = TRUE;
   return new CommerceCouponType($values);
 }
@@ -328,7 +328,9 @@ function commerce_coupon_get_types($type_name = NULL) {
  *   A commerce coupon type array or FALSE if $type does not exist.
  */
 function commerce_coupon_type_load($type) {
-  return commerce_coupon_get_types($type);
+  $type = strtr($type, array('-' => '_'));
+  $coupon_types = commerce_coupon_get_types();
+  return !empty($coupon_types[$type]) ? $coupon_types[$type] : FALSE;
 }
 
 /**
@@ -1043,8 +1045,6 @@ function commerce_coupon_field_widget_info() {
 function commerce_coupon_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
 
   if ($instance['widget']['type'] == 'commerce_coupon_autocomplete_widget') {
-
-
     $element['coupon_id'] = $element + array(
       '#type' => 'textfield',
       '#title' => t('Coupon Code'),

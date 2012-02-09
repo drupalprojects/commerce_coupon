@@ -13,7 +13,7 @@ function commerce_coupon_views_data_alter(&$data) {
   if (isset($data['commerce_coupon'])) {
     $data['commerce_coupon']['operations'] = array(
       'field' => array(
-        'title' => t('Operations links'),
+        'title' => t('Operations'),
         'help' => t('Display all the available operations links for the coupon.'),
         'handler' => 'commerce_coupon_handler_field_coupon_operations',
       ),

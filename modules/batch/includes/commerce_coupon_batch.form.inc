@@ -10,12 +10,7 @@
 /**
  * Generates the commerce coupon editing form.
  */
-function commerce_coupon_form($form, &$form_state, $commerce_coupon, $op = 'edit') {
-  if ($op === 'clone') {
-    $commerce_coupon_type->label .= ' (cloned)';
-    $commerce_coupon_type->type = '';
-  }
-
+function commerce_coupon_batch_form($form, &$form_state, $commerce_coupon) {
   $form['batch_size'] = array(
     '#title' => t('Batch Size'),
     '#type' => 'textfield',
@@ -68,7 +63,7 @@ function commerce_coupon_form($form, &$form_state, $commerce_coupon, $op = 'edit
   return $form;
 }
 
-function commerce_coupon_form_validate(&$form, &$form_state) {
+function commerce_coupon_batch_form_validate(&$form, &$form_state) {
   $v = &$form_state['values'];
 
   # strip invalid chars -- @see commerce_coupon_generate_coupon_code().
@@ -85,10 +80,10 @@ function commerce_coupon_form_validate(&$form, &$form_state) {
 
     # we need 3 spaces free for code generating
     if ($limit_length - $code_length < 3) {
-      $message  = 'Coupon code length set to %limit. You need to shorten your';
+      $message = 'Coupon code length set to %limit. You need to shorten your';
       $message .= ' coupon code prefix/suffix that we have 3 free space for';
       $message .= ' generating coupon code.';
-      $message  = t($message, array('%limit' => $limit_length));
+      $message = t($message, array('%limit' => $limit_length));
 
       if (!empty($v['coupon_code']['prefix'])) {
         form_set_error('prefix', $message);
@@ -103,20 +98,23 @@ function commerce_coupon_form_validate(&$form, &$form_state) {
 /**
  * Form API submit callback for the type form.
  */
-function commerce_coupon_form_submit(&$form, &$form_state) {
+function commerce_coupon_batch_form_submit(&$form, &$form_state) {
   $v = &$form_state['values'];
-  $size = (int)$v['batch_size'];
+  $size = (int) $v['batch_size'];
 
   if ($size > 0) {
-    # base commerce coupon object for cloning
-    $commerce_coupon = entity_ui_form_submit_build_entity($form, $form_state);
+    // Base commerce coupon object for cloning.
+    $commerce_coupon = $form_state['commerce_coupon'];
 
-    # coupon code prefix/suffix
+    // Notify field widgets.
+    field_attach_submit('commerce_coupon', $commerce_coupon, $form, $form_state);
+
+    // Coupon code prefix/suffix.
     $prefix = trim($v['coupon_code']['prefix']);
     $suffix = trim($v['coupon_code']['suffix']);
 
-    # coupon length
-    $length  = variable_get('commerce_coupon_default_code_size', 8);
+    // Coupon length.
+    $length = variable_get('commerce_coupon_default_code_size', 8);
     $length -= strlen($prefix);
     $length -= strlen($suffix);
 
@@ -126,7 +124,16 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
       $new_commerce_coupon->commerce_coupon_code[LANGUAGE_NONE][0]['value'] = "{$prefix}{$code}{$suffix}";
       commerce_coupon_save($new_commerce_coupon);
     }
+    drupal_set_message(format_plural($size,
+            'Generated 1 coupon in batch mode.',
+            'Generated @count coupons in batch mode.'
+    ));
   }
+  else {
+    drupal_set_message(t('No coupons to generate.'));
+  }
+
+
 
   $form_state['redirect'] = 'admin/commerce/coupons';
 }

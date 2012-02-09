@@ -103,7 +103,7 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['fields']['type']['element_default_classes'] = 1;
   $handler->display->display_options['fields']['type']['hide_empty'] = 0;
   $handler->display->display_options['fields']['type']['empty_zero'] = 0;
-  /* Field: Commerce Coupon: Operations links */
+  /* Field: Commerce Coupon: Operations */
   $handler->display->display_options['fields']['operations']['id'] = 'operations';
   $handler->display->display_options['fields']['operations']['table'] = 'commerce_coupon';
   $handler->display->display_options['fields']['operations']['field'] = 'operations';
@@ -124,12 +124,12 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['fields']['operations']['empty_zero'] = 0;
 
   /* Display: Adminpage */
-  $handler = $view->new_display('page', 'Adminpage', 'page');
+  $handler = $view->new_display('page', 'Admin page', 'page');
   $handler->display->display_options['display_description'] = 'Manage the coupons.';
   $handler->display->display_options['path'] = 'admin/commerce/coupons/list';
   $handler->display->display_options['menu']['type'] = 'default tab';
-  $handler->display->display_options['menu']['title'] = 'Coupons';
-  $handler->display->display_options['menu']['weight'] = '-14';
+  $handler->display->display_options['menu']['title'] = 'List';
+  $handler->display->display_options['menu']['weight'] = '-10';
   $handler->display->display_options['tab_options']['type'] = 'normal';
   $handler->display->display_options['tab_options']['title'] = 'Coupons';
   $handler->display->display_options['tab_options']['description'] = 'Manage coupons in the store.';
