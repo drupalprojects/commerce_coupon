@@ -12,7 +12,7 @@
 function commerce_coupon_entity_property_info() {
   $info = array();
 
-  // Add meta-data about the basic commerce_order properties.
+  // Add meta-data about the basic commerce_coupon properties.
   $properties = &$info['commerce_coupon']['properties'];
 
   $properties['coupon_id'] = array(
@@ -32,7 +32,37 @@ function commerce_coupon_entity_property_info() {
     'schema field' => 'type',
   );
 
-  // Add meta-data about the basic commerce_order properties.
+  // Add metadata anpit coupon type properties.
+  $properties = &$info['commerce_coupon_type']['properties'];
+  $properties['type_id'] = array(
+    'type' => 'integer',
+    'label' => t('Type ID', array(), array('context' => 'a drupal commerce coupon')),
+    'description' => t('The internal numeric ID of the coupon type.'),
+    'schema field' => 'type_id',
+  );
+
+  $properties['type'] = array(
+    'type' => 'token',
+    'label' => t('Coupon type'),
+    'description' => t('The machine name of the coupon type.'),
+    'schema field' => 'type',
+  );
+
+  $properties['label'] = array(
+    'type' => 'text',
+    'label' => t('Coupon type label'),
+    'description' => t('The human readable name of the coupon type.'),
+    'schema field' => 'label',
+  );
+
+  $properties['status'] = array(
+    'type' => 'boolean',
+    'label' => t('Coupon type status'),
+    'description' => t('Status of the coupon type.'),
+    'schema field' => 'status',
+  );
+
+  // Add metadata about coupon log properties.
   $properties = &$info['commerce_coupon_log']['properties'];
 
   $properties['log_id'] = array(
