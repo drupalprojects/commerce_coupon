@@ -146,7 +146,7 @@ function commerce_coupon_ui_views_default_views() {
   $view->base_table = 'commerce_coupon_log';
   $view->human_name = 'Commerce Coupon Review Pane';
   $view->core = 7;
-  $view->api_version = '3.0-alpha1';
+  $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
@@ -155,6 +155,7 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['query']['options']['query_comment'] = FALSE;
+  $handler->display->display_options['query']['options']['query_tags'] = FALSE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'none';
   $handler->display->display_options['pager']['options']['offset'] = '0';
@@ -191,10 +192,6 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['relationships']['coupon']['table'] = 'commerce_coupon_log';
   $handler->display->display_options['relationships']['coupon']['field'] = 'coupon';
   $handler->display->display_options['relationships']['coupon']['required'] = 0;
-  $handler->display->display_options['relationships']['coupon']['bundle_types'] = array(
-    'basic_coupon' => 0,
-    'pass' => 0,
-  );
   /* Field: Commerce Coupon: Coupon Code */
   $handler->display->display_options['fields']['commerce_coupon_code']['id'] = 'commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['table'] = 'field_data_commerce_coupon_code';
@@ -209,6 +206,7 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['nl2br'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['word_boundary'] = 1;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['ellipsis'] = 1;
+  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['more_link'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['strip_tags'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['trim'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['html'] = 0;
@@ -268,7 +266,7 @@ function commerce_coupon_ui_views_default_views() {
   $view->base_table = 'commerce_coupon_log';
   $view->human_name = 'Commerce Coupon Log';
   $view->core = 7;
-  $view->api_version = '3.0-alpha1';
+  $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
@@ -279,6 +277,7 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['cache']['type'] = 'none';
   $handler->display->display_options['query']['type'] = 'views_query';
   $handler->display->display_options['query']['options']['query_comment'] = FALSE;
+  $handler->display->display_options['query']['options']['query_tags'] = FALSE;
   $handler->display->display_options['exposed_form']['type'] = 'basic';
   $handler->display->display_options['pager']['type'] = 'full';
   $handler->display->display_options['pager']['options']['items_per_page'] = '25';
@@ -334,20 +333,16 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['style_options']['override'] = 1;
   $handler->display->display_options['style_options']['sticky'] = 0;
   $handler->display->display_options['style_options']['empty_table'] = 0;
-  /* Relationship: Commerce Coupon Log: Coupon coupon_id */
-  $handler->display->display_options['relationships']['coupon']['id'] = 'coupon';
-  $handler->display->display_options['relationships']['coupon']['table'] = 'commerce_coupon_log';
-  $handler->display->display_options['relationships']['coupon']['field'] = 'coupon';
-  $handler->display->display_options['relationships']['coupon']['required'] = 0;
-  $handler->display->display_options['relationships']['coupon']['bundle_types'] = array(
-    'basic_coupon' => 0,
-    'pass' => 0,
-  );
   /* Relationship: Commerce Coupon Log: Order order_id */
   $handler->display->display_options['relationships']['order']['id'] = 'order';
   $handler->display->display_options['relationships']['order']['table'] = 'commerce_coupon_log';
   $handler->display->display_options['relationships']['order']['field'] = 'order';
   $handler->display->display_options['relationships']['order']['required'] = 0;
+  /* Relationship: Commerce Coupon Log: Coupon coupon_id */
+  $handler->display->display_options['relationships']['coupon_1']['id'] = 'coupon_1';
+  $handler->display->display_options['relationships']['coupon_1']['table'] = 'commerce_coupon_log';
+  $handler->display->display_options['relationships']['coupon_1']['field'] = 'coupon';
+  $handler->display->display_options['relationships']['coupon_1']['required'] = 0;
   /* Field: Commerce Coupon Log: Creation date */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'commerce_coupon_log';
@@ -356,7 +351,7 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['fields']['commerce_coupon_code']['id'] = 'commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['table'] = 'field_data_commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['field'] = 'commerce_coupon_code';
-  $handler->display->display_options['fields']['commerce_coupon_code']['relationship'] = 'coupon';
+  $handler->display->display_options['fields']['commerce_coupon_code']['relationship'] = 'coupon_1';
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['alter_text'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['make_link'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['absolute'] = 0;
@@ -366,6 +361,7 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['nl2br'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['word_boundary'] = 1;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['ellipsis'] = 1;
+  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['more_link'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['strip_tags'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['trim'] = 0;
   $handler->display->display_options['fields']['commerce_coupon_code']['alter']['html'] = 0;
@@ -423,8 +419,6 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['fields']['is_accepted']['hide_empty'] = 0;
   $handler->display->display_options['fields']['is_accepted']['empty_zero'] = 0;
   $handler->display->display_options['fields']['is_accepted']['hide_alter_empty'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['separator'] = '';
-  $handler->display->display_options['fields']['is_accepted']['format_plural'] = 0;
   /* Sort criterion: Commerce Coupon Log: Creation date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'commerce_coupon_log';
