@@ -2,9 +2,7 @@
 
 /**
  * @file
- * Coupon..
- *
- * This file contains...
+ * Basic coupon default rules.
  */
 
 /**
@@ -13,42 +11,33 @@
 function commerce_coupon_basic_default_rules_configuration() {
   $rules = array();
 
-  // Define rules for percentage amounts
-  foreach (commerce_coupon_get_types() as $type => $coupon_type) {
+  $rule = rules_reaction_rule();
+  $rule->label = t('Apply percentage coupons to line item');
+  $rule->active = TRUE;
 
-    $instance = field_info_instance('commerce_coupon', 'commerce_coupon_percent_amount', $type);
-
-    // Check if a percenatage field is assigned to this type
-    if (empty($instance)) {
-      // Skip this type if no percentage field is defined
-      continue;
-    }
-
-    // Create a new rules component.
-    $rule = rule(array(
-      'line_item' => array(
-        'type' => 'commerce_line_item',
-        'label' => t('Line item'),
-      ),
-      'coupon' => array(
-        'type' => 'commerce_coupon',
-        'label' => t('Coupon'),
-      ),
+  $rule
+    ->event('commerce_product_calculate_sell_price')
+    ->action('commerce_coupon_action_get_coupons_for_order', array(
+      'commerce_order:select' => 'commerce-line-item:order',
+      'order_coupons:label' => 'Coupons attached to this order',
+      'order_coupons:var' => 'order_coupons',
     ));
 
-    $rule->label = t('Apply a percentage @title amount', array('@title' => $coupon_type->label));
-
-    // Add the action to apply the percentage coupons
-    $rule->action('commerce_coupon_basic_apply_to_item_line', array(
-      'line_item:select' => 'line-item',
-      'coupon:select' => 'coupon',
+  $loop = rules_loop(array(
+    'list:select' => 'order-coupons',
+    'item:var' => 'list_item',
+    'item:label' => t('Current list item'),
+  ))
+    ->action('commerce_coupon_basic_apply_to_item_line', array(
+      'line_item:select' => 'commerce-line-item',
+      'coupon:select' => 'list-item',
+      'component_name' => 'base_price',
+      'round_mode' => '1',
     ));
-    $rules['commerce_coupon_apply_' . $type . '_to_item_line'] = $rule;
 
-  }
+  $rule->action($loop);
 
-
-
+  $rules['commerce_coupon_basic_apply_percentage_coupons_to_line_item'] = $rule;
 
   // Create fixed amount rule
   $rule = rules_reaction_rule(array(), array(
@@ -111,10 +100,6 @@ function commerce_coupon_basic_default_rules_configuration() {
   $rule->action('commerce_coupon_action_is_invalid_coupon', array());
   $rules['commerce_coupon_basic_validate_uses_of_coupon_component'] = $rule;
 
-
-
-
-
   // Reaction on the validation event for check uses of coupons:
   $rule = rules_reaction_rule();
   $rule->label = t('Coupon Validation: Check the number of redemptions');
@@ -133,4 +118,3 @@ function commerce_coupon_basic_default_rules_configuration() {
 
   return $rules;
 }
-

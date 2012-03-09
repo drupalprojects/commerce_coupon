@@ -103,6 +103,24 @@ function commerce_coupon_rules_action_info() {
     ),
   );
 
+  $actions['commerce_coupon_action_get_coupons_for_order'] = array(
+    'label' => t('Get coupons for order'),
+    'parameter' => array(
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'label' => t('Commerce order'),
+      ),
+    ),
+    'provides' => array(
+      'order_coupons' => array(
+        'type' => 'list<commerce_coupon>',
+        'label' => 'Coupons attached to this order',
+      ),
+    ),
+    'group' => t('Commerce Coupon'),
+    'base' => 'commerce_coupon_action_get_coupons_for_order',
+  );
+
   $actions['commerce_coupon_action_create_coupon_line_item'] = array(
     'label' => t('Create coupon line item'),
     'parameter' => array(
@@ -203,6 +221,13 @@ function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount
   commerce_coupon_log_save($commerce_coupon_log->value());
 
 
+}
+
+function commerce_coupon_action_get_coupons_for_order($commerce_coupon) {
+  if (!$commerce_coupon) {
+    return array();
+  }
+  return array('order_coupons' => commerce_coupon_get_coupons_by_order($commerce_coupon->order_number));
 }
 
 function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $commerce_order, $amount, $currency_code) {
