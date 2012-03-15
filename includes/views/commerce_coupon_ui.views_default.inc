@@ -21,7 +21,7 @@ function commerce_coupon_ui_views_default_views() {
   $view->base_table = 'commerce_coupon';
   $view->human_name = 'Coupons';
   $view->core = 7;
-  $view->api_version = '3.0-alpha1';
+  $view->api_version = '3.0';
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
@@ -62,69 +62,27 @@ function commerce_coupon_ui_views_default_views() {
       'separator' => '',
     ),
   );
-  $handler->display->display_options['style_options']['override'] = 1;
-  $handler->display->display_options['style_options']['sticky'] = 0;
-  $handler->display->display_options['style_options']['empty_table'] = 0;
   /* Field: Commerce Coupon: Coupon Code */
   $handler->display->display_options['fields']['commerce_coupon_code']['id'] = 'commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['table'] = 'field_data_commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['field'] = 'commerce_coupon_code';
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['html'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['element_label_colon'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['field_api_classes'] = 0;
   /* Field: Commerce Coupon: Type */
   $handler->display->display_options['fields']['type']['id'] = 'type';
   $handler->display->display_options['fields']['type']['table'] = 'commerce_coupon';
   $handler->display->display_options['fields']['type']['field'] = 'type';
-  $handler->display->display_options['fields']['type']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['type']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['type']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['type']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['type']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['type']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['type']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['type']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['type']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['type']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['type']['alter']['html'] = 0;
-  $handler->display->display_options['fields']['type']['element_label_colon'] = 1;
-  $handler->display->display_options['fields']['type']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['type']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['type']['empty_zero'] = 0;
   /* Field: Commerce Coupon: Operations */
   $handler->display->display_options['fields']['operations']['id'] = 'operations';
   $handler->display->display_options['fields']['operations']['table'] = 'commerce_coupon';
   $handler->display->display_options['fields']['operations']['field'] = 'operations';
-  $handler->display->display_options['fields']['operations']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['operations']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['operations']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['operations']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['operations']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['operations']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['operations']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['operations']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['operations']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['operations']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['operations']['alter']['html'] = 0;
-  $handler->display->display_options['fields']['operations']['element_label_colon'] = 1;
-  $handler->display->display_options['fields']['operations']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['operations']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['operations']['empty_zero'] = 0;
+  /* Field: Commerce Coupon: Is active */
+  $handler->display->display_options['fields']['is_active']['id'] = 'is_active';
+  $handler->display->display_options['fields']['is_active']['table'] = 'commerce_coupon';
+  $handler->display->display_options['fields']['is_active']['field'] = 'is_active';
+  $handler->display->display_options['fields']['is_active']['label'] = 'Active';
+  $handler->display->display_options['fields']['is_active']['type'] = 'unicode-yes-no';
+  $handler->display->display_options['fields']['is_active']['not'] = 0;
 
-  /* Display: Adminpage */
+  /* Display: Admin page */
   $handler = $view->new_display('page', 'Admin page', 'page');
   $handler->display->display_options['display_description'] = 'Manage the coupons.';
   $handler->display->display_options['path'] = 'admin/commerce/coupons/list';
@@ -136,6 +94,7 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['tab_options']['description'] = 'Manage coupons in the store.';
   $handler->display->display_options['tab_options']['weight'] = '';
   $handler->display->display_options['tab_options']['name'] = 'management';
+
   $views[$view->name] = $view;
 
   // Coupon log admin view.

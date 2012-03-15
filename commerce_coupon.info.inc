@@ -21,7 +21,13 @@ function commerce_coupon_entity_property_info() {
     'description' => t('The internal numeric ID of the coupon.'),
     'schema field' => 'coupon_id',
   );
-
+  $properties['is_active'] = array(
+    'label' => t('Is active'),
+    'description' => t('Boolean indicating whether the coupon is active or disabled.'),
+    'type' => 'boolean',
+    'setter callback' => 'entity_property_verbatim_set',
+    'schema field' => 'is_active',
+  );
   $properties['type'] = array(
     'type' => 'commerce_coupon_type',
     'label' => t('Type'),

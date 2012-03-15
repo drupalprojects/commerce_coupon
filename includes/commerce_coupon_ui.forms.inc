@@ -27,8 +27,6 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
     '#weight' => 40,
   );
 
-  $form['data']['#tree'] = TRUE;
-
   $form['actions'] = array(
     '#type' => 'container',
     '#attributes' => array('class' => array('form-actions')),
@@ -74,6 +72,7 @@ function commerce_coupon_form_submit($form, &$form_state) {
   global $user;
 
   $commerce_coupon = &$form_state['commerce_coupon'];
+  $commerce_coupon->is_active = $form_state['values']['is_active'];
 
   // Notify field widgets.
   field_attach_submit('commerce_coupon', $commerce_coupon, $form, $form_state);
