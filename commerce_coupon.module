@@ -425,6 +425,59 @@ function commerce_coupon_type_configure($bundle, $reset) {
     }
   }
 
+  // Look for or add the number of uses.
+  $field_name = 'commerce_coupon_number_of_uses';
+  $field = field_info_field($field_name);
+  $instance = field_info_instance($entity_type, $field_name, $bundle);
+
+  if (empty($field) || $reset) {
+    $field_data = array(
+      'field_name' => $field_name,
+      'type' => 'number_integer',
+      'label' => t('Maximum Number of Uses'),
+      'cardinality' => 1,
+      'entity_types' => array($entity_type),
+      'translatable' => FALSE,
+      'locked' => FALSE,
+      'settings' => array(),
+    );
+
+    if (empty($field)) {
+      $field = field_create_field($field_data);
+    }
+    else {
+      $field = field_update_field($field_data);
+    }
+  }
+
+  if (empty($instance) || $reset) {
+    $instance_data = array(
+      'field_name' => $field_name,
+      'entity_type' => $entity_type,
+      'bundle' => $bundle,
+
+      'label' => t('Number of Uses'),
+      'required' => FALSE,
+      'display' => array(),
+      'settings' => array(
+        'min' => '0',
+      ),
+      'default_value' => array(
+        0 => array(
+          'value' => 1
+        )
+      ),
+    );
+
+
+    if (empty($instance)) {
+      field_create_instance($instance_data);
+    }
+    else {
+      field_update_instance($instance_data);
+    }
+  }
+
   // Allow other modules to configure coupon types:
   module_invoke_all('commerce_coupon_type_configure', $bundle, $reset);
 }
@@ -566,7 +619,7 @@ function commerce_coupon_get_coupons_by_order($order_id) {
     $commerce_coupon_ids[] = $commerce_coupon['coupon_id'];
   }
 
-  return commerce_coupon_load_multiple($commerce_coupon_ids);
+  return commerce_coupon_load_multiple($commerce_coupon_ids, array('is_active' => TRUE));
 }
 
 /**

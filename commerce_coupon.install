@@ -238,3 +238,10 @@ function commerce_coupon_uninstall() {
   commerce_delete_instances('commerce_coupon_log');
   commerce_delete_instances('commerce_coupon');
 }
+
+/**
+ * Implements hook_update_N(). 
+ */
+function commerce_coupon_update_7001(&$sandbox){
+  // The update system is going to flush all caches anyway, so nothing to do.
+}

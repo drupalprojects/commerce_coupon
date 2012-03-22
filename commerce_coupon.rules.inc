@@ -121,6 +121,24 @@ function commerce_coupon_rules_action_info() {
     'base' => 'commerce_coupon_action_get_coupons_for_order',
   );
 
+  $actions['commerce_coupon_action_get_coupons_for_order'] = array(
+    'label' => t('Get coupons for order'),
+    'parameter' => array(
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'label' => t('Commerce order'),
+      ),
+    ),
+    'provides' => array(
+      'order_coupons' => array(
+        'type' => 'list<commerce_coupon>',
+        'label' => 'Coupons attached to this order',
+      ),
+    ),
+    'group' => t('Commerce Coupon'),
+    'base' => 'commerce_coupon_action_get_coupons_for_order',
+  );
+
   $actions['commerce_coupon_action_create_coupon_line_item'] = array(
     'label' => t('Create coupon line item'),
     'parameter' => array(
@@ -202,16 +220,20 @@ function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount
 
   $coupon = $commerce_coupon_log->coupon;
 
+  // Get the price component to use in this price.
+  $price_component_name = 'commerce_coupon_' . $coupon->type;
+  drupal_alter('commerce_coupon_price_component_name', $price_component_name, $coupon);
+
   // Set the unit price on the line item object.
   $commerce_coupon_log->commerce_granted_amount->amount = $amount;
   $commerce_coupon_log->commerce_granted_amount->currency_code = $currency_code;
 
 
   // Add the base price to the components array.
-  if (!commerce_price_component_load($commerce_coupon_log->commerce_granted_amount->value(), 'commerce_coupon_' . $coupon->type)) {
+  if (!commerce_price_component_load($commerce_coupon_log->commerce_granted_amount->value(), $price_component_name)) {
     $commerce_coupon_log->commerce_granted_amount->data = commerce_price_component_add(
       $commerce_coupon_log->commerce_granted_amount->value(),
-      'commerce_coupon_' . $coupon->type,
+      $price_component_name,
       $commerce_coupon_log->commerce_granted_amount->value(),
       TRUE,
       FALSE
@@ -231,14 +253,15 @@ function commerce_coupon_action_get_coupons_for_order($commerce_coupon) {
 }
 
 function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $commerce_order, $amount, $currency_code) {
-
   if (!($commerce_order instanceof EntityMetadataWrapper)) {
     $commerce_order = entity_metadata_wrapper('commerce_order', $commerce_order);
   }
 
+  // Get the price component to use in this price.
+  $price_component_name = 'commerce_coupon_' . $commerce_coupon->type;
+  drupal_alter('commerce_coupon_price_component_name', $price_component_name, $commerce_coupon);
 
   $line_item = commerce_coupon_line_item_new($commerce_coupon, $commerce_order->order_id->value());
-
   $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
 
   // Set the unit price on the line item object.
@@ -247,10 +270,10 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
 
 
   // Add the base price to the components array.
-  if (!commerce_price_component_load($line_item_wrapper->commerce_unit_price->value(), 'commerce_coupon_' . $commerce_coupon->type)) {
+  if (!commerce_price_component_load($line_item_wrapper->commerce_unit_price->value(), $price_component_name)) {
     $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
       $line_item_wrapper->commerce_unit_price->value(),
-      'commerce_coupon_' . $commerce_coupon->type,
+      $price_component_name,
       $line_item_wrapper->commerce_unit_price->value(),
       TRUE,
       FALSE
