@@ -9,7 +9,6 @@
  */
 # @TODO: Set log entry as proceed after order complete
 # @TODO: Double check {commerce_coupon_type} columns.
-# @TODO: Coupon Clone is not working.
 
 /**
  * Implements hook_entity_info().

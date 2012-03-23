@@ -138,70 +138,31 @@ function commerce_coupon_ui_views_default_views() {
       'separator' => '',
     ),
   );
-  $handler->display->display_options['style_options']['override'] = 1;
-  $handler->display->display_options['style_options']['sticky'] = 0;
-  $handler->display->display_options['style_options']['empty_table'] = 0;
   /* Relationship: Commerce Coupon Log: Order order_id */
   $handler->display->display_options['relationships']['order']['id'] = 'order';
   $handler->display->display_options['relationships']['order']['table'] = 'commerce_coupon_log';
   $handler->display->display_options['relationships']['order']['field'] = 'order';
-  $handler->display->display_options['relationships']['order']['required'] = 1;
+  $handler->display->display_options['relationships']['order']['required'] = TRUE;
   /* Relationship: Commerce Coupon Log: Coupon coupon_id */
   $handler->display->display_options['relationships']['coupon']['id'] = 'coupon';
   $handler->display->display_options['relationships']['coupon']['table'] = 'commerce_coupon_log';
   $handler->display->display_options['relationships']['coupon']['field'] = 'coupon';
-  $handler->display->display_options['relationships']['coupon']['required'] = 0;
   /* Field: Commerce Coupon: Coupon Code */
   $handler->display->display_options['fields']['commerce_coupon_code']['id'] = 'commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['table'] = 'field_data_commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['field'] = 'commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['relationship'] = 'coupon';
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['trim_whitespace'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['more_link'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['html'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['element_label_colon'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['hide_alter_empty'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['field_api_classes'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_code']['hide_alter_empty'] = FALSE;
   /* Field: Commerce Coupon Log: Coupon Granted Amount */
   $handler->display->display_options['fields']['commerce_granted_amount']['id'] = 'commerce_granted_amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['table'] = 'field_data_commerce_granted_amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['field'] = 'commerce_granted_amount';
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['trim_whitespace'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['html'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['element_label_colon'] = 1;
-  $handler->display->display_options['fields']['commerce_granted_amount']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['commerce_granted_amount']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['hide_alter_empty'] = 0;
+  $handler->display->display_options['fields']['commerce_granted_amount']['hide_alter_empty'] = FALSE;
   $handler->display->display_options['fields']['commerce_granted_amount']['click_sort_column'] = 'amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['type'] = 'commerce_price_formatted_amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['settings'] = array(
     'calculation' => FALSE,
   );
-  $handler->display->display_options['fields']['commerce_granted_amount']['field_api_classes'] = 0;
   /* Contextual filter: Commerce Order: Order ID */
   $handler->display->display_options['arguments']['order_id']['id'] = 'order_id';
   $handler->display->display_options['arguments']['order_id']['table'] = 'commerce_order';
@@ -209,12 +170,15 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['arguments']['order_id']['relationship'] = 'order';
   $handler->display->display_options['arguments']['order_id']['default_action'] = 'empty';
   $handler->display->display_options['arguments']['order_id']['default_argument_type'] = 'fixed';
-  $handler->display->display_options['arguments']['order_id']['default_argument_skip_url'] = 0;
   $handler->display->display_options['arguments']['order_id']['summary']['number_of_records'] = '0';
   $handler->display->display_options['arguments']['order_id']['summary']['format'] = 'default_summary';
   $handler->display->display_options['arguments']['order_id']['summary_options']['items_per_page'] = '25';
-  $handler->display->display_options['arguments']['order_id']['break_phrase'] = 0;
-  $handler->display->display_options['arguments']['order_id']['not'] = 0;
+  /* Filter criterion: Commerce Coupon: Is active */
+  $handler->display->display_options['filters']['is_active']['id'] = 'is_active';
+  $handler->display->display_options['filters']['is_active']['table'] = 'commerce_coupon';
+  $handler->display->display_options['filters']['is_active']['field'] = 'is_active';
+  $handler->display->display_options['filters']['is_active']['relationship'] = 'coupon';
+  $handler->display->display_options['filters']['is_active']['value'] = '1';
   $views[$view->name] = $view;
 
   // Coupon log
@@ -242,7 +206,6 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['pager']['options']['items_per_page'] = '25';
   $handler->display->display_options['pager']['options']['offset'] = '0';
   $handler->display->display_options['pager']['options']['id'] = '0';
-  $handler->display->display_options['pager']['options']['expose']['items_per_page_options_all'] = 0;
   $handler->display->display_options['style_plugin'] = 'table';
   $handler->display->display_options['style_options']['columns'] = array(
     'created' => 'created',
@@ -289,19 +252,14 @@ function commerce_coupon_ui_views_default_views() {
       'separator' => '',
     ),
   );
-  $handler->display->display_options['style_options']['override'] = 1;
-  $handler->display->display_options['style_options']['sticky'] = 0;
-  $handler->display->display_options['style_options']['empty_table'] = 0;
   /* Relationship: Commerce Coupon Log: Order order_id */
   $handler->display->display_options['relationships']['order']['id'] = 'order';
   $handler->display->display_options['relationships']['order']['table'] = 'commerce_coupon_log';
   $handler->display->display_options['relationships']['order']['field'] = 'order';
-  $handler->display->display_options['relationships']['order']['required'] = 0;
   /* Relationship: Commerce Coupon Log: Coupon coupon_id */
   $handler->display->display_options['relationships']['coupon_1']['id'] = 'coupon_1';
   $handler->display->display_options['relationships']['coupon_1']['table'] = 'commerce_coupon_log';
   $handler->display->display_options['relationships']['coupon_1']['field'] = 'coupon';
-  $handler->display->display_options['relationships']['coupon_1']['required'] = 0;
   /* Field: Commerce Coupon Log: Creation date */
   $handler->display->display_options['fields']['created']['id'] = 'created';
   $handler->display->display_options['fields']['created']['table'] = 'commerce_coupon_log';
@@ -311,73 +269,28 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['fields']['commerce_coupon_code']['table'] = 'field_data_commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['field'] = 'commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['relationship'] = 'coupon_1';
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['trim_whitespace'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['more_link'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['alter']['html'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['element_label_colon'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['commerce_coupon_code']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['hide_alter_empty'] = 0;
-  $handler->display->display_options['fields']['commerce_coupon_code']['field_api_classes'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_code']['hide_alter_empty'] = FALSE;
   /* Field: Commerce Coupon Log: Coupon Granted Amount */
   $handler->display->display_options['fields']['commerce_granted_amount']['id'] = 'commerce_granted_amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['table'] = 'field_data_commerce_granted_amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['field'] = 'commerce_granted_amount';
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['trim_whitespace'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['alter']['html'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['element_label_colon'] = 1;
-  $handler->display->display_options['fields']['commerce_granted_amount']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['commerce_granted_amount']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['commerce_granted_amount']['hide_alter_empty'] = 0;
+  $handler->display->display_options['fields']['commerce_granted_amount']['hide_alter_empty'] = FALSE;
   $handler->display->display_options['fields']['commerce_granted_amount']['click_sort_column'] = 'amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['type'] = 'commerce_price_formatted_amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['settings'] = array(
     'calculation' => FALSE,
   );
-  $handler->display->display_options['fields']['commerce_granted_amount']['field_api_classes'] = 0;
   /* Field: Commerce Coupon Log: Is Accepted */
   $handler->display->display_options['fields']['is_accepted']['id'] = 'is_accepted';
   $handler->display->display_options['fields']['is_accepted']['table'] = 'commerce_coupon_log';
   $handler->display->display_options['fields']['is_accepted']['field'] = 'is_accepted';
-  $handler->display->display_options['fields']['is_accepted']['alter']['alter_text'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['make_link'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['absolute'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['external'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['replace_spaces'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['trim_whitespace'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['nl2br'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['word_boundary'] = 1;
-  $handler->display->display_options['fields']['is_accepted']['alter']['ellipsis'] = 1;
-  $handler->display->display_options['fields']['is_accepted']['alter']['strip_tags'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['trim'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['alter']['html'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['element_label_colon'] = 1;
-  $handler->display->display_options['fields']['is_accepted']['element_default_classes'] = 1;
-  $handler->display->display_options['fields']['is_accepted']['hide_empty'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['empty_zero'] = 0;
-  $handler->display->display_options['fields']['is_accepted']['hide_alter_empty'] = 0;
+  $handler->display->display_options['fields']['is_accepted']['hide_alter_empty'] = FALSE;
+  /* Field: Commerce Order: Link */
+  $handler->display->display_options['fields']['view_order']['id'] = 'view_order';
+  $handler->display->display_options['fields']['view_order']['table'] = 'commerce_order';
+  $handler->display->display_options['fields']['view_order']['field'] = 'view_order';
+  $handler->display->display_options['fields']['view_order']['relationship'] = 'order';
+  $handler->display->display_options['fields']['view_order']['label'] = 'Order';
   /* Sort criterion: Commerce Coupon Log: Creation date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'commerce_coupon_log';
