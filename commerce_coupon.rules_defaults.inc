@@ -28,7 +28,7 @@ function commerce_coupon_default_rules_configuration() {
     )
   );
   $rule->action('drupal_message', array(
-    'message' => 'Sorry, the maximum number of redemptions for this coupon has been reached.',
+    'message' => t('Sorry, the maximum number of redemptions for this coupon has been reached.'),
     'type' => 'error',
   ));
   $rule->action('commerce_coupon_action_is_invalid_coupon', array());
