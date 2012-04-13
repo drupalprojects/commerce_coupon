@@ -98,7 +98,7 @@ function commerce_coupon_ui_views_default_views() {
   $views[$view->name] = $view;
 
   // Coupon log admin view.
-  $view = new view;
+  $view = new view();
   $view->name = 'commerce_coupon_review_pane';
   $view->description = '';
   $view->tag = 'commerce';
@@ -144,15 +144,14 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['relationships']['order']['field'] = 'order';
   $handler->display->display_options['relationships']['order']['required'] = TRUE;
   /* Relationship: Commerce Coupon Log: Coupon coupon_id */
-  $handler->display->display_options['relationships']['coupon']['id'] = 'coupon';
-  $handler->display->display_options['relationships']['coupon']['table'] = 'commerce_coupon_log';
-  $handler->display->display_options['relationships']['coupon']['field'] = 'coupon';
+  $handler->display->display_options['relationships']['commerce_coupon']['id'] = 'commerce_coupon';
+  $handler->display->display_options['relationships']['commerce_coupon']['table'] = 'commerce_coupon_log';
+  $handler->display->display_options['relationships']['commerce_coupon']['field'] = 'commerce_coupon';
   /* Field: Commerce Coupon: Coupon Code */
   $handler->display->display_options['fields']['commerce_coupon_code']['id'] = 'commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['table'] = 'field_data_commerce_coupon_code';
   $handler->display->display_options['fields']['commerce_coupon_code']['field'] = 'commerce_coupon_code';
-  $handler->display->display_options['fields']['commerce_coupon_code']['relationship'] = 'coupon';
-  $handler->display->display_options['fields']['commerce_coupon_code']['hide_alter_empty'] = FALSE;
+  $handler->display->display_options['fields']['commerce_coupon_code']['relationship'] = 'commerce_coupon';
   /* Field: Commerce Coupon Log: Coupon Granted Amount */
   $handler->display->display_options['fields']['commerce_granted_amount']['id'] = 'commerce_granted_amount';
   $handler->display->display_options['fields']['commerce_granted_amount']['table'] = 'field_data_commerce_granted_amount';
@@ -177,7 +176,7 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['filters']['is_active']['id'] = 'is_active';
   $handler->display->display_options['filters']['is_active']['table'] = 'commerce_coupon';
   $handler->display->display_options['filters']['is_active']['field'] = 'is_active';
-  $handler->display->display_options['filters']['is_active']['relationship'] = 'coupon';
+  $handler->display->display_options['filters']['is_active']['relationship'] = 'commerce_coupon';
   $handler->display->display_options['filters']['is_active']['value'] = '1';
   $views[$view->name] = $view;
 

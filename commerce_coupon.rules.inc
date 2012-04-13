@@ -216,7 +216,7 @@ function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount
     $commerce_coupon_log = entity_metadata_wrapper('commerce_coupon_log', $commerce_coupon_log);
   }
 
-  $coupon = $commerce_coupon_log->coupon;
+  $coupon = $commerce_coupon_log->commerce_coupon;
 
   // Get the price component to use in this price.
   $price_component_name = 'commerce_coupon_' . $coupon->type;
