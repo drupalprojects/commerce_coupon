@@ -7,8 +7,6 @@
  * This file contains all the major functionality for providing a coupon system
  * to the Drupal Commerce system.
  */
-# @TODO: Set log entry as proceed after order complete
-# @TODO: Double check {commerce_coupon_type} columns.
 
 /**
  * Implements hook_entity_info().
@@ -221,12 +219,12 @@ function commerce_coupon_code_is_valid($code, $order) {
   // Check if the coupon is already applied to this order. In any case we
   // never want that a coupon is applied twice.
   $log = db_select('commerce_coupon_log', 'c')
-          ->fields('c')
-          ->condition('order_id', $order->order_id, '=')
-          ->condition('coupon_id', $commerce_coupon->coupon_id, '=')
-          # ->condition('is_processed', 1, '=')
-          ->execute()
-          ->fetchAssoc();
+      ->fields('c')
+      ->condition('order_id', $order->order_id, '=')
+      ->condition('coupon_id', $commerce_coupon->coupon_id, '=')
+      # ->condition('is_processed', 1, '=')
+      ->execute()
+      ->fetchAssoc();
 
   if (isset($log['log_id'])) {
     $commerce_coupon_validation_error_message = t('Sorry, you can only apply a coupon once per order.');
@@ -267,12 +265,12 @@ function commerce_coupon_redeem_coupon($commerce_coupon, $order) {
   // Check if the coupon is already applied to this order. In any case we
   // never want that a coupon is applied twice.
   $log = db_select('commerce_coupon_log', 'c')
-          ->fields('c')
-          ->condition('order_id', $order->order_id, '=')
-          ->condition('coupon_id', $commerce_coupon->coupon_id, '=')
-          //->condition('is_processed', 1, '=')
-          ->execute()
-          ->fetchAssoc();
+      ->fields('c')
+      ->condition('order_id', $order->order_id, '=')
+      ->condition('coupon_id', $commerce_coupon->coupon_id, '=')
+      //->condition('is_processed', 1, '=')
+      ->execute()
+      ->fetchAssoc();
 
   if (isset($log['log_id'])) {
     return FALSE;
@@ -280,10 +278,10 @@ function commerce_coupon_redeem_coupon($commerce_coupon, $order) {
 
   // Log the redemption
   $log = commerce_coupon_log_create(array(
-        'uid' => $user->uid,
-        'order_id' => $order->order_id,
-        'coupon_id' => $commerce_coupon->coupon_id,
-        'is_accepted' => TRUE,
+    'uid' => $user->uid,
+    'order_id' => $order->order_id,
+    'coupon_id' => $commerce_coupon->coupon_id,
+    'is_accepted' => TRUE,
       ));
   $log->save();
 
@@ -329,7 +327,7 @@ function commerce_coupon_get_types($type_name = NULL) {
 function commerce_coupon_type_load($type) {
   $type = strtr($type, array('-' => '_'));
   $coupon_types = commerce_coupon_get_types();
-  return!empty($coupon_types[$type]) ? $coupon_types[$type] : FALSE;
+  return !empty($coupon_types[$type]) ? $coupon_types[$type] : FALSE;
 }
 
 /**
@@ -454,7 +452,6 @@ function commerce_coupon_type_configure($bundle, $reset) {
       'field_name' => $field_name,
       'entity_type' => $entity_type,
       'bundle' => $bundle,
-
       'label' => t('Number of Uses'),
       'required' => FALSE,
       'display' => array(),
@@ -597,7 +594,7 @@ function commerce_coupon_load_by_code($code, $must_be_active = FALSE) {
 }
 
 /**
- * Loads a list of coupons that corresponds to the given order.
+ * Loads a list of active coupons that corresponds to the given order.
  *
  * @param $order_id
  *   Order Id to which the coupons belongs.
@@ -723,7 +720,6 @@ function commerce_coupon_code_exists($code) {
  * Returns the number of uses for this coupon
  */
 function commerce_coupon_get_number_of_uses($commerce_coupon_id) {
-  # @TODO: Use the Drupal 7 query API
   $commerce_coupon_logs = db_query('SELECT log_id FROM {commerce_coupon_log} WHERE coupon_id = :coupon_id', array(':coupon_id' => $commerce_coupon_id))->fetchAllAssoc('log_id', PDO::FETCH_ASSOC);
   return count($commerce_coupon_logs);
 }
@@ -874,7 +870,7 @@ function commerce_coupon_line_item_title($line_item) {
 
 /**
  * @TODO: Implement this method correct
- * 
+ *
  * Returns the elements necessary to add a product line item through a line item
  * manager widget.
  */
@@ -932,11 +928,7 @@ function commerce_coupon_line_item_add_form_submit(&$line_item, $element, &$form
   $line_item_wrapper->commerce_unit_price->amount = $element['actions']['amount']['#value'];
   $line_item_wrapper->commerce_unit_price->currency_code = $element['actions']['currency_code']['#value'];
   $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
-          $line_item_wrapper->commerce_unit_price->value(),
-          'base_price',
-          $line_item_wrapper->commerce_unit_price->value(),
-          TRUE,
-          FALSE
+      $line_item_wrapper->commerce_unit_price->value(), 'base_price', $line_item_wrapper->commerce_unit_price->value(), TRUE, FALSE
   );
 }
 
@@ -954,9 +946,9 @@ function commerce_coupon_line_item_add_form_submit(&$line_item, $element, &$form
 function commerce_coupon_line_item_new($commerce_coupon, $order_id) {
   // Create the new line item.
   $line_item = entity_create('commerce_line_item', array(
-        'type' => 'coupon',
-        'order_id' => $order_id,
-        'quantity' => 1,
+    'type' => 'coupon',
+    'order_id' => $order_id,
+    'quantity' => 1,
       ));
 
   $line_item->sku = $commerce_coupon->type . '_' . $commerce_coupon->coupon_id;

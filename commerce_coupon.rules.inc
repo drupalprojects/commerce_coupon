@@ -2,11 +2,12 @@
 
 /**
  * @file
- * Coupon rules
- *
- * This file contains...
+ * Coupon rules integration file.
  */
 
+/**
+ * Implements hook_rules_event_info().
+ */
 function commerce_coupon_rules_event_info() {
   $events = array();
 
@@ -170,7 +171,7 @@ function commerce_coupon_rules_action_info() {
     'callbacks' => array(
       'execute' => 'commerce_coupon_action_create_coupon_line_item',
     ),
-      );
+  );
 
 
   $actions['commerce_coupon_action_get_coupon_uses'] = array(
@@ -180,7 +181,6 @@ function commerce_coupon_rules_action_info() {
         'type' => 'commerce_coupon',
         'label' => t('Commerce Coupon'),
       ),
-
     ),
     'group' => t('Commerce Coupon'),
     'provides' => array(
@@ -195,7 +195,6 @@ function commerce_coupon_rules_action_info() {
   return $actions;
 }
 
-
 function commerce_coupon_action_is_valid_coupon($override = FALSE) {
   $validation_results = &drupal_static('commerce_coupon_action_validation_results');
 
@@ -205,7 +204,6 @@ function commerce_coupon_action_is_valid_coupon($override = FALSE) {
   else {
     $validation_results[$commerce_coupon->coupon_id] = TRUE;
   }
-
 }
 
 function commerce_coupon_action_is_invalid_coupon() {
@@ -232,17 +230,11 @@ function commerce_coupon_action_set_granted_amount($commerce_coupon_log, $amount
   // Add the base price to the components array.
   if (!commerce_price_component_load($commerce_coupon_log->commerce_granted_amount->value(), $price_component_name)) {
     $commerce_coupon_log->commerce_granted_amount->data = commerce_price_component_add(
-      $commerce_coupon_log->commerce_granted_amount->value(),
-      $price_component_name,
-      $commerce_coupon_log->commerce_granted_amount->value(),
-      TRUE,
-      FALSE
+        $commerce_coupon_log->commerce_granted_amount->value(), $price_component_name, $commerce_coupon_log->commerce_granted_amount->value(), TRUE, FALSE
     );
   }
 
   commerce_coupon_log_save($commerce_coupon_log->value());
-
-
 }
 
 function commerce_coupon_action_get_coupons_for_order($commerce_coupon) {
@@ -272,11 +264,7 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
   // Add the base price to the components array.
   if (!commerce_price_component_load($line_item_wrapper->commerce_unit_price->value(), $price_component_name)) {
     $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
-      $line_item_wrapper->commerce_unit_price->value(),
-      $price_component_name,
-      $line_item_wrapper->commerce_unit_price->value(),
-      TRUE,
-      FALSE
+        $line_item_wrapper->commerce_unit_price->value(), $price_component_name, $line_item_wrapper->commerce_unit_price->value(), TRUE, FALSE
     );
   }
 
@@ -287,7 +275,6 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
 
   return array('commerce_coupon_line_item' => $line_item);
 }
-
 
 function commerce_coupon_action_get_coupon_uses($commerce_coupon) {
   return array('number_of_uses' => commerce_coupon_get_number_of_uses($commerce_coupon->coupon_id));

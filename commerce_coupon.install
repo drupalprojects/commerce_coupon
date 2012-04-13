@@ -57,38 +57,38 @@ function commerce_coupon_schema() {
   $schema['commerce_coupon_type'] = array(
     'description' => 'Stores information about all defined coupon types.',
     'fields' => array(
-      'type_id' => array(
-        'type' => 'serial',
-        'not null' => TRUE,
-        'description' => 'Primary Key: Unique coupon type ID.',
-      ),
-      'type' => array(
-        'description' => 'The machine-readable name of this coupon type.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-      ),
-      'label' => array(
-        'description' => 'The human-readable name of this coupon type.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'weight' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'size' => 'tiny',
-        'description' => 'The weight of this coupon type in relation to others.',
-      ),
-      'data' => array(
-        'type' => 'text',
-        'not null' => FALSE,
-        'size' => 'big',
-        'serialize' => TRUE,
-        'description' => 'A serialized array of additional data related to this coupon type.',
-      ),
+  'type_id' => array(
+    'type' => 'serial',
+    'not null' => TRUE,
+    'description' => 'Primary Key: Unique coupon type ID.',
+  ),
+  'type' => array(
+    'description' => 'The machine-readable name of this coupon type.',
+    'type' => 'varchar',
+    'length' => 32,
+    'not null' => TRUE,
+  ),
+  'label' => array(
+    'description' => 'The human-readable name of this coupon type.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  ),
+  'weight' => array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'The weight of this coupon type in relation to others.',
+  ),
+  'data' => array(
+    'type' => 'text',
+    'not null' => FALSE,
+    'size' => 'big',
+    'serialize' => TRUE,
+    'description' => 'A serialized array of additional data related to this coupon type.',
+  ),
     ) + commerce_coupon_exportable_schema_fields(),
     'primary key' => array('type_id'),
     'unique keys' => array(
@@ -173,12 +173,12 @@ function commerce_coupon_schema() {
 function commerce_coupon_reference_field_schema($field) {
   return array(
     'columns' => array(
-        'coupon_id' => array(
-          'type' => 'int',
-          'length' => 11,
-          'not null' => TRUE,
-        ),
+      'coupon_id' => array(
+        'type' => 'int',
+        'length' => 11,
+        'not null' => TRUE,
       ),
+    ),
     'indexes' => array(
       'coupon_id' => array('coupon_id'),
     ),
@@ -240,8 +240,8 @@ function commerce_coupon_uninstall() {
 }
 
 /**
- * Implements hook_update_N(). 
+ * Implements hook_update_N().
  */
-function commerce_coupon_update_7001(&$sandbox){
+function commerce_coupon_update_7001(&$sandbox) {
   // The update system is going to flush all caches anyway, so nothing to do.
 }

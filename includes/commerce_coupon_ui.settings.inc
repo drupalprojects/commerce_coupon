@@ -5,6 +5,9 @@
  * Coupon general settings.
  */
 
+/**
+ * Commerce coupon settings form.
+ */
 function commerce_coupon_ui_settings_form($form, &$form_state) {
   $form['commerce_coupon_default_code_size'] = array(
     '#type' => 'textfield',
@@ -54,7 +57,7 @@ function commerce_coupon_ui_settings_upgrade_coupons_submit($form, &$form_state)
   $operations = array();
   $basic_coupons = commerce_coupon_load_multiple(array(), array('type' => 'basic_coupon'));
   foreach ($basic_coupons as $basic_coupon) {
-   $operations[] = array('commerce_coupon_ui_settings_upgrade_coupons_batch_worker', array($basic_coupon, $info));
+    $operations[] = array('commerce_coupon_ui_settings_upgrade_coupons_batch_worker', array($basic_coupon, $info));
   }
 
   $batch = array(
@@ -108,7 +111,7 @@ function _commerce_coupon_ui_settings_upgrade_coupon($basic_coupon, $info, $new_
   if (isset($info['bundles'][$new_type])) {
     field_attach_delete('commerce_coupon', $basic_coupon);
     $basic_coupon->type = $new_type;
-    foreach($info['bundles']['basic_coupon']['properties'] as $property_name => $property) {
+    foreach ($info['bundles']['basic_coupon']['properties'] as $property_name => $property) {
       if (!isset($info['bundles'][$new_type]['properties'][$property_name])) {
         unset($basic_coupon->$property_name);
       }

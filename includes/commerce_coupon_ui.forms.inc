@@ -69,8 +69,6 @@ function commerce_coupon_form_submit_delete(&$form, &$form_state) {
  * Submit callback for commerce_coupon_form().
  */
 function commerce_coupon_form_submit($form, &$form_state) {
-  global $user;
-
   $commerce_coupon = &$form_state['commerce_coupon'];
   $commerce_coupon->is_active = $form_state['values']['is_active'];
 
@@ -103,13 +101,7 @@ function commerce_coupon_ui_delete_form($form, &$form_state, $coupon) {
 
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
 
-  $form = confirm_form($form,
-          t('Are you sure you want to delete the coupon with code %code?', array('%code' => $coupon_wrapper->commerce_coupon_code->value())),
-          'admin/commerce/coupons',
-          '<p>' . t('Deleting this coupon cannot be undone.') . '</p>',
-          t('Delete'),
-          t('Cancel'),
-          'confirm'
+  $form = confirm_form($form, t('Are you sure you want to delete the coupon with code %code?', array('%code' => $coupon_wrapper->commerce_coupon_code->value())), 'admin/commerce/coupons', '<p>' . t('Deleting this coupon cannot be undone.') . '</p>', t('Delete'), t('Cancel'), 'confirm'
   );
 
   return $form;
@@ -286,13 +278,7 @@ function commerce_coupon_ui_coupon_type_delete_form($form, &$form_state, $coupon
 
   $form['#submit'][] = 'commerce_coupon_ui_coupon_type_delete_form_submit';
 
-  $form = confirm_form($form,
-    t('Are you sure you want to delete the %name coupon type?', array('%name' => $coupon_type->label)),
-    'admin/commerce/coupons/types',
-    '<p>' . t('This action cannot be undone.') . '</p>',
-    t('Delete'),
-    t('Cancel'),
-    'confirm'
+  $form = confirm_form($form, t('Are you sure you want to delete the %name coupon type?', array('%name' => $coupon_type->label)), 'admin/commerce/coupons/types', '<p>' . t('This action cannot be undone.') . '</p>', t('Delete'), t('Cancel'), 'confirm'
   );
 
   return $form;
