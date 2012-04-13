@@ -260,7 +260,6 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
   $line_item_wrapper->commerce_unit_price->amount = $amount * -1;
   $line_item_wrapper->commerce_unit_price->currency_code = $currency_code;
 
-
   // Add the base price to the components array.
   if (!commerce_price_component_load($line_item_wrapper->commerce_unit_price->value(), $price_component_name)) {
     $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(

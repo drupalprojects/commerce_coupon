@@ -248,16 +248,16 @@ function commerce_coupon_code_is_valid($code, $order) {
 /**
  * Redeem a coupon. For calculating the coupon value the rules engine is used.
  *
- * @param $commerce_coupon
+ * @param $coupon
  *   The coupon to redeem.
  * @param $order
  *   The order at which the coupon should be redeem.
  * @return void
  */
-function commerce_coupon_redeem_coupon($commerce_coupon, $order) {
+function commerce_coupon_redeem_coupon($coupon, $order) {
   global $user;
 
-  if (!isset($order->order_id) or !isset($commerce_coupon->coupon_id)) {
+  if (!isset($order->order_id) or !isset($coupon->coupon_id)) {
     drupal_set_message(t('Your coupon code cannot be redeem.'), 'error');
     return;
   }
@@ -267,7 +267,7 @@ function commerce_coupon_redeem_coupon($commerce_coupon, $order) {
   $log = db_select('commerce_coupon_log', 'c')
       ->fields('c')
       ->condition('order_id', $order->order_id, '=')
-      ->condition('coupon_id', $commerce_coupon->coupon_id, '=')
+      ->condition('coupon_id', $coupon->coupon_id, '=')
       //->condition('is_processed', 1, '=')
       ->execute()
       ->fetchAssoc();
@@ -280,14 +280,14 @@ function commerce_coupon_redeem_coupon($commerce_coupon, $order) {
   $log = commerce_coupon_log_create(array(
     'uid' => $user->uid,
     'order_id' => $order->order_id,
-    'coupon_id' => $commerce_coupon->coupon_id,
+    'coupon_id' => $coupon->coupon_id,
     'is_accepted' => TRUE,
       ));
   $log->save();
 
   // We invoke the rule. The defined action callback methods sets then the
   // coupon value appropriate.
-  rules_invoke_event('commerce_coupon_redeem', $commerce_coupon, $log, $order);
+  rules_invoke_event('commerce_coupon_redeem', $coupon, $log, $order);
 }
 
 /**
@@ -836,7 +836,7 @@ function commerce_coupon_commerce_price_component_type_info() {
 function commerce_coupon_commerce_line_item_type_info() {
   return array(
     'coupon' => array(
-      'type' => 'coupon',
+      'type' => 'commerce_coupon',
       'name' => t('Coupon'),
       'description' => t('Coupon line item for fixed coupon amounts.'),
       'add_form_submit_value' => t('Add coupon'),
@@ -933,7 +933,7 @@ function commerce_coupon_line_item_add_form_submit(&$line_item, $element, &$form
 }
 
 /**
- * Creates a new product line item populated with the proper product values.
+ * Creates a new coupon line item populated with the proper coupon values.
  *
  * @param $commerce_coupon
  *   The fully loaded coupon to add.
@@ -943,23 +943,23 @@ function commerce_coupon_line_item_add_form_submit(&$line_item, $element, &$form
  * @return
  *   Line item object with default values.
  */
-function commerce_coupon_line_item_new($commerce_coupon, $order_id) {
+function commerce_coupon_line_item_new($coupon, $order_id) {
   // Create the new line item.
   $line_item = entity_create('commerce_line_item', array(
-    'type' => 'coupon',
+    'type' => 'commerce_coupon',
     'order_id' => $order_id,
     'quantity' => 1,
       ));
 
-  $line_item->sku = $commerce_coupon->type . '_' . $commerce_coupon->coupon_id;
-  $commerce_coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $commerce_coupon);
-  $line_item->line_item_label = $commerce_coupon_wrapper->type->label->value() . ': ' . $commerce_coupon_wrapper->commerce_coupon_code->value();
+  $line_item->sku = $coupon->type . '_' . $coupon->coupon_id;
+  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+  $line_item->line_item_label = $coupon_wrapper->type->label->value() . ': ' . $coupon_wrapper->commerce_coupon_code->value();
 
   if (!($line_item instanceof EntityMetadataWrapper)) {
     $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
   }
 
-  $line_item_wrapper->commerce_coupon_reference = $commerce_coupon->coupon_id;
+  $line_item_wrapper->commerce_coupon_reference = $coupon->coupon_id;
 
   // Return the line item.
   return $line_item_wrapper->value();
@@ -1020,9 +1020,22 @@ function commerce_coupon_field_info() {
       'instance_settings' => array(),
       'default_widget' => 'commerce_coupon_autocomplete_widget',
       'default_formatter' => 'commerce_coupon_reference_code',
+      'property_type' => 'commerce_coupon',
+      'property_callbacks' => array('commerce_coupon_reference_property_info_callback'),
     ),
   );
 }
+
+/**
+ * Callback to alter the property info of the reference fields.
+ *
+ * @see commerce_coupon_field_info().
+ */
+function commerce_coupon_reference_property_info_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+  $property['options list'] = 'entity_metadata_field_options_list';
+}
+
 
 /**
  * Implements hook_field_formatter_info().
@@ -1074,7 +1087,7 @@ function commerce_coupon_field_formatter_view($entity_type, $object, $field, $in
 function commerce_coupon_field_widget_info() {
   $widgets = array();
 
-  // Define an autocomplete textfield widget for product referencing that works
+  // Define an autocomplete textfield widget for coupon referencing that works
   // like the Term Reference autocomplete widget.
   $widgets['commerce_coupon_autocomplete_widget'] = array(
     'label' => t('Coupon Autocomplete'),
