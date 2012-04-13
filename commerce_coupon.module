@@ -835,7 +835,7 @@ function commerce_coupon_commerce_price_component_type_info() {
  */
 function commerce_coupon_commerce_line_item_type_info() {
   return array(
-    'coupon' => array(
+    'commerce_coupon' => array(
       'type' => 'commerce_coupon',
       'name' => t('Coupon'),
       'description' => t('Coupon line item for fixed coupon amounts.'),
@@ -974,7 +974,7 @@ function commerce_coupon_line_item_new($coupon, $order_id) {
  */
 function commerce_coupon_configure_line_item() {
   $entity_type = 'commerce_line_item';
-  $bundle = 'coupon';
+  $bundle = 'commerce_coupon';
 
   // Look for or add the specified coupon code
   $field_name = 'commerce_coupon_reference';

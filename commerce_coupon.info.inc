@@ -78,7 +78,7 @@ function commerce_coupon_entity_property_info() {
     'schema field' => 'log_id',
   );
 
-  $properties['coupon'] = array(
+  $properties['commerce_coupon'] = array(
     'type' => 'commerce_coupon',
     'label' => t('Coupon', array(), array('context' => 'a drupal commerce coupon')),
     'description' => t('The associated coupon.'),
@@ -129,4 +129,21 @@ function commerce_coupon_entity_property_info() {
   );
 
   return $info;
+}
+
+/**
+ * Implements hook_entity_property_info_alter() on top of the Product module.
+ */
+function commerce_coupon_entity_property_info_alter(&$info) {
+  if (!empty($info['commerce_coupon']['bundles'])) {
+    $properties = array();
+
+    foreach ($info['commerce_coupon']['bundles'] as $bundle => $bundle_info) {
+      $bundle_info += array('properties' => array());
+      $properties += $bundle_info['properties'];
+    }
+
+    $info['commerce_coupon']['properties']['commerce_coupon_code'] = $properties['commerce_coupon_code'];
+    $info['commerce_coupon']['properties']['commerce_coupon_number_of_uses'] = $properties['commerce_coupon_number_of_uses'];
+  }
 }
