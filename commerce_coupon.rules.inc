@@ -122,24 +122,6 @@ function commerce_coupon_rules_action_info() {
     'base' => 'commerce_coupon_action_get_coupons_for_order',
   );
 
-  $actions['commerce_coupon_action_get_coupons_for_order'] = array(
-    'label' => t('Get coupons for order'),
-    'parameter' => array(
-      'commerce_order' => array(
-        'type' => 'commerce_order',
-        'label' => t('Commerce order'),
-      ),
-    ),
-    'provides' => array(
-      'order_coupons' => array(
-        'type' => 'list<commerce_coupon>',
-        'label' => 'Coupons attached to this order',
-      ),
-    ),
-    'group' => t('Commerce Coupon'),
-    'base' => 'commerce_coupon_action_get_coupons_for_order',
-  );
-
   $actions['commerce_coupon_action_create_coupon_line_item'] = array(
     'label' => t('Create coupon line item'),
     'parameter' => array(
