@@ -209,7 +209,7 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
 function commerce_coupon_code_is_valid($code, $order) {
   global $commerce_coupon_validation_error_message;
 
-  $commerce_coupon = commerce_coupon_load_by_code($code, TRUE);
+  $commerce_coupon = commerce_coupon_load_by_code($code);
 
   // if no such coupon found, the $code is invalid
   if (!is_object($commerce_coupon)) {
@@ -562,35 +562,22 @@ function commerce_coupon_load_multiple($commerce_coupon_ids = array(), $conditio
  * Loads a coupon by its coupon code.
  *
  * @param $code
- *   An code of a coupon
+ *   An code of a coupon.
  * @return
  *   A coupon object corresponding to the coupon code.
  */
-function commerce_coupon_load_by_code($code, $must_be_active = FALSE) {
+function commerce_coupon_load_by_code($code) {
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'commerce_coupon')
-      ->fieldCondition('commerce_coupon_code', 'value', $code, '=');
+  $result = $query->entityCondition('entity_type', 'commerce_coupon')
+      ->fieldCondition('commerce_coupon_code', 'value', $code, '=')
+      ->execute();
 
-
-  $commerce_coupon = $query->execute();
-
-  if ($commerce_coupon == NULL || !isset($commerce_coupon['commerce_coupon']) || !is_array($commerce_coupon['commerce_coupon'])) {
-    return NULL;
+  if (empty($result)) {
+    return;
   }
 
-  $commerce_coupon = reset($commerce_coupon['commerce_coupon']);
-
-  if (!isset($commerce_coupon) || !isset($commerce_coupon->coupon_id)) {
-    return NULL;
-  }
-
-  # @TODO: Find a better way to load the entity
-  $commerce_coupon = commerce_coupon_load($commerce_coupon->coupon_id);
-
-  if ($must_be_active && $commerce_coupon->is_active == FALSE) {
-    return NULL;
-  }
-  return $commerce_coupon;
+  $commerce_coupon = reset($result['commerce_coupon']);
+  return commerce_coupon_load($commerce_coupon->coupon_id);
 }
 
 /**
@@ -616,6 +603,48 @@ function commerce_coupon_get_coupons_by_order($order_id) {
   }
 
   return commerce_coupon_load_multiple($commerce_coupon_ids, array('is_active' => TRUE));
+}
+
+/**
+ * Removes a coupon from the order context. It also cleans the coupon log
+ * references.
+ *
+ * @param $order
+ *   Order object to affect in the coupon removal.
+ * @param $coupon
+ *   Coupon object to remove.
+ */
+function commerce_coupon_remove_coupon_from_order($order, $coupon) {
+  // Make a EFQ to get coupon line items in that order that match to the coupon.
+  $query = new EntityFieldQuery();
+  $result = $query->entityCondition('entity_type', 'commerce_line_item')
+      ->propertyCondition('order_id', $order->order_id)
+      ->propertyCondition('type', 'commerce_coupon')
+      ->fieldCondition('commerce_coupon_reference', 'value', $coupon->coupon_id, '=')
+      ->execute();
+
+  if (empty($result)) {
+    return;
+  }
+
+  $line_item_ids = array_keys($result['commerce_line_item']);
+
+  if (!empty($line_item_ids)) {
+    // First remove the line items from the order and save it to avoid
+    // conflicts.
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    foreach ($order_wrapper->commerce_line_items as $delta => $line_item_wrapper) {
+      if (in_array($line_item_wrapper->line_item_id->value(), $line_item_ids)) {
+        $order_wrapper->commerce_line_items->offsetUnset($delta);
+      }
+    }
+    commerce_order_save($order);
+    commerce_line_item_delete_multiple($line_item_ids);
+  }
+
+  // Also delete the coupon log.
+  $coupon_log = commerce_coupon_log_load_by_order_and_coupon($order->order_id, $coupon->coupon_id);
+  commerce_coupon_log_delete($coupon_log->log_id);
 }
 
 /**
@@ -646,8 +675,8 @@ function commerce_coupon_save($commerce_coupon) {
 /**
  * Deletes a coupon.
  *
- * @param $commerce_coupon
- *   CommerceCoupon object to delete
+ * @param $commerce_coupon_idd
+ *   Id of the coupon to delete.
  * @return void
  */
 function commerce_coupon_delete($commerce_coupon_id) {
@@ -710,7 +739,7 @@ function commerce_coupon_code_exists($code) {
 
   $result = $query->execute();
 
-  if (!is_array($result) || count($result) <= 0) {
+  if (empty($result)) {
     return FALSE;
   }
   return TRUE;
@@ -741,6 +770,38 @@ function commerce_coupon_code_is_active($code) {
     return FALSE;
   }
   return TRUE;
+}
+
+/**
+ * Implements hook_commerce_order_delete().
+ *
+ * Delete all coupon logs related with the order.
+ */
+function commerce_coupon_commerce_order_delete($order) {
+  $coupons = commerce_coupon_get_coupons_by_order($order->order_id);
+  if (!empty($coupons)) {
+    foreach ($coupons as $coupon) {
+      $coupon_log = commerce_coupon_log_load_by_order_and_coupon($order->order_id, $coupon->coupon_id);
+      commerce_coupon_log_delete($coupon_log->log_id);
+    }
+  }
+}
+
+/**
+ * Fetch a coupon log object.
+ *
+ * @param $coupon_log_id
+ *   Integer specifying the coupon id.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   A fully-loaded commerce_coupon_log object or FALSE if it cannot be loaded.
+ *
+ * @see commerce_coupon_log_load_multiple()
+ */
+function commerce_coupon_log_load($coupon_log_id, $reset = FALSE) {
+  $coupon_logs = commerce_coupon_log_load_multiple(array($coupon_log_id), array(), $reset);
+  return reset($coupon_logs);
 }
 
 /**
@@ -811,6 +872,27 @@ function commerce_coupon_log_create(array $values) {
   $log = new CommerceCouponLog($values);
   $log->created = REQUEST_TIME;
   return $log;
+}
+
+/**
+ * Deletes a coupon log.
+ *
+ * @param $commerce_coupon_log_id
+ *   Id of the coupon to delete
+ * @return void
+ */
+function commerce_coupon_log_delete($coupon_log_id) {
+  return commerce_coupon_log_delete_multiple(array($coupon_log_id));
+}
+
+/**
+ * Delete multiple coupon logs.
+ *
+ * @param $commerce_coupon_log_ids
+ *   An array of coupon log IDs.
+ */
+function commerce_coupon_log_delete_multiple(array $coupon_log_ids) {
+  return entity_get_controller('commerce_coupon_log')->delete($coupon_log_ids);
 }
 
 /**

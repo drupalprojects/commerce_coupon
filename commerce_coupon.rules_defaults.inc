@@ -35,7 +35,7 @@ function commerce_coupon_default_rules_configuration() {
     'type' => 'error',
   ));
   $rule->action('commerce_coupon_action_is_invalid_coupon', array());
-  $rules['commerce_coupon_basic_validate_uses_of_coupon_component'] = $rule;
+  $rules['commerce_coupon_validate_uses_of_coupon_component'] = $rule;
 
   // Reaction on the validation event for check uses of coupons:
   $rule = rules_reaction_rule();
@@ -46,11 +46,33 @@ function commerce_coupon_default_rules_configuration() {
       ->event('commerce_coupon_validate')
       ->condition('entity_has_field', array('entity:select' => 'coupon', 'field' => 'commerce_coupon_number_of_uses'))
       ->action('commerce_coupon_action_get_coupon_uses', array('commerce_coupon:select' => 'coupon'))
-      ->action('component_commerce_coupon_basic_validate_uses_of_coupon_component', array(
+      ->action('component_commerce_coupon_validate_uses_of_coupon_component', array(
         'commerce_coupon:select' => 'coupon',
         'number_of_redemptions:select' => 'number-of-uses'
       ));
-  $rules['commerce_coupon_basic_validate_uses_of_coupon'] = $rule;
+  $rules['commerce_coupon_validate_uses_of_coupon'] = $rule;
+
+  // When removing a product from the cart, trigger deleting the coupon.
+  $rule = rules_reaction_rule();
+  $rule->label = t('Remove coupons from empty carts');
+  $rule->active = TRUE;
+
+  $rule
+      ->event('commerce_cart_product_remove')
+      ->condition('commerce_order_compare_total_product_quantity', array('entity:select' => 'commerce_order', 'operator' => '=', 'value' => 0))
+      ->action('commerce_coupon_action_get_coupons_for_order', array('entity:select' => 'commerce_order', 'order_coupons' => 'order_coupons'));
+
+  $loop = rules_loop(array(
+    'list:select' => 'order-coupons',
+    'item:var' => 'current_coupon',
+    'item:label' => t('Current coupon'),
+    'item:type' => 'commerce_coupon'));
+  $loop->action('commerce_coupon_action_remove_coupon_from_order', array(
+    'commerce_order:select' => 'commerce_order',
+    'commerce_coupon:select' => 'current-coupon'));
+
+  $rule->action($loop);
+  $rules['commerce_coupon_remove_coupons_from_empty_carts'] = $rule;
 
   return $rules;
 }
