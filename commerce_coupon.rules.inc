@@ -275,6 +275,6 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
   return array('commerce_coupon_line_item' => $line_item);
 }
 
-function commerce_coupon_action_get_coupon_uses($commerce_coupon) {
-  return array('number_of_uses' => commerce_coupon_get_number_of_uses($commerce_coupon->coupon_id));
+function commerce_coupon_action_get_coupon_uses($coupon) {
+  return array('number_of_uses' => commerce_coupon_get_number_of_uses($coupon->coupon_id));
 }

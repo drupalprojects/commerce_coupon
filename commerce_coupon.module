@@ -819,15 +819,37 @@ function commerce_coupon_log_create(array $values) {
 function commerce_coupon_commerce_price_component_type_info() {
   $components = array();
 
-  // Add a price component type for each tax rate that specifies it.
-  foreach (commerce_coupon_get_types() as $type => $commerce_coupon_type) {
-    $components['commerce_coupon_' . $type] = array(
-      'title' => $commerce_coupon_type->label,
-      'display_title' => $commerce_coupon_type->label,
+  $coupons = commerce_coupon_load_multiple(array(), array('is_active' => TRUE));
+
+  // Add a price component type per each coupon.
+  foreach ($coupons as $coupon) {
+    $name = commerce_coupon_type_get_name($coupon->type);
+    $coupon_machine_name = commerce_coupon_machine_name_code($coupon);
+    $components[$coupon->type . '_' . $coupon_machine_name] = array(
+      'title' => $name,
+      'display_title' => $name,
+      'coupon_type' => $coupon->type,
+      'coupon_code' => $coupon_machine_name,
     );
   }
 
   return $components;
+}
+
+/**
+ * Generates a machine name for a coupon code.
+ *
+ * @param $coupon
+ *   A commerce coupon object
+ * @retrun string
+ *   A generated machine name for the coupon code.
+ */
+function commerce_coupon_machine_name_code($coupon) {
+  $coupon_code = $coupon->commerce_coupon_code[LANGUAGE_NONE][0]['value'];
+  // Set the pattern replacement to the default one that drupal uses for
+  // machine names.
+  // @see form_process_machine_name
+  return preg_replace('/_+/', '_', preg_replace('/[^a-z0-9]/', '_', strtolower($coupon_code)));
 }
 
 /**
@@ -1035,7 +1057,6 @@ function commerce_coupon_reference_property_info_callback(&$info, $entity_type, 
   $property = &$info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
   $property['options list'] = 'entity_metadata_field_options_list';
 }
-
 
 /**
  * Implements hook_field_formatter_info().
