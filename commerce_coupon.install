@@ -170,7 +170,7 @@ function commerce_coupon_schema() {
 /**
  * Implements hook_field_schema().
  */
-function commerce_coupon_reference_field_schema($field) {
+function commerce_coupon_field_schema($field) {
   return array(
     'columns' => array(
       'coupon_id' => array(
