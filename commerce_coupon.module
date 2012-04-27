@@ -61,7 +61,6 @@ function commerce_coupon_entity_info() {
     'exportable' => FALSE,
     'entity keys' => array(
       'id' => 'type',
-      'name' => 'type',
       'label' => 'label',
     ),
     'access callback' => 'commerce_coupon_type_access',
@@ -306,28 +305,28 @@ function commerce_coupon_type_create(array $values = array()) {
 /**
  * Gets an array of all coupon types, keyed by the type name.
  *
- * @param $type_name
+ * @param $coupon_type_name
  *   If set, the type with the given name is returned.
  * @return CouponType[]
  *   Depending whether $type isset, an array of coupon types or a single one.
  */
-function commerce_coupon_get_types($type_name = NULL) {
-  $types = entity_load('commerce_coupon_type', isset($type_name) ? array($type_name) : FALSE);
-  return isset($type_name) ? $types[$type_name] : $types;
+function commerce_coupon_get_types($coupon_type_name = NULL) {
+  $types = entity_load('commerce_coupon_type', isset($coupon_type_name) ? array($coupon_type_name) : FALSE);
+  return isset($coupon_type_name) ? $types[$coupon_type_name] : $types;
 }
 
 /**
  * Menu argument loader; Load a coupon type by string.
  *
- * @param $type
+ * @param $coupon_type_name
  *   The machine-readable name of a coupon type to load.
  * @return
  *   A commerce coupon type array or FALSE if $type does not exist.
  */
-function commerce_coupon_type_load($type) {
-  $type = strtr($type, array('-' => '_'));
+function commerce_coupon_type_load($coupon_type_name) {
+  $coupon_type_name = strtr($coupon_type_name, array('-' => '_'));
   $coupon_types = commerce_coupon_get_types();
-  return !empty($coupon_types[$type]) ? $coupon_types[$type] : FALSE;
+  return !empty($coupon_types[$coupon_type_name]) ? $coupon_types[$coupon_type_name] : FALSE;
 }
 
 /**
@@ -354,10 +353,61 @@ function commerce_coupon_type_save(CommerceCouponType $type, $reset = FALSE) {
 }
 
 /**
- * Deletes a coupon type from.
+ * Deletes a coupon type.
+ *
+ * @param $coupon_type
+ *   Machine name of the coupon type to delete
+ * @return void
  */
-function commerce_coupon_type_delete(CommerceCouponType $type) {
-  $type->delete();
+function commerce_coupon_type_delete($coupon_type_name) {
+  return commerce_coupon_type_delete_multiple(array($coupon_type_name));
+}
+
+/**
+ * Delete multiple coupon types.
+ *
+ * @param $commerce_coupon_type_names
+ *   An array of coupon type machine names.
+ */
+function commerce_coupon_type_delete_multiple(array $coupon_type_names) {
+  return entity_get_controller('commerce_coupon_type')->delete($coupon_type_names);
+}
+
+/**
+ * Disables a coupon type and set as inactive all the coupons from the type.
+ *
+ * @param string $coupon_type_name
+ * A machine name for the coupon type to disable.
+ */
+function commerce_coupon_type_disable($coupon_type_name) {
+  $coupon_type = commerce_coupon_type_load($coupon_type_name);
+  if (!empty($coupon_type)) {
+    // Disable the coupon type.
+    $coupon_type->status = 0;
+    commerce_coupon_type_save($coupon_type, TRUE);
+    // Also disable the coupons for the type.
+    $coupons = commerce_coupon_load_multiple(array(), array('type' => $coupon_type_name));
+    foreach ($coupons as $coupon) {
+      $coupon->is_active = 0;
+      commerce_coupon_save($coupon);
+    }
+    menu_rebuild();
+  }
+}
+
+/**
+ * Enables a coupon type.
+ *
+ * @param string $coupon_type_name
+ * A machine name for the coupon type to disable.
+ */
+function commerce_coupon_type_enable($coupon_type_name) {
+  $coupon_type = commerce_coupon_type_load($coupon_type_name);
+  if (!empty($coupon_type)) {
+    $coupon_type->status = 1;
+    commerce_coupon_type_save($coupon_type, TRUE);
+    menu_rebuild();
+  }
 }
 
 /**
@@ -620,7 +670,7 @@ function commerce_coupon_remove_coupon_from_order($order, $coupon) {
   $result = $query->entityCondition('entity_type', 'commerce_line_item')
       ->propertyCondition('order_id', $order->order_id)
       ->propertyCondition('type', 'commerce_coupon')
-      ->fieldCondition('commerce_coupon_reference', 'value', $coupon->coupon_id, '=')
+      ->fieldCondition('commerce_coupon_reference', 'coupon_id', $coupon->coupon_id, '=')
       ->execute();
 
   if (empty($result)) {
@@ -878,7 +928,7 @@ function commerce_coupon_log_create(array $values) {
  * Deletes a coupon log.
  *
  * @param $commerce_coupon_log_id
- *   Id of the coupon to delete
+ *   Id of the coupon log to delete.
  * @return void
  */
 function commerce_coupon_log_delete($coupon_log_id) {
@@ -945,9 +995,6 @@ function commerce_coupon_commerce_line_item_type_info() {
       'description' => t('Coupon line item for fixed coupon amounts.'),
       'add_form_submit_value' => t('Add coupon'),
       'base' => 'commerce_coupon_line_item',
-      'callbacks' => array(
-        'configuration' => 'commerce_coupon_configure_line_item',
-      ),
     ),
   );
 }
@@ -960,9 +1007,7 @@ function commerce_coupon_line_item_title($line_item) {
 
   $fields = $line_item_wrapper->getPropertyInfo();
   if (isset($fields['commerce_coupon_reference']) && isset($line_item_wrapper->commerce_coupon_reference)) {
-    $commerce_coupon_id = $line_item_wrapper->commerce_coupon_reference->value();
-    $commerce_coupon = commerce_coupon_load($commerce_coupon_id);
-    $commerce_coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $commerce_coupon);
+    $commerce_coupon_wrapper = $line_item_wrapper->commerce_coupon_reference;
     $type = commerce_coupon_get_types($commerce_coupon_wrapper->value()->type);
     if (is_object($type)) {
       return $type->label . ': ' . $commerce_coupon_wrapper->commerce_coupon_code->value();
@@ -1076,7 +1121,7 @@ function commerce_coupon_line_item_new($coupon, $order_id) {
  * module is enabled. It invokes this function using the configuration_callback
  * as specified above.
  */
-function commerce_coupon_configure_line_item() {
+function commerce_coupon_line_item_configuration() {
   $entity_type = 'commerce_line_item';
   $bundle = 'commerce_coupon';
 
@@ -1088,7 +1133,7 @@ function commerce_coupon_configure_line_item() {
   if (empty($field)) {
     $field = array(
       'field_name' => $field_name,
-      'type' => 'text',
+      'type' => 'commerce_coupon_reference',
       'cardinality' => 1,
       'entity_types' => array($entity_type),
       'translatable' => FALSE,

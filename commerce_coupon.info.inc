@@ -40,12 +40,6 @@ function commerce_coupon_entity_property_info() {
 
   // Add metadata anpit coupon type properties.
   $properties = &$info['commerce_coupon_type']['properties'];
-  $properties['type_id'] = array(
-    'type' => 'integer',
-    'label' => t('Type ID', array(), array('context' => 'a drupal commerce coupon')),
-    'description' => t('The internal numeric ID of the coupon type.'),
-    'schema field' => 'type_id',
-  );
 
   $properties['type'] = array(
     'type' => 'token',

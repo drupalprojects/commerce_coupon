@@ -57,43 +57,36 @@ function commerce_coupon_schema() {
   $schema['commerce_coupon_type'] = array(
     'description' => 'Stores information about all defined coupon types.',
     'fields' => array(
-  'type_id' => array(
-    'type' => 'serial',
-    'not null' => TRUE,
-    'description' => 'Primary Key: Unique coupon type ID.',
-  ),
-  'type' => array(
-    'description' => 'The machine-readable name of this coupon type.',
-    'type' => 'varchar',
-    'length' => 32,
-    'not null' => TRUE,
-  ),
-  'label' => array(
-    'description' => 'The human-readable name of this coupon type.',
-    'type' => 'varchar',
-    'length' => 255,
-    'not null' => TRUE,
-    'default' => '',
-  ),
-  'weight' => array(
-    'type' => 'int',
-    'not null' => TRUE,
-    'default' => 0,
-    'size' => 'tiny',
-    'description' => 'The weight of this coupon type in relation to others.',
-  ),
-  'data' => array(
-    'type' => 'text',
-    'not null' => FALSE,
-    'size' => 'big',
-    'serialize' => TRUE,
-    'description' => 'A serialized array of additional data related to this coupon type.',
-  ),
+      'type' => array(
+        'description' => 'The machine-readable name of this coupon type.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'label' => array(
+        'description' => 'The human-readable name of this coupon type.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'weight' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+        'description' => 'The weight of this coupon type in relation to others.',
+      ),
+      'data' => array(
+        'type' => 'text',
+        'not null' => FALSE,
+        'size' => 'big',
+        'serialize' => TRUE,
+        'description' => 'A serialized array of additional data related to this coupon type.',
+      ),
     ) + commerce_coupon_exportable_schema_fields(),
-    'primary key' => array('type_id'),
-    'unique keys' => array(
-      'type' => array('type'),
-    ),
+    'primary key' => array('type'),
   );
 
   $schema['commerce_coupon_log'] = array(
@@ -164,6 +157,7 @@ function commerce_coupon_schema() {
       ),
     ),
   );
+
   return $schema;
 }
 
@@ -171,7 +165,7 @@ function commerce_coupon_schema() {
  * Implements hook_field_schema().
  */
 function commerce_coupon_field_schema($field) {
-  if($field['field_name'] == 'commerce_coupon_reference'){
+  if ($field['field_name'] == 'commerce_coupon_reference') {
     return array(
       'columns' => array(
         'coupon_id' => array(
@@ -234,11 +228,12 @@ function commerce_coupon_install() {
 function commerce_coupon_uninstall() {
   // Make sure commerce.module is loaded so that commerce_delete_instances()
   // is available.
-  drupal_load('module', 'commerce');
+  module_load_include('module', 'commerce');
 
   // Delete all fields that belong to the module's entity types.
   commerce_delete_instances('commerce_coupon_log');
   commerce_delete_instances('commerce_coupon');
+  commerce_delete_instances('commerce_coupon_type');
   commerce_delete_fields('commerce_coupon_reference');
 }
 
@@ -247,4 +242,44 @@ function commerce_coupon_uninstall() {
  */
 function commerce_coupon_update_7001(&$sandbox) {
   // The update system is going to flush all caches anyway, so nothing to do.
+}
+
+/**
+ * Implements hook_update_N().
+ */
+function commerce_coupon_update_7002(&$sandbox) {
+  // Remove type_id from coupon type table and set type as primary key.
+  db_drop_field('commerce_coupon_type', 'type_id');
+  db_drop_unique_key('commerce_coupon_type', 'type');
+  db_drop_primary_key('commerce_coupon_type');
+  db_add_primary_key('commerce_coupon_type', array('type'));
+
+  // Update commerce_coupon_reference not to be a text field anymore.
+  $query = new EntityFieldQuery;
+  $result = $query
+      ->entityCondition('entity_type', 'commerce_line_item')
+      ->propertyCondition('type', 'commerce_coupon')
+      ->execute();
+
+  // Get all line items from the system.
+  $line_items = commerce_line_item_load_multiple(array_keys($result['commerce_line_item']));
+
+  // Store an array with the line item id and the coupon id.
+  $values = array();
+  foreach ($line_items as $line_item) {
+    $value = array('line_item_id' => $line_item->line_item_id, 'coupon_id' => $line_item->commerce_coupon_reference[LANGUAGE_NONE][0]['value']);
+    $values[] = $value;
+  }
+
+  // Remove old field and force a new creation, no way to rename it.
+  // see http://drupal.org/node/1201898
+  field_delete_field('commerce_coupon_reference');
+  commerce_coupon_line_item_configuration();
+
+  // Finally restore the line item values.
+  foreach ($values as $value) {
+    $line_item = commerce_line_item_load($value['line_item_id']);
+    $line_item->commerce_coupon_reference[LANGUAGE_NONE][0]['coupon_id'] = $value['coupon_id'];
+    commerce_line_item_save($line_item);
+  }
 }

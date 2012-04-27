@@ -36,15 +36,17 @@ function commerce_coupon_ui_menu() {
   );
 
   foreach (commerce_coupon_get_types() as $type => $coupon_type) {
-    $items['admin/commerce/coupons/add/' . strtr($type, array('_' => '-'))] = array(
-      'title' => 'Create !name',
-      'title arguments' => array('!name' => $coupon_type->label),
-      'page callback' => 'drupal_get_form',
-      'page callback' => 'commerce_coupon_ui_coupon_form_wrapper',
-      'page arguments' => array(commerce_coupon_create($type)),
-      'access callback' => 'commerce_coupon_access',
-      'access arguments' => array('create', $type),
-    );
+    if (!empty($coupon_type->status)) {
+      $items['admin/commerce/coupons/add/' . strtr($type, array('_' => '-'))] = array(
+        'title' => 'Create !name',
+        'title arguments' => array('!name' => $coupon_type->label),
+        'page callback' => 'drupal_get_form',
+        'page callback' => 'commerce_coupon_ui_coupon_form_wrapper',
+        'page arguments' => array(commerce_coupon_create($type)),
+        'access callback' => 'commerce_coupon_access',
+        'access arguments' => array('create', $type),
+      );
+    }
   }
 
   // Edit & Delete coupon forms.
@@ -93,31 +95,33 @@ function commerce_coupon_ui_menu() {
     'file' => 'includes/commerce_coupon_ui.forms.inc',
   );
   foreach (commerce_coupon_get_types() as $type => $coupon_type) {
-    // Convert underscores to hyphens for the menu item argument.
-    $type_arg = strtr($type, '_', '-');
+    if (!empty($coupon_type->status)) {
+      // Convert underscores to hyphens for the menu item argument.
+      $type_arg = strtr($type, '_', '-');
 
-    $items['admin/commerce/coupons/types/' . $type_arg] = array(
-      'title' => $coupon_type->label,
-      'page callback' => 'drupal_get_form',
-      'page arguments' => array('commerce_coupon_ui_type_form', $coupon_type),
-      'access arguments' => array('administer coupon types'),
-      'file' => 'includes/commerce_coupon_ui.forms.inc',
-    );
-    $items['admin/commerce/coupons/types/' . $type_arg . '/edit'] = array(
-      'title' => 'Edit',
-      'access arguments' => array('administer coupon types'),
-      'type' => MENU_DEFAULT_LOCAL_TASK,
-      'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-    );
-    $items['admin/commerce/coupons/types/' . $type_arg . '/delete'] = array(
-      'title' => 'Delete',
-      'page callback' => 'commerce_coupon_ui_coupon_type_delete_form_wrapper',
-      'page arguments' => array($coupon_type),
-      'access arguments' => array('administer coupon types'),
-      'type' => MENU_LOCAL_TASK,
-      'context' => MENU_CONTEXT_INLINE,
-      'weight' => 10,
-    );
+      $items['admin/commerce/coupons/types/' . $type_arg] = array(
+        'title' => $coupon_type->label,
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('commerce_coupon_ui_type_form', $coupon_type),
+        'access arguments' => array('administer coupon types'),
+        'file' => 'includes/commerce_coupon_ui.forms.inc',
+      );
+      $items['admin/commerce/coupons/types/' . $type_arg . '/edit'] = array(
+        'title' => 'Edit',
+        'access arguments' => array('administer coupon types'),
+        'type' => MENU_DEFAULT_LOCAL_TASK,
+        'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+      );
+      $items['admin/commerce/coupons/types/' . $type_arg . '/delete'] = array(
+        'title' => 'Delete',
+        'page callback' => 'commerce_coupon_ui_coupon_type_delete_form_wrapper',
+        'page arguments' => array($coupon_type),
+        'access arguments' => array('administer coupon types'),
+        'type' => MENU_LOCAL_TASK,
+        'context' => MENU_CONTEXT_INLINE,
+        'weight' => 10,
+      );
+    }
   }
 
   // Add a general settings form.
@@ -143,9 +147,15 @@ function commerce_coupon_ui_menu_alter(&$items) {
   foreach (commerce_coupon_get_types() as $type => $coupon_type) {
     // Convert underscores to hyphens for the menu item argument.
     $type_arg = strtr($type, '_', '-');
-
-    $items['admin/commerce/coupons/types/' . $type_arg . '/fields']['context'] = MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE;
-    $items['admin/commerce/coupons/types/' . $type_arg . '/display']['context'] = MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE;
+    if (!empty($coupon_type->status)) {
+      $items['admin/commerce/coupons/types/' . $type_arg . '/fields']['context'] = MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE;
+      $items['admin/commerce/coupons/types/' . $type_arg . '/display']['context'] = MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE;
+    }
+    else {
+      // Hide the menu if the coupon type is not enabled.
+      $items['admin/commerce/coupons/types/' . $type_arg . '/fields']['access callback'] = FALSE;
+      $items['admin/commerce/coupons/types/' . $type_arg . '/display']['access callback'] = FALSE;
+    }
   }
 }
 
@@ -298,14 +308,16 @@ function commerce_coupon_ui_types_overview() {
 
   // Loop through all defined product types.
   foreach (commerce_coupon_get_types() as $type => $coupon_type) {
-    // Build the operation links for the current product type.
-    $links = menu_contextual_links('commerce-coupon-type', 'admin/commerce/coupons/types', array(strtr($type, array('_' => '-'))));
+    if (!empty($coupon_type->status)) {
+      // Build the operation links for the current product type.
+      $links = menu_contextual_links('commerce-coupon-type', 'admin/commerce/coupons/types', array(strtr($type, array('_' => '-'))));
 
-    // Add the product type's row to the table's rows array.
-    $rows[] = array(
-      theme('coupon_type_admin_overview', array('coupon_type' => $coupon_type)),
-      theme('links', array('links' => $links, 'attributes' => array('class' => 'links inline operations'))),
-    );
+      // Add the product type's row to the table's rows array.
+      $rows[] = array(
+        theme('coupon_type_admin_overview', array('coupon_type' => $coupon_type)),
+        theme('links', array('links' => $links, 'attributes' => array('class' => 'links inline operations'))),
+      );
+    }
   }
 
   // If no product types are defined...

@@ -45,6 +45,13 @@ function commerce_coupon_form($form, &$form_state, $coupon, $op = 'edit') {
  * Form API submit callback for the type form.
  */
 function commerce_coupon_form_validate(&$form, &$form_state) {
+  $coupon = &$form_state['commerce_coupon'];
+  $coupon_type = commerce_coupon_type_load($coupon->type);
+  // Don't allow to enable a coupon from a coupon type non enabled.
+  if (empty($coupon_type->status) && $coupon->is_active == 1) {
+    form_set_error('is_active', t('You can\'t enable a coupon of a coupon type that is disabled'));
+  }
+
   if ($form_state['op'] == 'add') {
     $lang_code = field_language('commerce_coupon', $form_state['commerce_coupon'], 'commerce_coupon_code');
     if (isset($form_state['values']['commerce_coupon_code'][$lang_code][0]['value'])) {
@@ -290,7 +297,7 @@ function commerce_coupon_ui_coupon_type_delete_form($form, &$form_state, $coupon
 function commerce_coupon_ui_coupon_type_delete_form_submit($form, &$form_state) {
   $coupon_type = $form_state['coupon_type'];
 
-  commerce_coupon_type_delete($coupon_type);
+  commerce_coupon_type_delete($coupon_type->type);
 
   drupal_set_message(t('The coupon type %name has been deleted.', array('%name' => $coupon_type->label)));
   watchdog('commerce_product', 'Deleted product type %name.', array('%name' => $coupon_type->label), WATCHDOG_NOTICE);
