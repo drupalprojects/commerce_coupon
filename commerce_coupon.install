@@ -171,24 +171,26 @@ function commerce_coupon_schema() {
  * Implements hook_field_schema().
  */
 function commerce_coupon_field_schema($field) {
-  return array(
-    'columns' => array(
-      'coupon_id' => array(
-        'type' => 'int',
-        'length' => 11,
-        'not null' => TRUE,
+  if($field['field_name'] == 'commerce_coupon_reference'){
+    return array(
+      'columns' => array(
+        'coupon_id' => array(
+          'type' => 'int',
+          'length' => 11,
+          'not null' => TRUE,
+        ),
       ),
-    ),
-    'indexes' => array(
-      'coupon_id' => array('coupon_id'),
-    ),
-    'foreign keys' => array(
-      'coupon_id' => array(
-        'table' => 'commerce_coupon',
-        'columns' => array('coupon_id' => 'coupon_id'),
+      'indexes' => array(
+        'coupon_id' => array('coupon_id'),
       ),
-    ),
-  );
+      'foreign keys' => array(
+        'coupon_id' => array(
+          'table' => 'commerce_coupon',
+          'columns' => array('coupon_id' => 'coupon_id'),
+        ),
+      ),
+    );
+  }
 }
 
 function commerce_coupon_exportable_schema_fields($module_col = 'module', $status_col = 'status') {
@@ -237,6 +239,7 @@ function commerce_coupon_uninstall() {
   // Delete all fields that belong to the module's entity types.
   commerce_delete_instances('commerce_coupon_log');
   commerce_delete_instances('commerce_coupon');
+  commerce_delete_fields('commerce_coupon_reference');
 }
 
 /**
