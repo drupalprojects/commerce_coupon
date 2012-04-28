@@ -246,6 +246,7 @@ function commerce_coupon_update_7001(&$sandbox) {
 
 /**
  * Implements hook_update_N().
+ * Remove coupon type id field and update coupon reference field.
  */
 function commerce_coupon_update_7002(&$sandbox) {
   // Remove type_id from coupon type table and set type as primary key.
@@ -282,4 +283,20 @@ function commerce_coupon_update_7002(&$sandbox) {
     $line_item->commerce_coupon_reference[LANGUAGE_NONE][0]['coupon_id'] = $value['coupon_id'];
     commerce_line_item_save($line_item);
   }
+}
+
+/**
+ * Implements hook_update_N().
+ * Set the coupon reference as non locked.
+ */
+function commerce_coupon_update_7003(&$sandbox) {
+  $field = array(
+    'field_name' => 'commerce_coupon_reference',
+    'type' => 'commerce_coupon_reference',
+    'cardinality' => 1,
+    'entity_types' => array('commerce_line_item'),
+    'translatable' => FALSE,
+    'settings' => array(),
+  );
+  field_update_field($field);
 }
