@@ -103,19 +103,28 @@ function commerce_coupon_ui_delete_form($form, &$form_state, $coupon) {
 
   // Ensure this include file is loaded when the form is rebuilt from the cache.
   $form_state['build_info']['files']['form'] = drupal_get_path('module', 'commerce_coupon') . '/includes/commerce_coupon_ui.forms.inc';
-
   $form['#submit'][] = 'commerce_coupon_ui_coupon_delete_form_submit';
-
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+  $form = confirm_form($form, t('Are you sure you want to delete the coupon with code %code?', array('%code' => $coupon_wrapper->commerce_coupon_code->value())), 'admin/commerce/coupons', '<p>' . t('Deleting this coupon cannot be undone.') . '</p>', t('Delete'), t('Cancel'), 'confirm');
 
-  $form = confirm_form($form, t('Are you sure you want to delete the coupon with code %code?', array('%code' => $coupon_wrapper->commerce_coupon_code->value())), 'admin/commerce/coupons', '<p>' . t('Deleting this coupon cannot be undone.') . '</p>', t('Delete'), t('Cancel'), 'confirm'
-  );
+  // Get the orders referenced by the coupon.
+  $query = new EntityFieldQuery();
+  $query
+    ->entityCondition('entity_type', 'commerce_order', '=')
+    ->fieldCondition('commerce_coupon_order_reference', 'target_id', $coupon->coupon_id, '=');
+  $result = $query->execute();
+
+  if (!empty($result)) {
+    $description = t('This coupon is referenced by an order and therefore cannot be deleted. Disable it instead.');
+    $form['description']['#markup'] .= '<p>' . $description . '</p>';
+    $form['actions']['submit']['#disabled'] = TRUE;
+  }
 
   return $form;
 }
 
 /**
- * Submit callback for commerce_product_product_delete_form().
+ * Submit callback for commerce_coupon_ui_coupon_delete_form().
  */
 function commerce_coupon_ui_coupon_delete_form_submit($form, &$form_state) {
   $coupon = $form_state['commerce_coupon'];

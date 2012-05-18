@@ -704,6 +704,46 @@ function commerce_coupon_delete_multiple(array $commerce_coupon_ids) {
 }
 
 /**
+ * Determines whether or not the give coupon can be deleted.
+ *
+ * @param $coupon
+ *   The coupon to be checked for deletion.
+ *
+ * @return
+ *   Boolean indicating whether or not the coupon can be deleted.
+ *
+ * @see commerce_product_can_delete
+ */
+function commerce_coupon_can_delete($coupon) {
+  // Return FALSE if the given coupon does not have an ID; it need not be
+  // deleted, which is functionally equivalent to cannot be deleted as far as
+  // code depending on this function is concerned.
+  if (empty($coupon->coupon_id)) {
+    return FALSE;
+  }
+
+  // If any module implementing hook_commerce_coupon_can_delete() returns FALSE
+  // the coupon cannot be deleted. Return TRUE if none return FALSE.
+  return !in_array(FALSE, module_invoke_all('commerce_coupon_can_delete', $coupon));
+}
+
+/**
+ * Implements commerce_coupon_can_delete().
+ */
+function commerce_coupon_commerce_coupon_can_delete($coupon) {
+  // Use EntityFieldQuery to look for orders referencing this coupon and don't
+  // allow the delete to occur if one exists.
+  $query = new EntityFieldQuery();
+
+  $query
+    ->entityCondition('entity_type', 'commerce_order', '=')
+    ->fieldCondition('commerce_coupon_order_reference', 'target_id', $coupon->coupon_id, '=')
+    ->count();
+
+  return $query->execute() == 0;
+}
+
+/**
  * Checks if a given coupon code exists.
  *
  * @param $code

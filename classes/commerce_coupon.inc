@@ -50,7 +50,7 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
         $entity->created = REQUEST_TIME;
       }
     }
-    
+
     // Generate a code if no is set:
     $code = field_get_items('commerce_coupon', $entity, 'commerce_coupon_code');
     if (!isset($code) || empty($code)) {
@@ -58,5 +58,39 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
     }
     return parent::save($entity);
   }
-}
 
+  /**
+   * Deletes multiple coupons by ID.
+   *
+   * @param $coupon_ids
+   *   An array of coupon IDs to delete.
+   * @param $transaction
+   *   An optional transaction object.
+   *
+   * @return
+   *   TRUE on success, FALSE otherwise.
+   */
+  public function delete($coupon_ids, DatabaseTransaction $transaction = NULL) {
+    if (!empty($coupon_ids)) {
+      $coupons = $this->load($coupon_ids, array());
+
+      // Ensure the coupons can actually be deleted.
+      foreach ((array) $coupons as $coupon_id => $coupon) {
+        if (!commerce_coupon_can_delete($coupon)) {
+          unset($coupons[$coupon_id]);
+        }
+      }
+
+      // If none of the specified coupons can be deleted, return FALSE.
+      if (empty($coupons)) {
+        return FALSE;
+      }
+
+      parent::delete(array_keys($coupons), $transaction);
+      return TRUE;
+    }
+    else {
+      return FALSE;
+    }
+  }
+}
