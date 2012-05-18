@@ -19,10 +19,10 @@ class commerce_coupon_handler_field_coupon_granted_amount extends views_handler_
 
   function render($values) {
     $amount = '';
-    $coupon_id = $this->get_value($values, 'coupon_id');
-    // @TODO: get the order id in a better way.
+    // Get the coupon from the entities returned by the view.
+    $entities = $this->view->query->get_result_entities(array($values));
+    $coupon = reset($entities[1]);
     $values->order_id = $values->commerce_coupon_order_reference_commerce_coupon_order_id;
-    $coupon = commerce_coupon_load($coupon_id);
 
     drupal_alter('commerce_coupon_granted_amount', $amount, $coupon, $values);
     return $amount;
