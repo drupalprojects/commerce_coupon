@@ -193,7 +193,7 @@ function commerce_coupon_ui_add_page($type = NULL) {
   $item = menu_get_item();
   $content = system_admin_menu_block($item);
 
-  // Bypass the admin/commerce/products/add listing if only one product type is
+  // Bypass the admin/commerce/coupons/add listing if only one product type is
   // available.
   if (count($content) == 1) {
     $item = array_shift($content);
@@ -285,7 +285,7 @@ function commerce_coupon_ui_set_breadcrumb($coupon_types = FALSE) {
     l(t('Home'), '<front>'),
     l(t('Administration'), 'admin'),
     l(t('Store'), 'admin/commerce'),
-    l(t('Products'), 'admin/commerce/coupons'),
+    l(t('Coupons'), 'admin/commerce/coupons'),
   );
 
   if ($coupon_types) {
