@@ -16,6 +16,7 @@
 function commerce_coupon_entity_info() {
   $entity_info['commerce_coupon'] = array(
     'label' => t('Commerce Coupon'),
+    'plural label' => t('Commerce Coupons'),
     'controller class' => 'CommerceCouponEntityController',
     'base table' => 'commerce_coupon',
     'fieldable' => TRUE,
@@ -33,6 +34,7 @@ function commerce_coupon_entity_info() {
 
   $entity_info['commerce_coupon_type'] = array(
     'label' => t('Commerce Coupon Type'),
+    'plural label' => t('Commerce Coupon Types'),
     'entity class' => 'CommerceCouponType',
     'controller class' => 'EntityAPIControllerExportable',
     'base table' => 'commerce_coupon_type',
