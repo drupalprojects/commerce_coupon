@@ -86,7 +86,7 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
   // Generate an option list from all user defined and module defined views.
   foreach (views_get_all_views() as $view_id => $view_value) {
     // Only include line item Views.
-    if ($view_value->base_table == 'commerce_coupon_log') {
+    if ($view_value->base_table == 'commerce_coupon') {
       foreach ($view_value->display as $display_id => $display_value) {
         $options[check_plain($view_id)][$view_id . '|' . $display_id] = check_plain($display_value->display_title);
       }

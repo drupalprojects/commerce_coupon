@@ -57,134 +57,39 @@ function commerce_coupon_schema() {
   $schema['commerce_coupon_type'] = array(
     'description' => 'Stores information about all defined coupon types.',
     'fields' => array(
-      'type' => array(
-        'description' => 'The machine-readable name of this coupon type.',
-        'type' => 'varchar',
-        'length' => 32,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'label' => array(
-        'description' => 'The human-readable name of this coupon type.',
-        'type' => 'varchar',
-        'length' => 255,
-        'not null' => TRUE,
-        'default' => '',
-      ),
-      'weight' => array(
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-        'size' => 'tiny',
-        'description' => 'The weight of this coupon type in relation to others.',
-      ),
-      'data' => array(
-        'type' => 'text',
-        'not null' => FALSE,
-        'size' => 'big',
-        'serialize' => TRUE,
-        'description' => 'A serialized array of additional data related to this coupon type.',
-      ),
+  'type' => array(
+    'description' => 'The machine-readable name of this coupon type.',
+    'type' => 'varchar',
+    'length' => 32,
+    'not null' => TRUE,
+    'default' => '',
+  ),
+  'label' => array(
+    'description' => 'The human-readable name of this coupon type.',
+    'type' => 'varchar',
+    'length' => 255,
+    'not null' => TRUE,
+    'default' => '',
+  ),
+  'weight' => array(
+    'type' => 'int',
+    'not null' => TRUE,
+    'default' => 0,
+    'size' => 'tiny',
+    'description' => 'The weight of this coupon type in relation to others.',
+  ),
+  'data' => array(
+    'type' => 'text',
+    'not null' => FALSE,
+    'size' => 'big',
+    'serialize' => TRUE,
+    'description' => 'A serialized array of additional data related to this coupon type.',
+  ),
     ) + commerce_coupon_exportable_schema_fields(),
     'primary key' => array('type'),
   );
 
-  $schema['commerce_coupon_log'] = array(
-    'description' => 'Stores the usage of coupons.',
-    'fields' => array(
-      'log_id' => array(
-        'description' => 'The primary identifier for the log entry.',
-        'type' => 'serial',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'coupon_id' => array(
-        'description' => 'The referenced coupon.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'uid' => array(
-        'description' => 'The referenced user.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'order_id' => array(
-        'description' => 'The referenced order id.',
-        'type' => 'int',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-      ),
-      'is_accepted' => array(
-        'description' => 'Indicates if this coupon is accepted.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'is_processed' => array(
-        'description' => 'Indicates if this coupon is processed. This is set to true, when the order is completed.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'created' => array(
-        'description' => 'The Unix timestamp when the log was created.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'changed' => array(
-        'description' => 'The Unix timestamp when the log was most recently saved.',
-        'type' => 'int',
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-    ),
-    'primary key' => array('log_id'),
-    'foreign keys' => array(
-      'coupon' => array(
-        'table' => 'commerce_coupon',
-        'columns' => array('coupon_id' => 'coupon_id'),
-      ),
-      'order' => array(
-        'table' => 'commerce_order',
-        'columns' => array('order_id' => 'order_id'),
-      ),
-      'user' => array(
-        'table' => 'users',
-        'columns' => array('uid' => 'uid'),
-      ),
-    ),
-  );
-
   return $schema;
-}
-
-/**
- * Implements hook_field_schema().
- */
-function commerce_coupon_field_schema($field) {
-  if ($field['field_name'] == 'commerce_coupon_reference') {
-    return array(
-      'columns' => array(
-        'coupon_id' => array(
-          'type' => 'int',
-          'length' => 11,
-          'not null' => TRUE,
-        ),
-      ),
-      'indexes' => array(
-        'coupon_id' => array('coupon_id'),
-      ),
-      'foreign keys' => array(
-        'coupon_id' => array(
-          'table' => 'commerce_coupon',
-          'columns' => array('coupon_id' => 'coupon_id'),
-        ),
-      ),
-    );
-  }
 }
 
 function commerce_coupon_exportable_schema_fields($module_col = 'module', $status_col = 'status') {
@@ -211,15 +116,8 @@ function commerce_coupon_exportable_schema_fields($module_col = 'module', $statu
  * Implements hook_install().
  */
 function commerce_coupon_install() {
-  // Create the required fields.
-  $entity_type = 'commerce_coupon_log';
-  $bundle = 'commerce_coupon_log';
-  $field_name = 'commerce_granted_amount';
-
-  $instance = field_read_instance($entity_type, $field_name, $bundle);
-  if (empty($instance)) {
-    commerce_price_create_instance($field_name, $entity_type, $bundle, st('Coupon Granted Amount'));
-  }
+  // Add the coupon reference field to the order.
+  commerce_coupon_order_configuration();
 }
 
 /**
@@ -299,4 +197,56 @@ function commerce_coupon_update_7003(&$sandbox) {
     'settings' => array(),
   );
   field_update_field($field);
+}
+
+/**
+ * Implements hook_update_N().
+ * Embrace EntityReference module.
+ */
+function commerce_coupon_update_7004(&$sandbox) {
+  $query = new EntityFieldQuery;
+  $result = $query
+      ->entityCondition('entity_type', 'commerce_line_item')
+      ->propertyCondition('type', 'commerce_coupon')
+      ->execute();
+
+  // Get all line items from the system.
+  $line_items = commerce_line_item_load_multiple(array_keys($result['commerce_line_item']));
+
+  // Store an array with the line item id and the coupon id.
+  $values = array();
+  foreach ($line_items as $line_item) {
+    $value = array('line_item_id' => $line_item->line_item_id, 'coupon_id' => $line_item->commerce_coupon_reference[LANGUAGE_NONE][0]['coupon_id']);
+    $values[] = $value;
+  }
+
+  // Remove old field and force a new creation, no way to rename it.
+  // see http://drupal.org/node/1201898
+  field_delete_field('commerce_coupon_reference');
+  commerce_coupon_line_item_configuration();
+
+  // Finally restore the line item values.
+  foreach ($values as $value) {
+    $line_item = commerce_line_item_load($value['line_item_id']);
+    $line_item->commerce_coupon_reference[LANGUAGE_NONE][0]['target_id'] = $value['coupon_id'];
+    commerce_line_item_save($line_item);
+  }
+
+  // Also add the coupon reference field to the order.
+  commerce_coupon_order_configuration();
+
+  // Migrate all coupon log references to the field in the order.
+  $logs = db_query('SELECT * FROM {commerce_coupon_log}')->fetchAllAssoc('log_id', PDO::FETCH_ASSOC);
+  foreach ($logs as $log) {
+    if ($order = commerce_order_load($log['order_id'])) {
+      $order->commerce_coupon_order_reference[LANGUAGE_NONE][]['target_id'] = $log['coupon_id'];
+      commerce_order_save($order);
+    }
+  }
+
+  // Delete the coupon log fields.
+  commerce_delete_instances('commerce_coupon_log');
+
+  // Delete the coupon log database table.
+  db_drop_table('commerce_coupon_log');
 }

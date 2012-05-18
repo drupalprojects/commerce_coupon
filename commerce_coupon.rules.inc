@@ -35,10 +35,6 @@ function commerce_coupon_rules_event_info() {
         'type' => 'commerce_coupon',
         'label' => t('commerce coupon to redeem')
       ),
-      'coupon_log' => array(
-        'type' => 'commerce_coupon_log',
-        'label' => t('commerce coupon log')
-      ),
       'commerce_order' => array(
         'type' => 'commerce_order',
         'label' => t('Order'),
@@ -81,47 +77,6 @@ function commerce_coupon_rules_action_info() {
     ),
   );
 
-  $actions['commerce_coupon_action_set_granted_amount'] = array(
-    'label' => t('Set granted coupon amount'),
-    'parameter' => array(
-      'commerce_coupon_log' => array(
-        'type' => 'commerce_coupon_log',
-        'label' => t('Commerce Coupon Log'),
-      ),
-      'amount' => array(
-        'type' => 'decimal',
-        'label' => t('Granted Amount'),
-      ),
-      'currency_code' => array(
-        'type' => 'text',
-        'label' => t('Currency Code'),
-      ),
-    ),
-    'group' => t('Commerce Coupon'),
-    'base' => 'commerce_coupon_action_is_invalid_coupon',
-    'callbacks' => array(
-      'execute' => 'commerce_coupon_action_set_granted_amount',
-    ),
-  );
-
-  $actions['commerce_coupon_action_get_coupons_for_order'] = array(
-    'label' => t('Get coupons for order'),
-    'parameter' => array(
-      'commerce_order' => array(
-        'type' => 'commerce_order',
-        'label' => t('Commerce order'),
-      ),
-    ),
-    'provides' => array(
-      'order_coupons' => array(
-        'type' => 'list<commerce_coupon>',
-        'label' => 'Coupons attached to this order',
-      ),
-    ),
-    'group' => t('Commerce Coupon'),
-    'base' => 'commerce_coupon_action_get_coupons_for_order',
-  );
-
   $actions['commerce_coupon_action_create_coupon_line_item'] = array(
     'label' => t('Create coupon line item'),
     'parameter' => array(
@@ -136,6 +91,13 @@ function commerce_coupon_rules_action_info() {
       'amount' => array(
         'type' => 'decimal',
         'label' => t('coupon amount'),
+      ),
+      'component_name' => array(
+        'type' => 'text',
+        'label' => t('Price component type'),
+        'description' => t('Price components track changes to prices made during the price calculation process, and they are carried over from the unit price to the total price of a line item. When an order total is calculated, it combines all the components of every line item on the order. When the unit price is altered by this action, the selected type of price component will be added to its data array and reflected in the order total display when it is formatted with components showing. Defaults to base price, which displays as the order Subtotal.'),
+        'options list' => 'commerce_price_component_titles',
+        'default value' => 'base_price',
       ),
       'currency_code' => array(
         'type' => 'text',
@@ -154,7 +116,6 @@ function commerce_coupon_rules_action_info() {
       'execute' => 'commerce_coupon_action_create_coupon_line_item',
     ),
   );
-
 
   $actions['commerce_coupon_action_get_coupon_uses'] = array(
     'label' => t('Get the redemption number of a coupon'),
@@ -188,6 +149,17 @@ function commerce_coupon_rules_action_info() {
     'group' => t('Commerce Coupon'),
   );
 
+  $actions['commerce_coupon_action_remove_all_coupons_from_order'] = array(
+    'label' => t('Remove all coupons from an order'),
+    'parameter' => array(
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'label' => t('Commerce Order'),
+      ),
+    ),
+    'group' => t('Commerce Coupon'),
+  );
+
 
   return $actions;
 }
@@ -208,49 +180,12 @@ function commerce_coupon_action_is_invalid_coupon() {
   $validation_results = FALSE;
 }
 
-function commerce_coupon_action_set_granted_amount($coupon_log, $amount, $currency_code) {
-  if (!($coupon_log instanceof EntityMetadataWrapper)) {
-    $coupon_log = entity_metadata_wrapper('commerce_coupon_log', $coupon_log);
-  }
-
-  $coupon = $coupon_log->commerce_coupon;
-
-  // Get the price component to use in this price.
-  $price_component_name = 'commerce_coupon_' . $coupon->type;
-  drupal_alter('commerce_coupon_price_component_name', $price_component_name, $coupon);
-
-  // Set the unit price on the line item object.
-  $coupon_log->commerce_granted_amount->amount = $amount;
-  $coupon_log->commerce_granted_amount->currency_code = $currency_code;
-
-
-  // Add the base price to the components array.
-  if (!commerce_price_component_load($coupon_log->commerce_granted_amount->value(), $price_component_name)) {
-    $coupon_log->commerce_granted_amount->data = commerce_price_component_add(
-        $coupon_log->commerce_granted_amount->value(), $price_component_name, $coupon_log->commerce_granted_amount->value(), TRUE, FALSE
-    );
-  }
-
-  commerce_coupon_log_save($coupon_log->value());
-}
-
-function commerce_coupon_action_get_coupons_for_order($coupon) {
-  if (!$coupon) {
-    return array();
-  }
-  return array('order_coupons' => commerce_coupon_get_coupons_by_order($coupon->order_number));
-}
-
-function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $commerce_order, $amount, $currency_code) {
+function commerce_coupon_action_create_coupon_line_item($coupon, $commerce_order, $amount, $component_name, $currency_code) {
   if (!($commerce_order instanceof EntityMetadataWrapper)) {
     $commerce_order = entity_metadata_wrapper('commerce_order', $commerce_order);
   }
 
-  // Get the price component to use in this price.
-  $price_component_name = 'commerce_coupon_' . $commerce_coupon->type;
-  drupal_alter('commerce_coupon_price_component_name', $price_component_name, $commerce_coupon);
-
-  $line_item = commerce_coupon_line_item_new($commerce_coupon, $commerce_order->order_id->value());
+  $line_item = commerce_coupon_line_item_new($coupon, $commerce_order->order_id->raw());
   $line_item_wrapper = entity_metadata_wrapper('commerce_line_item', $line_item);
 
   // Set the unit price on the line item object.
@@ -258,27 +193,42 @@ function commerce_coupon_action_create_coupon_line_item($commerce_coupon, $comme
   $line_item_wrapper->commerce_unit_price->currency_code = $currency_code;
 
   // Add the base price to the components array.
-  if (!commerce_price_component_load($line_item_wrapper->commerce_unit_price->value(), $price_component_name)) {
+  if ($coupon->is_active && !commerce_price_component_load($line_item_wrapper->commerce_unit_price->value(), $component_name)) {
     $line_item_wrapper->commerce_unit_price->data = commerce_price_component_add(
-        $line_item_wrapper->commerce_unit_price->value(), $price_component_name, $line_item_wrapper->commerce_unit_price->value(), TRUE, FALSE
+        $line_item_wrapper->commerce_unit_price->value(), $component_name, $line_item_wrapper->commerce_unit_price->value(), TRUE, FALSE
     );
   }
 
   commerce_line_item_save($line_item);
 
   $commerce_order->commerce_line_items[] = $line_item;
-  $commerce_order->save();
 
   return array('commerce_coupon_line_item' => $line_item);
 }
 
+/**
+ * Action to get all uses for a coupon.
+ */
 function commerce_coupon_action_get_coupon_uses($coupon) {
   return array('number_of_uses' => commerce_coupon_get_number_of_uses($coupon->coupon_id));
 }
 
+/**
+ * Action to remove a coupon from a given order.
+ */
 function commerce_coupon_action_remove_coupon_from_order($order, $coupon) {
   if (empty($coupon) || empty($order)) {
     return array();
   }
   commerce_coupon_remove_coupon_from_order($order, $coupon);
+}
+
+/**
+ * Action to remove all coupons from a given order.
+ */
+function commerce_coupon_action_remove_all_coupons_from_order($order) {
+  if (empty($order)) {
+    return array();
+  }
+  commerce_coupon_remove_all_coupons_from_order($order);
 }
