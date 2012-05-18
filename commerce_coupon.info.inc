@@ -44,6 +44,21 @@ function commerce_coupon_entity_property_info() {
     'required' => FALSE,
     'schema field' => 'type',
   );
+  $properties['created'] = array(
+    'label' => t('Date created'),
+    'description' => t('The date the coupon was created.'),
+    'type' => 'date',
+    'setter callback' => 'entity_property_verbatim_set',
+    'schema field' => 'created',
+  );
+  $properties['changed'] = array(
+    'label' => t('Date updated'),
+    'description' => t('The date the coupon was most recently updated.'),
+    'type' => 'date',
+    'setter callback' => 'entity_property_verbatim_set',
+    'query callback' => 'entity_metadata_table_query',
+    'schema field' => 'changed',
+  );
 
   // Add metadata anpit coupon type properties.
   $properties = &$info['commerce_coupon_type']['properties'];
