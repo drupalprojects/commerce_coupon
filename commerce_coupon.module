@@ -843,10 +843,13 @@ function commerce_coupon_line_item_title($line_item) {
 
   $fields = $line_item_wrapper->getPropertyInfo();
   if (isset($fields['commerce_coupon_reference']) && isset($line_item_wrapper->commerce_coupon_reference)) {
-    $commerce_coupon_wrapper = $line_item_wrapper->commerce_coupon_reference;
-    $type = commerce_coupon_get_types($commerce_coupon_wrapper->value()->type);
-    if (is_object($type)) {
-      return $type->label . ': ' . $commerce_coupon_wrapper->commerce_coupon_code->value();
+    $coupon_wrapper = $line_item_wrapper->commerce_coupon_reference;
+    $coupon = $coupon_wrapper->value();
+    if (!empty($coupon)) {
+      $type = commerce_coupon_get_types($coupon_wrapper->value()->type);
+      if (is_object($type)) {
+        return $type->label . ': ' . $coupon_wrapper->commerce_coupon_code->value();
+      }
     }
   }
 
