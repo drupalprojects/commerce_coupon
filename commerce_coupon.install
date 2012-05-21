@@ -113,14 +113,6 @@ function commerce_coupon_exportable_schema_fields($module_col = 'module', $statu
 }
 
 /**
- * Implements hook_install().
- */
-function commerce_coupon_install() {
-  // Add the coupon reference field to the order.
-  commerce_coupon_order_configuration();
-}
-
-/**
  * Implements hook_uninstall().
  */
 function commerce_coupon_uninstall() {
@@ -131,7 +123,7 @@ function commerce_coupon_uninstall() {
   // Delete all fields that belong to the module's entity types.
   commerce_delete_instances('commerce_coupon_log');
   commerce_delete_instances('commerce_coupon');
-  commerce_delete_instances('commerce_coupon_type');
+  commerce_delete_fields('commerce_coupon_order_reference');
   commerce_delete_fields('commerce_coupon_reference');
 }
 
