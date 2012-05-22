@@ -239,7 +239,7 @@ function commerce_coupon_update_7004(&$sandbox) {
 
 /**
  * Implements hook_update_N().
- * Remove all coupon log views.
+ * Remove all coupon log views. 
  */
 function commerce_coupon_update_7005(&$sandbox) {
   if($view = views_get_view('commerce_coupon_log')){
