@@ -971,19 +971,30 @@ function commerce_coupon_line_item_configuration() {
 }
 
 /**
+ * Implements hook_enable().
+ */
+function commerce_coupon_enable() {
+  // Add the coupon reference field to the order.
+  commerce_coupon_order_configuration();
+}
+
+/**
  * Ensures the coupon reference field is present on the default order bundle.
  */
 function commerce_coupon_order_configuration($type = 'commerce_order') {
+  // If a field type we know should exist isn't found, clear the Field cache.
+  if (!field_info_field_types('entityreference')) {
+    field_cache_clear();
+  }
+
   // Look for or add a coupon reference field to the order type.
   $field_name = 'commerce_coupon_order_reference';
   $field = field_info_field($field_name);
   $instance = field_info_instance('commerce_order', $field_name, $type);
-
   if (empty($field)) {
     $field = commerce_coupon_reference_field($field_name, FIELD_CARDINALITY_UNLIMITED);
     $field = field_create_field($field);
   }
-
   if (empty($instance)) {
     $instance = array(
       'field_name' => $field_name,
@@ -1015,6 +1026,7 @@ function commerce_coupon_reference_field($field_name, $cardinality) {
     'type' => 'entityreference',
     'cardinality' => $cardinality,
     'entity_types' => array('commerce_order', 'commerce_line_item'),
+    'module' => 'entityreference',
     'translatable' => FALSE,
     'settings' => array(
       'target_type' => 'commerce_coupon',
