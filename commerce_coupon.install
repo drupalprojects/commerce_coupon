@@ -180,15 +180,9 @@ function commerce_coupon_update_7002(&$sandbox) {
  * Set the coupon reference as non locked.
  */
 function commerce_coupon_update_7003(&$sandbox) {
-  $field = array(
-    'field_name' => 'commerce_coupon_reference',
-    'type' => 'commerce_coupon_reference',
-    'cardinality' => 1,
-    'entity_types' => array('commerce_line_item'),
-    'translatable' => FALSE,
-    'settings' => array(),
-  );
-  field_update_field($field);
+  // This update setted the coupon reference field to non locked, code here has
+  // been removed due to conflicts with 7004 as the coupon reference field type
+  // doesn't exist anymore.
 }
 
 /**
