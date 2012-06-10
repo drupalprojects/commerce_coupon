@@ -583,6 +583,7 @@ function commerce_coupon_load_by_code($code) {
   $query = new EntityFieldQuery();
   $result = $query->entityCondition('entity_type', 'commerce_coupon')
       ->fieldCondition('commerce_coupon_code', 'value', $code, '=')
+      ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT')
       ->execute();
 
   if (empty($result)) {
