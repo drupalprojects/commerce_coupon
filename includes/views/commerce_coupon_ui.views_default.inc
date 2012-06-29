@@ -23,7 +23,7 @@ function commerce_coupon_ui_views_default_views() {
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
-  $handler = $view->new_display('default', 'Master', 'default');
+  $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->display->display_options['title'] = 'Coupons';
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'administer coupons';
@@ -123,7 +123,7 @@ function commerce_coupon_ui_views_default_views() {
   $view->disabled = FALSE; /* Edit this to true to make a default view disabled initially */
 
   /* Display: Master */
-  $handler = $view->new_display('default', 'Master', 'default');
+  $handler = $view->new_display('default', 'Defaults', 'default');
   $handler->display->display_options['access']['type'] = 'perm';
   $handler->display->display_options['access']['perm'] = 'administer coupons';
   $handler->display->display_options['cache']['type'] = 'none';
