@@ -59,6 +59,12 @@ function commerce_coupon_entity_property_info() {
     'query callback' => 'entity_metadata_table_query',
     'schema field' => 'changed',
   );
+  $properties['times_used'] = array(
+    'type' => 'token',
+    'label' => t('Times used'),
+    'description' => t('Number of times that the coupon has been used.'),
+    'getter callback' => 'commerce_coupon_get_properties',
+  );
 
   // Add metadata anpit coupon type properties.
   $properties = &$info['commerce_coupon_type']['properties'];

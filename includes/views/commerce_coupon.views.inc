@@ -2,8 +2,7 @@
 
 /**
  * @file
- * Coupon views alter
- *
+ * Coupon views extra data.
  */
 
 /**
@@ -23,6 +22,15 @@ function commerce_coupon_views_data_alter(&$data) {
         'title' => t('Granted amount'),
         'help' => t('Display the granted amount of the coupon.'),
         'handler' => 'commerce_coupon_handler_field_coupon_granted_amount',
+      ),
+    );
+    // Expose the number of times the coupon has been used.
+    $data['commerce_coupon']['times_used'] = array(
+      'title' => t('Times used'),
+      'help' => t('Number of times that the coupon has been used.'),
+      'field' => array(
+        'handler' => 'commerce_coupon_handler_field_times_used',
+        'click sortable' => TRUE,
       ),
     );
   }
