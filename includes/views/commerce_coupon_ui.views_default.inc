@@ -73,6 +73,55 @@ function commerce_coupon_ui_views_default_views() {
   $handler->display->display_options['fields']['type']['id'] = 'type';
   $handler->display->display_options['fields']['type']['table'] = 'commerce_coupon';
   $handler->display->display_options['fields']['type']['field'] = 'type';
+  /* Field: Commerce Coupon: Number of Uses */
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['id'] = 'commerce_coupon_number_of_uses';
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['table'] = 'field_data_commerce_coupon_number_of_uses';
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['field'] = 'commerce_coupon_number_of_uses';
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['alter_text'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['make_link'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['absolute'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['external'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['replace_spaces'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['trim_whitespace'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['nl2br'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['word_boundary'] = 1;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['ellipsis'] = 1;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['more_link'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['strip_tags'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['trim'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['alter']['html'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['element_label_colon'] = 1;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['element_default_classes'] = 1;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['hide_empty'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['empty_zero'] = 0;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['hide_alter_empty'] = 1;
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['settings'] = array(
+    'thousand_separator' => ' ',
+    'prefix_suffix' => 1,
+  );
+  $handler->display->display_options['fields']['commerce_coupon_number_of_uses']['field_api_classes'] = 0;
+  /* Field: Commerce Coupon: Times used */
+  $handler->display->display_options['fields']['times_used']['id'] = 'times_used';
+  $handler->display->display_options['fields']['times_used']['table'] = 'commerce_coupon';
+  $handler->display->display_options['fields']['times_used']['field'] = 'times_used';
+  $handler->display->display_options['fields']['times_used']['alter']['alter_text'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['make_link'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['absolute'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['external'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['replace_spaces'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['trim_whitespace'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['nl2br'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['word_boundary'] = 1;
+  $handler->display->display_options['fields']['times_used']['alter']['ellipsis'] = 1;
+  $handler->display->display_options['fields']['times_used']['alter']['more_link'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['strip_tags'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['trim'] = 0;
+  $handler->display->display_options['fields']['times_used']['alter']['html'] = 0;
+  $handler->display->display_options['fields']['times_used']['element_label_colon'] = 1;
+  $handler->display->display_options['fields']['times_used']['element_default_classes'] = 1;
+  $handler->display->display_options['fields']['times_used']['hide_empty'] = 0;
+  $handler->display->display_options['fields']['times_used']['empty_zero'] = 0;
+  $handler->display->display_options['fields']['times_used']['hide_alter_empty'] = 1;
   /* Field: Commerce Coupon: Operations */
   $handler->display->display_options['fields']['operations']['id'] = 'operations';
   $handler->display->display_options['fields']['operations']['table'] = 'commerce_coupon';
