@@ -3,6 +3,9 @@
 /**
  * @file
  * Coupon checkout panes.
+ *
+ * Expose a textfield for entering a coupon code during checkout, and show list
+ * of coupons applied to current order.
  */
 
 /**
@@ -32,16 +35,19 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
   return $pane_form;
 }
 
+/**
+ * Check whether the coupon code is valid.
+ */
 function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
   //@todo I think global function should start and end with an underscore
   global $commerce_coupon_validation_error_message;
 
-  // Check if it is empty
+  // Check if coupon code is empty.
   if (empty($form_state['values']['commerce_coupon']['coupon_code'])) {
     return TRUE;
   }
 
-  // Valdiate the coupon code
+  // Validate the coupon code.
   if (commerce_coupon_code_is_valid($form_state['values']['commerce_coupon']['coupon_code'], $order)) {
     return TRUE;
   }
@@ -58,6 +64,9 @@ function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $check
   }
 }
 
+/**
+ * We have a valid coupon code, so submit it.
+ */
 function commerce_coupon_pane_checkout_form_submit($form, &$form_state, $checkout_pane, $order) {
   // Only redeem coupon if no validation errors on form and coupon code is set
   // This prevents trying to add the same coupon twice on validation error in another pane
