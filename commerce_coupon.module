@@ -243,12 +243,12 @@ function commerce_coupon_code_is_valid($code, $order) {
  * @param $coupon
  *   The coupon to redeem.
  * @param $order
- *   The order at which the coupon should be redeem.
+ *   The order on which the coupon should be redeemed.
  * @return void
  */
 function commerce_coupon_redeem_coupon($coupon, $order) {
   if (!isset($order->order_id) or !isset($coupon->coupon_id)) {
-    drupal_set_message(t('Your coupon code cannot be redeem.'), 'error');
+    drupal_set_message(t('Your coupon code cannot be redeemed.'), 'error');
     return;
   }
 
@@ -692,7 +692,7 @@ function commerce_coupon_save($commerce_coupon) {
 /**
  * Deletes a coupon.
  *
- * @param $commerce_coupon_idd
+ * @param $commerce_coupon_id
  *   Id of the coupon to delete.
  * @return void
  */
@@ -877,7 +877,7 @@ function commerce_coupon_commerce_line_item_type_info() {
     'commerce_coupon' => array(
       'type' => 'commerce_coupon',
       'name' => t('Coupon'),
-      'description' => t('Coupon line item for fixed coupon amounts.'),
+      'description' => t('Coupon line item.'),
       'add_form_submit_value' => t('Add coupon'),
       'base' => 'commerce_coupon_line_item',
     ),
