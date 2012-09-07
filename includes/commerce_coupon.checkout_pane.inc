@@ -39,8 +39,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
  * Check whether the coupon code is valid.
  */
 function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
-  //@todo I think global function should start and end with an underscore
-  global $commerce_coupon_validation_error_message;
+  global $_commerce_coupon_validation_error_message;
 
   // Check if coupon code is empty.
   if (empty($form_state['values']['commerce_coupon']['coupon_code'])) {
@@ -52,8 +51,8 @@ function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $check
     return TRUE;
   }
   else {
-    if (isset($commerce_coupon_validation_error_message)) {
-      $message = $commerce_coupon_validation_error_message;
+    if (isset($_commerce_coupon_validation_error_message)) {
+      $message = $_commerce_coupon_validation_error_message;
     }
     else {
       $message = t('Your coupon code is not valid.');

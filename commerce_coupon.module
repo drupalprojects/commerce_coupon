@@ -11,7 +11,7 @@
 /**
  * Implements hook_entity_info().
  *
- * This function provides informations about the coupon entities.
+ * This function provides information about the coupon entities.
  */
 function commerce_coupon_entity_info() {
   $entity_info['commerce_coupon'] = array(
@@ -204,7 +204,7 @@ function commerce_coupon_generate_coupon_code($length = NULL) {
  *   Returns TRUE if the code is valid else FALSE.
  */
 function commerce_coupon_code_is_valid($code, $order) {
-  global $commerce_coupon_validation_error_message;
+  global $_commerce_coupon_validation_error_message;
 
   // Trim trailing spaces
   $code = trim($code);
@@ -219,7 +219,7 @@ function commerce_coupon_code_is_valid($code, $order) {
   // Check if the coupon is already applied to this order. In any case we
   // never want that a coupon is applied twice.
   if (commerce_coupon_code_is_in_order($code, $order)) {
-    $commerce_coupon_validation_error_message = t('Sorry, you can only apply a coupon once per order.');
+    $_commerce_coupon_validation_error_message = t('Sorry, you can only apply a coupon once per order.');
     return FALSE;
   }
 
@@ -719,7 +719,7 @@ function commerce_coupon_delete_multiple(array $commerce_coupon_ids) {
  * @return
  *   Boolean indicating whether or not the coupon can be deleted.
  *
- * @see commerce_product_can_delete
+ * @see commerce_product_can_delete()
  */
 function commerce_coupon_can_delete($coupon) {
   // Return FALSE if the given coupon does not have an ID; it need not be
@@ -865,8 +865,8 @@ function commerce_coupon_machine_name_code($coupon) {
   $coupon_code = $coupon->commerce_coupon_code[LANGUAGE_NONE][0]['value'];
   // Set the pattern replacement to the default one that drupal uses for
   // machine names.
-  // @see form_process_machine_name
-  return preg_replace('/_+/', '_', preg_replace('/[^a-z0-9]/', '_', strtolower($coupon_code)));
+  // @see form_process_machine_name()
+  return preg_replace('/_+/', '_', preg_replace('/[^a-z0-9]/', '_', drupal_strtolower($coupon_code)));
 }
 
 /**
