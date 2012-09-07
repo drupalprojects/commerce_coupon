@@ -97,7 +97,7 @@ function commerce_coupon_commerce_checkout_pane_info() {
   $checkout_panes['commerce_coupon'] = array(
     'title' => t('Coupons'),
     'page' => 'checkout',
-    'locked' => TRUE,
+    'locked' => FALSE,
     'file' => 'includes/commerce_coupon.checkout_pane.inc',
     'base' => 'commerce_coupon_pane',
     'weight' => 9,
