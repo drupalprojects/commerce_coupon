@@ -79,11 +79,12 @@ function commerce_coupon_pane_checkout_form_submit($form, &$form_state, $checkou
  * Implements the callback for the checkout pane review form
  */
 function commerce_coupon_pane_review($form, $form_state, $checkout_pane, $order) {
+  if(!empty($order->commerce_coupon_order_reference)) {
+    // Extract the View and display keys from the cart contents pane setting.
+    list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|default'));
 
-  // Extract the View and display keys from the cart contents pane setting.
-  list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|default'));
-
-  return commerce_embed_view($view_id, $display_id, array($order->order_id));
+    return commerce_embed_view($view_id, $display_id, array($order->order_id));
+  }
 }
 
 /**
