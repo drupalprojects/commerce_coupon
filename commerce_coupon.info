@@ -1,5 +1,6 @@
 name = Commerce Coupon
 description = "Coupon module for the commerce shopping cart."
+dependencies[] = number
 dependencies[] = commerce
 dependencies[] = commerce_checkout
 dependencies[] = commerce_price
