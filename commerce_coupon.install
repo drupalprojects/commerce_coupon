@@ -130,6 +130,7 @@ function commerce_coupon_uninstall() {
   variable_del('commerce_coupon_default_code_size');
   variable_del('commerce_coupon_checkout_pane_view');
   variable_del('commerce_coupon_review_pane_view');
+  variable_del('commerce_coupon_checkout_enable_add_button');
 }
 
 /**
