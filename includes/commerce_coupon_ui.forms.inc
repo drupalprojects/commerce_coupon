@@ -52,12 +52,16 @@ function commerce_coupon_form_validate(&$form, &$form_state) {
     form_set_error('is_active', t('You can\'t enable a coupon of a coupon type that is disabled'));
   }
 
-  if ($form_state['op'] == 'add') {
+  if ($form_state['op'] == 'add' || $form_state['op'] == 'edit') {
     $lang_code = field_language('commerce_coupon', $form_state['commerce_coupon'], 'commerce_coupon_code');
     if (isset($form_state['values']['commerce_coupon_code'][$lang_code][0]['value'])) {
       $coupon_code = $form_state['values']['commerce_coupon_code'][$lang_code][0]['value'];
       if (!empty($coupon_code) && commerce_coupon_code_exists($coupon_code)) {
-        form_set_error('commerce_coupon_code][' . $lang_code, t('This coupon code is already in use.'));
+        // Don't invalidate duplicate code if we are simply updating one.
+        if ($form_state['op'] == 'add' || (isset($coupon->commerce_coupon_code) &&
+          $coupon->commerce_coupon_code[$lang_code][0]['value'] != $coupon_code)) {
+          form_set_error('commerce_coupon_code][' . $lang_code, t('This coupon code is already in use.'));
+        }
       }
     }
   }

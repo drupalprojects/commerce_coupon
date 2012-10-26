@@ -40,9 +40,8 @@ function commerce_coupon_ui_menu() {
       $items['admin/commerce/coupons/add/' . strtr($type, array('_' => '-'))] = array(
         'title' => 'Create !name',
         'title arguments' => array('!name' => $coupon_type->label),
-        'page callback' => 'drupal_get_form',
         'page callback' => 'commerce_coupon_ui_coupon_form_wrapper',
-        'page arguments' => array(commerce_coupon_create($type)),
+        'page arguments' => array(commerce_coupon_create($type), 'add'),
         'access callback' => 'commerce_coupon_access',
         'access arguments' => array('create', $type),
       );
@@ -53,7 +52,7 @@ function commerce_coupon_ui_menu() {
   $items['admin/commerce/coupons/%commerce_coupon'] = array(
     'title' => 'Edit',
     'page callback' => 'commerce_coupon_ui_coupon_form_wrapper',
-    'page arguments' => array(3),
+    'page arguments' => array(3, 'edit'),
     'access callback' => 'entity_access',
     'access arguments' => array('update', 'commerce_coupon', 3),
     'weight' => 0,
@@ -247,14 +246,14 @@ function theme_commerce_coupon_ui_add_list($variables) {
  * @param $coupon
  *   The coupon object being edited by this form.
  */
-function commerce_coupon_ui_coupon_form_wrapper($coupon) {
+function commerce_coupon_ui_coupon_form_wrapper($coupon, $op = NULL) {
   // Add the breadcrumb for the form's location.
   commerce_coupon_ui_set_breadcrumb();
 
   // Include the forms file from the Coupon module.
   module_load_include('inc', 'commerce_coupon', 'includes/commerce_coupon_ui.forms');
 
-  return drupal_get_form('commerce_coupon_form', $coupon);
+  return drupal_get_form('commerce_coupon_form', $coupon, $op);
 }
 
 /**
