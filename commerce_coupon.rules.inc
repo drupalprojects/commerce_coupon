@@ -117,6 +117,24 @@ function commerce_coupon_rules_action_info() {
     ),
   );
 
+  $actions['commerce_coupon_action_get_coupons_for_order'] = array(
+    'label' => t('Get coupons for order'),
+    'parameter' => array(
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'label' => t('Commerce order'),
+      ),
+    ),
+    'provides' => array(
+      'order_coupons' => array(
+        'type' => 'list<commerce_coupon>',
+        'label' => t('Coupons attached to this order'),
+      ),
+    ),
+    'group' => t('Commerce Coupon'),
+    'base' => 'commerce_coupon_action_get_coupons_for_order',
+  );
+
   $actions['commerce_coupon_action_get_coupon_uses'] = array(
     'label' => t('Get the redemption number of a coupon'),
     'parameter' => array(

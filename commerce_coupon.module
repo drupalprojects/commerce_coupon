@@ -1071,3 +1071,36 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
     }
   }
 }
+
+/**
+ * Returns the number of uses for this coupon.
+ *
+ * @param $coupon_id
+ *   Coupon id to check.
+ *
+ * @return integer
+ *   Returns number of uses of the coupon in all orders.
+ */
+function commerce_coupon_get_coupons_in_order($order_id) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order_id);
+  $coupons = array();
+  foreach ($order_wrapper->commerce_coupon_order_reference as $coupon_wrapper) {
+    if ($coupon_wrapper->value()->is_active == 1) {
+      $coupons[] = $coupon_wrapper->value();
+    }
+  }
+  return $coupons;
+}
+
+/**
+ * Returns a list of coupons that have been attached to the order.
+ *
+ * @param $commerce_order
+ *  The order which is to be checked.
+ */
+function commerce_coupon_action_get_coupons_for_order($commerce_order) {
+  if (!$commerce_order) {
+    return array();
+  }
+  return array('order_coupons' => commerce_coupon_get_coupons_in_order($commerce_order->order_id));
+}
