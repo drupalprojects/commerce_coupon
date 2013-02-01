@@ -213,6 +213,7 @@ function commerce_coupon_code_is_valid($code, $order) {
 
   // if no such coupon found, the $code is invalid
   if (!is_object($coupon)) {
+   // $commerce_coupon_validation_error_message = t('Coupon code is invalid.');
     return FALSE;
   }
 
