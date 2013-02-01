@@ -802,7 +802,7 @@ function commerce_coupon_get_number_of_uses($coupon_id) {
 function commerce_coupon_code_is_in_order($code, $order) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   foreach ($order_wrapper->commerce_coupon_order_reference as $coupon_wrapper) {
-    if ($coupon_wrapper->commerce_coupon_code->raw() == $code) {
+    if (strcasecmp($coupon_wrapper->commerce_coupon_code->raw(), $code) == 0) {
       return TRUE;
     }
   }
