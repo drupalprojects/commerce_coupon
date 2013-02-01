@@ -42,7 +42,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
   $pane_view = variable_get('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|default');
   if ($pane_view <> 'none') {
     list($view_id, $display_id) = explode('|', $pane_view);
-    if (!empty($view_id) && !empty($display_id)) {
+    if (!empty($view_id) && !empty($display_id) && views_get_view($view_id)) {
       $pane_form['redeemed_coupons'] = array(
         '#type' => 'markup',
         '#markup' => commerce_embed_view($view_id, $display_id, array($order->order_id)),
