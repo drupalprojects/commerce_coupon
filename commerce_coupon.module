@@ -611,12 +611,12 @@ function commerce_coupon_load_by_code($code) {
  *   Coupon object to remove.
  */
 function commerce_coupon_remove_coupon_from_order($order, $coupon) {
-  $original_order = $order;
+  $original_order = clone $order;
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-  //Remove the coupons from the order relationship.
+  // Remove the coupons from the order relationship.
   foreach ($order_wrapper->commerce_coupon_order_reference as $delta => $coupon_wrapper) {
-    if ($coupon_wrapper->value() == $coupon) {
+    if ($coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
       $order_wrapper->commerce_coupon_order_reference->offsetUnset($delta);
     }
   }
