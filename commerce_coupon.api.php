@@ -10,22 +10,31 @@
  */
 
 /**
- * This hook called when a coupon type deleted.
- * 
- * @param string $type Coupon type.
+ * This hook is called to check if a coupon type can be deleted.
+ *
+ * @param $coupon
+ *   The coupon to be checked for deletion.
  */
-function hook_commerce_coupon_type_delete($type) {
-  // Delete all coupons of this type.
-  if ($pids = array_keys(commerce_coupon_load_multiple(FALSE, array('type' => $type->type)))) {
-    commerce_coupon_delete_multiple($pids);
-  }
-  // Rebuild the menu as any (user-category) menu items should be gone now.
-  menu_rebuild();
+function hook_commerce_coupon_can_delete($type) {
 }
 
 /**
- * ???
+ * Allow other modules to configure coupon types.
+ *
  * @see commerce_coupon_type_configure().
  */
-function commerce_coupon_type_configure($bundle, $reset) {
+function hook_commerce_coupon_type_configure($bundle, $reset) {
+}
+
+/**
+ * Alter the granted amount in the log-type coupon views.
+ *
+ * @param $amount
+ *   Textual value representing the amount discounted.
+ * @param $coupon
+ *   Coupon applied
+ * @param $order
+ *   Order discounted
+ */
+function hook_commerce_coupon_granted_amount_alter($amount, $coupon, $order) {
 }
