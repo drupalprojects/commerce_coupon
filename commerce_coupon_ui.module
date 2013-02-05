@@ -149,7 +149,6 @@ function commerce_coupon_ui_menu() {
  * Access callback: determines if the user can create any type of coupon.
  */
 function commerce_coupon_ui_coupon_add_any_access() {
-  dpm('test');
   // Grant automatic access to users with administer coupons permission.
   if (user_access('administer commerce_coupon entities')) {
     return TRUE;
