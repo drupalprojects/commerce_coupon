@@ -113,6 +113,14 @@ function commerce_coupon_exportable_schema_fields($module_col = 'module', $statu
 }
 
 /**
+ * Implements hook_install().
+ */
+function commerce_coupon_install() {
+  variable_set('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|checkout');
+  variable_set('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|review');
+}
+
+/**
  * Implements hook_uninstall().
  */
 function commerce_coupon_uninstall() {
@@ -250,5 +258,18 @@ function commerce_coupon_update_7004(&$sandbox) {
 function commerce_coupon_update_7005(&$sandbox) {
   if($view = views_get_view('commerce_coupon_log')){
     $view->delete(TRUE);
+  }
+}
+
+/**
+ * Implements hook_update_N().
+ * Use new "commerce_coupon_review_pane" view displays.
+ */
+function commerce_coupon_update_7006(&$sandbox) {
+  if (variable_get('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|default') == 'commerce_coupon_review_pane|default') {
+    variable_set('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|checkout');
+  }
+  if (variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|default') == 'commerce_coupon_review_pane|default') {
+    variable_set('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|review');
   }
 }

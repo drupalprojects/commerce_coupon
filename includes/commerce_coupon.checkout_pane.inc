@@ -39,7 +39,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
   }
 
   // Extract the View and display keys from the cart contents pane setting.
-  $pane_view = variable_get('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|default');
+  $pane_view = variable_get('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|checkout');
   if ($pane_view <> 'none') {
     list($view_id, $display_id) = explode('|', $pane_view);
     if (!empty($view_id) && !empty($display_id) && views_get_view($view_id)) {
@@ -52,7 +52,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
 
   if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {
     if (!empty($form_state['values']['commerce_coupon']['coupon_add'])) {
-      list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|default'));
+      list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|checkout'));
       if (!empty($view_id) && !empty($display_id)) {
         global $_commerce_coupon_validation_error_message;
         $code = $form_state['input']['commerce_coupon']['coupon_code'];
@@ -179,7 +179,7 @@ function commerce_coupon_ajax_render_alter(&$commands) {
 function commerce_coupon_pane_review($form, $form_state, $checkout_pane, $order) {
   if (!empty($order->commerce_coupon_order_reference)) {
     // Extract the View and display keys from the cart contents pane setting.
-    list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|default'));
+    list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|checkout'));
 
     return commerce_embed_view($view_id, $display_id, array($order->order_id));
   }
@@ -209,7 +209,7 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
     '#title' => t('Coupons Checkout Pane View'),
     '#description' => t('Specify the View to use in the checkout pane under the coupon form. Select \'none\' to not display anything.'),
     '#options' => array('none' => t('None')) + $options,
-    '#default_value' => variable_get('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|default'),
+    '#default_value' => variable_get('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|checkout'),
   );
 
   $form['commerce_coupon_review_pane_view'] = array(
@@ -217,7 +217,7 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
     '#title' => t('Coupons Review Pane View'),
     '#description' => t('Specify the View to use in the review pane to display the coupons.'),
     '#options' => $options,
-    '#default_value' => variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|default'),
+    '#default_value' => variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|checkout'),
   );
 
   $form['commerce_coupon_checkout_enable_add_button'] = array(

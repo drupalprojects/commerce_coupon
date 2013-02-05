@@ -33,5 +33,12 @@ function commerce_coupon_views_data_alter(&$data) {
         'click sortable' => TRUE,
       ),
     );
+    $data['commerce_coupon']['remove_from_order'] = array(
+      'field' => array(
+        'title' => t('Remove from Order'),
+        'help' => t('Remove coupon from the order.'),
+        'handler' => 'commerce_coupon_handler_field_coupon_order_remove',
+      ),
+    );
   }
 }
