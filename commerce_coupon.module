@@ -30,6 +30,15 @@ function commerce_coupon_entity_info() {
     ),
     'access callback' => 'commerce_coupon_access',
     'module' => 'commerce_coupon',
+    'permission labels' => array(
+      'singular' => t('coupon'),
+      'plural' => t('coupons'),
+    ),
+    'access callback' => 'commerce_entity_access',
+    'access arguments' => array(
+      'user key' => 'uid',
+      'access tag' => 'commerce_coupon_access',
+    ),
   );
 
   $entity_info['commerce_coupon_type'] = array(
@@ -107,17 +116,19 @@ function commerce_coupon_commerce_checkout_pane_info() {
 }
 
 /**
- * Access callback for coupon types.
+ * Checks coupon access for various operations.
+ *
+ * @param $op
+ *   The operation being performed. One of 'view', 'update', 'create' or
+ *   'delete'.
+ * @param $coupon
+ *   Optionally a coupon to check access for. If nothing is given access
+ *   permissions for all coupons are returned.
+ * @param $account
+ *   The user to check for. Leave it to NULL to check for the current user.
  */
-function commerce_coupon_type_access($op, $type = NULL, $account = NULL) {
-  return user_access('administer coupon types', $account);
-}
-
-/**
- * Access callback for coupons
- */
-function commerce_coupon_access($op, $type = NULL, $account = NULL) {
-  return user_access('administer coupons', $account);
+function commerce_coupon_access($op, $coupon = NULL, $account = NULL) {
+  return commerce_entity_access($op, $coupon, $account, 'commerce_coupon');
 }
 
 /**
@@ -135,11 +146,10 @@ function commerce_coupon_permission() {
       'title' => t('Administer Coupon Types'),
       'description' => t('Allows users to manage coupon types.'),
     ),
-    'administer coupons' => array(
-      'title' => t('Administer Coupons'),
-      'description' => t('Allows users to manage coupons.'),
-    ),
   );
+
+  $permissions += commerce_entity_access_permissions('commerce_coupon');
+
   return $permissions;
 }
 

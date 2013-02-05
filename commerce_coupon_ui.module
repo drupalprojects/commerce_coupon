@@ -25,14 +25,12 @@ function commerce_coupon_ui_entity_info_alter(&$entity_info) {
  * Implements hook_menu().
  */
 function commerce_coupon_ui_menu() {
-
   $items['admin/commerce/coupons/add'] = array(
     'title' => 'Create Coupon',
     'description' => 'Create a new coupon',
     'page callback' => 'commerce_coupon_ui_add_page',
     'weight' => 10,
-    'access callback' => 'commerce_coupon_access',
-    'access arguments' => array('create'),
+    'access callback' => 'commerce_coupon_ui_coupon_add_any_access',
   );
 
   foreach (commerce_coupon_get_types() as $type => $coupon_type) {
@@ -43,7 +41,7 @@ function commerce_coupon_ui_menu() {
         'page callback' => 'commerce_coupon_ui_coupon_form_wrapper',
         'page arguments' => array(commerce_coupon_create($type), 'add'),
         'access callback' => 'commerce_coupon_access',
-        'access arguments' => array('create', $type),
+        'access arguments' => array('create', commerce_coupon_create($type)),
       );
     }
   }
@@ -53,8 +51,8 @@ function commerce_coupon_ui_menu() {
     'title' => 'Edit',
     'page callback' => 'commerce_coupon_ui_coupon_form_wrapper',
     'page arguments' => array(3, 'edit'),
-    'access callback' => 'entity_access',
-    'access arguments' => array('update', 'commerce_coupon', 3),
+    'access callback' => 'commerce_coupon_access',
+    'access arguments' => array('update', 3),
     'weight' => 0,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
   );
@@ -68,8 +66,8 @@ function commerce_coupon_ui_menu() {
     'title' => 'Delete',
     'page callback' => 'commerce_coupon_ui_coupon_delete_form_wrapper',
     'page arguments' => array(3),
-    'access callback' => 'entity_access',
-    'access arguments' => array('update', 'commerce_coupon', 3),
+    'access callback' => 'commerce_coupon_access',
+    'access arguments' => array('update', 3),
     'type' => MENU_LOCAL_TASK,
     'weight' => 20,
     'context' => MENU_CONTEXT_INLINE,
@@ -145,6 +143,26 @@ function commerce_coupon_ui_menu() {
   );
 
   return $items;
+}
+
+/**
+ * Access callback: determines if the user can create any type of coupon.
+ */
+function commerce_coupon_ui_coupon_add_any_access() {
+  dpm('test');
+  // Grant automatic access to users with administer coupons permission.
+  if (user_access('administer commerce_coupon entities')) {
+    return TRUE;
+  }
+
+  // Check the user's access on a coupon type basis.
+  foreach (commerce_coupon_get_types() as $type => $coupon_type) {
+    if (commerce_coupon_access('create', commerce_coupon_create($type))) {
+      return TRUE;
+    }
+  }
+
+  return FALSE;
 }
 
 /**
