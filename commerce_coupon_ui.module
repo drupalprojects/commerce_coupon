@@ -231,7 +231,7 @@ function commerce_coupon_ui_add_page($type = NULL) {
 /**
  * Implements hook_theme().
  */
-function commerce_coupon_theme() {
+function commerce_coupon_ui_theme() {
   return array(
     'commerce_coupon_ui_add_list' => array(
       'variables' => array('content' => NULL),
