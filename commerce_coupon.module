@@ -116,6 +116,13 @@ function commerce_coupon_commerce_checkout_pane_info() {
 }
 
 /**
+ * Access callback for coupon types.
+ */
+function commerce_coupon_type_access($op, $type = NULL, $account = NULL) {
+  return user_access('administer coupon types', $account);
+}
+
+/**
  * Checks coupon access for various operations.
  *
  * @param $op
@@ -126,6 +133,7 @@ function commerce_coupon_commerce_checkout_pane_info() {
  *   permissions for all coupons are returned.
  * @param $account
  *   The user to check for. Leave it to NULL to check for the current user.
+ * @return bool
  */
 function commerce_coupon_access($op, $coupon = NULL, $account = NULL) {
   return commerce_entity_access($op, $coupon, $account, 'commerce_coupon');
@@ -933,7 +941,7 @@ function commerce_coupon_line_item_new($coupon, $order_id) {
     'type' => 'commerce_coupon',
     'order_id' => $order_id,
     'quantity' => 1,
-      ));
+  ));
 
   $line_item->sku = $coupon->type . '_' . $coupon->coupon_id;
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
