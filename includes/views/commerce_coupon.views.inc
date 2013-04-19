@@ -41,4 +41,14 @@ function commerce_coupon_views_data_alter(&$data) {
       ),
     );
   }
+
+  // Expose the coupon form item on the form.
+  $data['commerce_order']['coupon_cart_form'] = array(
+    'title' => t('Coupon cart form'),
+    'help' => t('Coupon cart form.'),
+    'area' => array(
+      'handler' => 'commerce_coupon_handler_area_cart_form',
+    ),
+  );
+
 }

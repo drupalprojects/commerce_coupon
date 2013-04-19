@@ -19,3 +19,4 @@ files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_granted_a
 files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_operations.inc
 files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_order_remove.inc
 files[] = includes/views/handlers/commerce_coupon_handler_field_times_used.inc
+files[] = includes/views/handlers/commerce_coupon_handler_area_cart_form.inc
