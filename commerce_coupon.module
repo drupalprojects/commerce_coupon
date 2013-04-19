@@ -1046,7 +1046,7 @@ function commerce_coupon_reference_field($field_name, $cardinality) {
     'translatable' => FALSE,
     'settings' => array(
       'target_type' => 'commerce_coupon',
-      'handler' => 'base',
+      'handler' => 'coupon',
       'handler_settings' => array(),
     ),
   );
