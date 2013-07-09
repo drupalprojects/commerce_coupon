@@ -169,7 +169,7 @@ function commerce_coupon_ajax_render_alter(&$commands) {
       '#markup' => commerce_embed_view($view_id, $display_id, array($coupon_current_order)),
     );
     $contents = drupal_render($contents);
-    $commands[] = ajax_command_replace('.view-commerce-cart-summary', $contents);
+    $commands[] = ajax_command_replace('.view-id-' . $view_id, $contents);
   }
 }
 
