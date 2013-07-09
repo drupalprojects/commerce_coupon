@@ -52,7 +52,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
 
   if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {
     if (!empty($form_state['values']['commerce_coupon']['coupon_add'])) {
-      list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|checkout'));
+      list($view_id, $display_id) = explode('|', $pane_view);
       if (!empty($view_id) && !empty($display_id)) {
         global $_commerce_coupon_validation_error_message;
         $code = $form_state['input']['commerce_coupon']['coupon_code'];
