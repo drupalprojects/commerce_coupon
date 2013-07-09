@@ -241,6 +241,11 @@ function commerce_coupon_code_is_valid($code, $order) {
     return FALSE;
   }
 
+  // Check coupon status.
+  if ($coupon->is_active == FALSE) {
+    return FALSE;
+  }
+
   // We use the drupal_static function to generate a global variable.
   // We set per default the result to TRUE. The rules can modify this values,
   // by invoking the valid or invalid action.
