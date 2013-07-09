@@ -10,6 +10,8 @@
  */
 function commerce_coupon_default_rules_configuration() {
   $rules = array();
+  // Default tags that should be added to all Commerce Coupon rules
+  $tags = array('Commerce Coupon');
 
   // Add validation rule component to check the number of uses of a coupon
   $rule = rule(array(
@@ -35,6 +37,7 @@ function commerce_coupon_default_rules_configuration() {
     'type' => 'error',
   ));
   $rule->action('commerce_coupon_action_is_invalid_coupon', array());
+  $rule->tags = $tags;
   $rules['commerce_coupon_validate_uses_of_coupon_component'] = $rule;
 
   // Reaction on the validation event for check uses of coupons:
@@ -50,6 +53,7 @@ function commerce_coupon_default_rules_configuration() {
       'commerce_coupon:select' => 'coupon',
       'number_of_redemptions:select' => 'number-of-uses'
     ));
+  $rule->tags = $tags;
   $rules['commerce_coupon_validate_uses_of_coupon'] = $rule;
 
   // When removing a product from the cart, trigger deleting the coupon.
@@ -62,6 +66,7 @@ function commerce_coupon_default_rules_configuration() {
     ->condition('commerce_order_compare_total_product_quantity', array('entity:select' => 'commerce_order', 'operator' => '=', 'value' => 0))
     ->action('commerce_coupon_action_remove_all_coupons_from_order', array('commerce_order:select' => 'commerce_order'));
 
+  $rule->tags = $tags;
   $rules['commerce_coupon_remove_coupons_from_empty_carts'] = $rule;
 
   return $rules;
