@@ -42,6 +42,47 @@ function commerce_coupon_types_overview_page() {
   return theme('table', array('header' => $header, 'rows' => $rows));
 }
 
+/*
+ * Menu callback: display a list of product types that the user can create.
+ */
+function commerce_coupon_add_page() {
+  $item = menu_get_item();
+  $content = system_admin_menu_block($item);
+
+  // Bypass the admin/commerce/products/add listing if only one product type is
+  // available.
+  if (count($content) == 1) {
+    $item = array_shift($content);
+    drupal_goto($item['href']);
+  }
+
+  return theme('commerce_coupon_add_list', array('content' => $content));
+}
+
+/**
+ * Displays the list of available product types for product creation.
+ *
+ * @ingroup themeable
+ */
+function theme_commerce_coupon_add_list($variables) {
+  $content = $variables['content'];
+  $output = '';
+
+  if ($content) {
+    $output = '<dl class="commerce-coupon-type-list">';
+    foreach ($content as $item) {
+      $output .= '<dt>' . l($item['title'], $item['href'], $item['localized_options']) . '</dt>';
+      $output .= '<dd>' . filter_xss_admin($item['description']) . '</dd>';
+    }
+    $output .= '</dl>';
+  }
+  else {
+    $output = '<p>' . t('No coupon types have been created yet for you to use.') . '</p>';
+  }
+
+  return $output;
+}
+
 /**
  * Builds an overview of a product type for display to an administrator.
  *

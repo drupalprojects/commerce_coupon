@@ -146,7 +146,7 @@ function commerce_coupon_add_coupon_callback($form, &$form_state) {
 function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
   // This is really only a failsafe for if the user has js disabled, or if they 
   // type in the coupon code and forget to hit "add coupon".
-  $code = $form_state['input']['commerce_coupon_coupon_codes']['coupon_code'];
+  $code = $form_state['input']['commerce_coupon']['coupon_code'];
   if ($code) {
     // It is necessary to reload the order to make sure it is up to date.
     $order = commerce_order_load($form_state['order']->order_id);
