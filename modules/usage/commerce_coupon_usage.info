@@ -1,0 +1,5 @@
+name = "Commerce Coupon Usage"
+description = "Enables coupon usage limits"
+project = "Commerce"
+core = 7.x
+dependencies[] = commerce_coupon
