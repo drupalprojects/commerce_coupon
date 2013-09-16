@@ -482,7 +482,7 @@ function commerce_coupon_load_by_code($code) {
   $query = new EntityFieldQuery();
   $result = $query->entityCondition('entity_type', 'commerce_coupon')
       ->propertyCondition('code', $code)
-      ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT')
+      ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT') // TODO is this still necessary?
       ->execute();
 
   if (empty($result)) {
