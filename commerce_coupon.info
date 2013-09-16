@@ -2,7 +2,7 @@ name = "Commerce Coupon"
 description = "Coupon functionality for Drupal Commerce"
 project = "Commerce"
 core = 7.x
-dependencies[] = commerce_discount (>=2.0)
+dependencies[] = commerce_discount
 
 files[] = includes/commerce_coupon.entity.inc
 files[] = includes/views/handlers/commerce_coupon_handler_field_discount_value_display.inc
