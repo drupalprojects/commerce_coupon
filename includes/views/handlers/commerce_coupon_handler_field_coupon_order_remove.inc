@@ -5,6 +5,7 @@ class commerce_coupon_handler_field_coupon_order_remove extends commerce_coupon_
   public function render($values) {
     $coupon_id = $this->get_value($values, 'coupon_id');    
     $order = _commerce_coupon_load_argument_order($this);
+    
 
     // If there's an ajax form in the page, get the right destination url.
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')  {

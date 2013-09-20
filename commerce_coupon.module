@@ -736,6 +736,12 @@ function commerce_coupon_commerce_coupon_discount_savings_value_alter(&$text, $d
       }
       
       $text = drupal_render($offer_text) . ' ' . t('from') . ' ' . $product_text;
+      
+      break;
+    default:
+      // By default, just use the label.
+      $text = check_plain($discount->label);
+      
       break;
   }
 }
