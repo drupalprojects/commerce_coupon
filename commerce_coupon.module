@@ -903,7 +903,7 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
     // Invalidate coupons that exist on the order without their discount present 
     // - meaning an inline condition on the discount was not satisfied.
     if (!commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {
-      drupal_set_message(t('One or more conditions for this coupon discount were not satisfied.'), 'error');
+      drupal_set_message(t('One or more conditions for coupon @code are currently not satisfied.', array('@code' => $coupon->code)), 'error');
       $valid = FALSE;
     }
     else {
