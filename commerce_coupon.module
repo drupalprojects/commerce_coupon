@@ -16,6 +16,7 @@ function commerce_coupon_entity_info() {
     'label' => t('Commerce Coupon'),
     'plural label' => t('Commerce Coupons'),
     'controller class' => 'CommerceCouponEntityController',
+    'metadata controller class' => 'CommerceCouponMetadataController',      
     'base table' => 'commerce_coupon',
     'fieldable' => TRUE,
     'entity keys' => array(

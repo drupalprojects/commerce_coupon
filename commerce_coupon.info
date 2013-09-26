@@ -10,3 +10,4 @@ files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_order_rem
 files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_delete.inc
 files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_edit.inc
 files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_link.inc
+files[] = commerce_coupon.info.inc
