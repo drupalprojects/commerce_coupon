@@ -175,10 +175,7 @@ function commerce_coupon_validate_code($element, &$form_state) {
 /*
  * Form submit callback: submit coupon entity form
  */
-function commerce_coupon_form_submit(&$form, &$form_state) {
-  // Rebuild rules defaults so that discount rules get updated.
-  entity_defaults_rebuild(array('rules_config'));    
-  
+function commerce_coupon_form_submit(&$form, &$form_state) {    
   $coupon = &$form_state['coupon'];
   $coupon->code = !empty($form_state['values']['code']) ? $form_state['values']['code'] : commerce_coupon_generate_coupon_code('discount_coupon');
   $coupon->status = $form_state['values']['status'];
@@ -189,6 +186,9 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
   // Save the coupon.
   commerce_coupon_save($coupon);
   $form_state['redirect'] = 'admin/commerce/coupons';
+  
+  // Rebuild rules defaults so that discount rules get updated.
+  entity_defaults_rebuild(array('rules_config'));  
 
   // Redirect based on the button clicked.
   drupal_set_message(t('Coupon saved.'));
