@@ -98,6 +98,9 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
         }
       }
     }
+    else {
+      drupal_set_message(t('Please enter a code.'), 'error');
+    }
   }
   
   // Extract the View and display keys from the cart contents pane setting.
