@@ -179,6 +179,20 @@ function commerce_coupon_menu() {
 }
 
 /*
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_coupon_form_commerce_discount_operation_form_alter(&$form, &$form_state) {
+  if ($form_state['op'] == 'delete') {
+    // See if there are any coupons referencing this discount.
+    $discount_wrapper = entity_metadata_wrapper('commerce_discount', $form_state['commerce_discount']);
+    if ($discount_wrapper->coupons->count()) {
+      $form['description']['#markup'] = t('This discount cannot be deleted because it has coupons referencing it. Try disabling it instead, or deleting the coupons first.');
+      unset($form['actions']['submit']);
+    }
+  }
+}
+
+/*
  * Implements hook_theme().
  */
 function commerce_coupon_theme() {
