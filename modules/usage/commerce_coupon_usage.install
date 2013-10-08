@@ -1,0 +1,42 @@
+<?php
+
+/*
+ * Implements hook_install().
+ */
+function commerce_coupon_usage_install() {
+  _commerce_coupon_install_helper();
+}
+
+/**
+ * Helper function to set up fields
+ */
+function _commerce_coupon_install_helper() {
+  field_info_cache_clear();
+  
+  $fields = field_info_fields();
+  $instances = field_info_instances();
+  
+  if (empty($fields['commerce_coupon_max_uses'])) {
+    // Create max uses field.
+    $field = array(
+      'entity_types' => array('commerce_coupon'),
+      'field_name' => 'commerce_coupon_max_uses',
+      'type' => 'number_integer',
+      'locked' => TRUE,
+    );
+    field_create_field($field);
+  }
+  
+  // Add max uses field to coupons
+  if (empty($instances['commerce_coupon']['discount_coupon']['commerce_coupon_max_uses'])) {
+    $instance = array(
+      'field_name' => 'commerce_coupon_max_uses',
+      'entity_type' => 'commerce_coupon',
+      'bundle' => 'discount_coupon',
+      'label' => t('Maximum uses'),
+      'description' => t('Leave blank for unlimited.'),
+      'required' => FALSE,
+    );
+    field_create_instance($instance);
+  }
+}

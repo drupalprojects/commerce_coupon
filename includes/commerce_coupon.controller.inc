@@ -1,0 +1,62 @@
+<?php
+
+/**
+ * @file
+ * Coupon controller class.
+ */
+
+class CommerceCouponEntityController extends DrupalCommerceEntityController {
+  
+  public $code;
+  
+  public $created;
+  
+  public $bulk;
+  
+  public $type = 'discount_coupon';
+  
+  public $status;
+
+  /**
+   * Create a default coupon.
+   *
+   * @param array $values
+   *   An array of values to set, keyed by property name.
+   * @return
+   *   A product object with all default fields initialized.
+   */
+  public function create(array $values = array()) {
+    $values += array(
+      'coupon_id' => '',
+      'code' => '',
+      'bulk' => FALSE,
+      'created' => '',
+      'status' => TRUE
+    );
+
+    return parent::create($values);
+  }
+
+  /**
+   * Saves a coupon.
+   *
+   * @param $commerce_coupon
+   *   The full coupon object to save.
+   * @param $transaction
+   *   An optional transaction object.
+   *
+   * @return
+   *   SAVED_NEW or SAVED_UPDATED depending on the operation performed.
+   */
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+
+    if (empty($entity->{$this->idKey}) || !empty($entity->is_new)) {
+      // Set the creation timestamp if not set, for new entities.
+      if (empty($entity->created)) {
+        $entity->created = REQUEST_TIME;
+      }
+    }
+    
+    return parent::save($entity);
+  }
+}

@@ -1,5 +1,6 @@
 <?php
 
+<<<<<<< HEAD
 /**
  * @file
  * Coupon checkout panes.
@@ -10,6 +11,55 @@
 
 /**
  * Payment pane: form callback.
+=======
+/*
+ * Checkout pane callback: coupon settings
+ */
+function commerce_coupon_pane_settings_form($checkout_pane) {
+  $form = array();
+
+  // Build an options array of Views available for the cart contents pane.
+  $options = array();
+
+  // Generate an option list from all user defined and module defined views.
+  foreach (views_get_all_views() as $view_id => $view_value) {
+    // Only include line item Views.
+    if ($view_value->base_table == 'commerce_coupon') {
+      foreach ($view_value->display as $display_id => $display_value) {
+        $options[check_plain($view_id)][$view_id . '|' . $display_id] = check_plain($display_value->display_title);
+      }
+    }
+  }
+
+  $form['commerce_coupon_checkout_pane_view'] = array(
+    '#type' => 'select',
+    '#title' => t('Coupons Checkout Pane View'),
+    '#description' => t('Specify the View to use in the checkout pane under the coupon form. Select \'none\' to not display anything.'),
+    '#options' => array('none' => t('None')) + $options,
+    '#default_value' => variable_get('commerce_coupon_checkout_pane_view', 'order_coupon_list|checkout'),
+  );
+
+  $form['commerce_coupon_review_pane_view'] = array(
+    '#type' => 'select',
+    '#title' => t('Coupons Review Pane View'),
+    '#description' => t('Specify the View to use in the review pane to display the coupons.'),
+    '#options' => $options,
+    '#default_value' => variable_get('commerce_coupon_review_pane_view', 'order_coupon_list|checkout'),
+  );
+
+  $form['commerce_coupon_checkout_enable_add_button'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enable <em>Add coupon</em> button'),
+    '#description' => t('Enabling <em>Add coupon</em> button provides option to add multiple coupon codes from <em>Coupons</em> checkout pane.'),
+    '#default_value' => variable_get('commerce_coupon_checkout_enable_add_button', TRUE),
+  );
+
+  return $form;
+}
+
+/*
+ * Checkout pane callback: coupon checkout form
+>>>>>>> 1bfb4a5c1a929d163db345dad4c0d98133252d8f
  */
 function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane, $order) {
   // Allow to replace pane content with ajax calls.
@@ -38,9 +88,43 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
     );
   }
 
+<<<<<<< HEAD
   // Extract the View and display keys from the cart contents pane setting.
   $pane_view = variable_get('commerce_coupon_checkout_pane_view', 'commerce_coupon_review_pane|checkout');
   if ($pane_view <> 'none') {
+=======
+  if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {    
+    $code = $form_state['input']['commerce_coupon']['coupon_code'];
+    
+    if (!empty($code)) {
+      // It is necessary to reload the order to make sure it is up to date.
+      $order = commerce_order_load($order->order_id);
+      
+      if (commerce_coupon_may_redeem_coupon_code($code, $order) && commerce_coupon_redeem_coupon_code($code, $order)) {
+        // Clear the field value so that the coupon code does not get 
+        // resubmitted causing an error when user uses main "Continue to next 
+        // step" submit.
+        $pane_form['coupon_code']['#value'] = '';
+
+        // Recalculate discounts.
+        commerce_cart_order_refresh($order);
+        
+        // If the coupon is still present on the order at this point, show a 
+        // message.
+        if (commerce_coupon_order_has_coupon_code($code, $order)) {
+          drupal_set_message(t('Coupon code applied.'));
+        }
+      }
+    }
+    else {
+      drupal_set_message(t('Please enter a code.'), 'error');
+    }
+  }
+  
+  // Extract the View and display keys from the cart contents pane setting.
+  $pane_view = variable_get('commerce_coupon_checkout_pane_view', 'order_coupon_list|checkout');
+  if ($pane_view != 'none') {
+>>>>>>> 1bfb4a5c1a929d163db345dad4c0d98133252d8f
     list($view_id, $display_id) = explode('|', $pane_view);
     if (!empty($view_id) && !empty($display_id) && views_get_view($view_id)) {
       $pane_form['redeemed_coupons'] = array(
@@ -48,6 +132,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
         '#markup' => commerce_embed_view($view_id, $display_id, array($order->order_id)),
       );
     }
+<<<<<<< HEAD
   }
 
   if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {
@@ -88,6 +173,9 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
       }
     }
   }
+=======
+  }  
+>>>>>>> 1bfb4a5c1a929d163db345dad4c0d98133252d8f
 
   // Display any new status messages added by this pane within the pane's area.
   if (drupal_get_messages(NULL, FALSE)) {
@@ -101,6 +189,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
   return $pane_form;
 }
 
+<<<<<<< HEAD
 /**
  * Check whether the coupon code is valid.
  */
@@ -180,10 +269,69 @@ function commerce_coupon_pane_review($form, $form_state, $checkout_pane, $order)
   if (!empty($order->commerce_coupon_order_reference)) {
     // Extract the View and display keys from the cart contents pane setting.
     list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'commerce_coupon_review_pane|checkout'));
+=======
+/*
+ * Ajax callback: coupon add button.
+ */
+function commerce_coupon_add_coupon_callback($form, &$form_state) {
+  // Re-render the cart summary.
+  list($view_id, $display_id) = explode('|', variable_get('commerce_cart_contents_pane_view', 'commerce_cart_summary|default'));
+  $cart_summary = commerce_embed_view($view_id, $display_id, array($form_state['order']->order_id));
+  $commands[] = ajax_command_replace('.view-commerce-cart-summary', $cart_summary);
+  
+  // Re-render coupon pane
+  $coupon_pane = $form['commerce_coupon'];
+  $commands[] = ajax_command_replace('#commerce-checkout-coupon-ajax-wrapper', drupal_render($coupon_pane));
+  
+  return array('#type' => 'ajax', '#commands' => $commands);
+}
+
+/*
+ * Checkout pane callback: coupon checkout form validate
+ */
+function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
+  // This is really only a failsafe for if the user has js disabled, or if they 
+  // type in the coupon code and forget to hit "add coupon".
+  $code = $form_state['input']['commerce_coupon']['coupon_code'];
+  if ($code) {
+    // It is necessary to reload the order to make sure it is up to date.
+    $order = commerce_order_load($form_state['order']->order_id);
+    if (!commerce_coupon_may_redeem_coupon_code($code, $order)) {      
+      return FALSE;
+    }
+    else {
+      $form_state['redeem_coupon_code'] = $code;      
+    }
+  }
+  
+  // If code is empty there is no need to do anything.
+  return TRUE;
+}
+
+/*
+ * Checkout pane callback: coupon checkout form submit
+ */
+function commerce_coupon_pane_checkout_form_submit($form, &$form_state, $checkout_pane, $order) {
+  if (isset($form_state['redeem_coupon_code'])) {
+    // It is necessary to reload the order to make sure it is up to date.    
+    $order = commerce_order_load($form_state['order']->order_id);
+    commerce_coupon_redeem_coupon_code($form_state['redeem_coupon_code'], $order);  
+  }
+}
+
+/*
+ * Checkout pane callback: coupon checkout review
+ */
+function commerce_coupon_pane_review($form, $form_state, $checkout_pane, $order) {
+  if (!empty($order->commerce_coupons)) {
+    // Extract the View and display keys from the cart contents pane setting.
+    list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'order_coupon_list|checkout'));
+>>>>>>> 1bfb4a5c1a929d163db345dad4c0d98133252d8f
 
     return commerce_embed_view($view_id, $display_id, array($order->order_id));
   }
 }
+<<<<<<< HEAD
 
 /**
  * Checkout pane callback: returns the cart contents pane's settings form.
@@ -229,3 +377,5 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
 
   return $form;
 }
+=======
+>>>>>>> 1bfb4a5c1a929d163db345dad4c0d98133252d8f

@@ -1,0 +1,9 @@
+<?php
+
+/*
+ * Implements hook_flush_caches().
+ */
+function commerce_coupon_expire_flush_caches() {
+  module_load_install('commerce_coupon_expire');
+  _commerce_coupon_expire_extra_install_helper();
+}
