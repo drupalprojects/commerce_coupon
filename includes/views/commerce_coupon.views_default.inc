@@ -7,7 +7,7 @@ function commerce_coupon_views_default_views() {
 
   /*
    * Administrative coupons list
-   */  
+   */
 
   $view = new view();
   $view->name = 'coupons';
@@ -133,5 +133,5 @@ function commerce_coupon_views_default_views() {
   $views['order_coupons_list'] = $view;
 
   return $views;
-        
+
 }

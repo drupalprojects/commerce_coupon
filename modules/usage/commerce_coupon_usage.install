@@ -12,10 +12,10 @@ function commerce_coupon_usage_install() {
  */
 function _commerce_coupon_install_helper() {
   field_info_cache_clear();
-  
+
   $fields = field_info_fields();
   $instances = field_info_instances();
-  
+
   if (empty($fields['commerce_coupon_max_uses'])) {
     // Create max uses field.
     $field = array(
@@ -26,7 +26,7 @@ function _commerce_coupon_install_helper() {
     );
     field_create_field($field);
   }
-  
+
   // Add max uses field to coupons
   if (empty($instances['commerce_coupon']['discount_coupon']['commerce_coupon_max_uses'])) {
     $instance = array(

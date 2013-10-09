@@ -23,12 +23,6 @@ Drupal Commerce and all of its dependencies
 Entity Reference
 Commerce Discount
 
-Roadmap
--------
-
-Before we tag a release, we will design and implement a coupons UI directly on
-the discounts edit/create page.
-
 Configuration
 -------------
 
@@ -41,10 +35,13 @@ Coupon Types > Discount Coupon.
 There is no longer a UI for creating new coupon types. This must now be done in
 code.
 
-To set up a Discount Coupon:
+To set up a discount that uses a coupon code:
 
 - Create a discount (Store > Discounts, "create discount").
+- In the "Coupons" section, add one or more coupon codes.
+- Save discount
+
+There is also a separate UI for managing coupon entities themselves
 - Create a Discount Coupon (Store > Coupons > Create Coupon > Discount Coupon).
-- In the discount reference field, select the Discount that you just created.
-- Save Coupon. The discount now will not take effect until the correct coupon
-  code has been entered.
+- In the discount reference field, select a Discount.
+- Save Coupon.

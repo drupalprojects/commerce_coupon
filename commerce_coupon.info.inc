@@ -10,6 +10,11 @@ function commerce_coupon_entity_property_info_alter(&$info) {
       'label' => t('Coupons'),
       'getter callback' => 'commerce_coupon_get_discount_properties'
     );
+    $info['commerce_discount']['properties']['coupon_count'] = array(
+      'type' => 'integer',
+      'label' => t('Coupon count'),
+      'getter callback' => 'commerce_coupon_get_discount_properties'
+    );
   }
 }
 

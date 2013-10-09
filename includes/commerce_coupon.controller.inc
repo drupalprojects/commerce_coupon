@@ -6,15 +6,15 @@
  */
 
 class CommerceCouponEntityController extends DrupalCommerceEntityController {
-  
+
   public $code;
-  
+
   public $created;
-  
+
   public $bulk;
-  
+
   public $type = 'discount_coupon';
-  
+
   public $status;
 
   /**
@@ -56,7 +56,7 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
         $entity->created = REQUEST_TIME;
       }
     }
-    
+
     return parent::save($entity);
   }
 }

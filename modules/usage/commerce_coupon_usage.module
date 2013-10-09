@@ -16,7 +16,7 @@ function commerce_coupon_usage_get_number_of_uses($coupon_id) {
     ->entityCondition('entity_type', 'commerce_order')
     ->fieldCondition('commerce_coupons', 'target_id', $coupon_id, '=')
     ->count()
-    ->execute();          
+    ->execute();
 }
 
 /*
@@ -25,7 +25,7 @@ function commerce_coupon_usage_get_number_of_uses($coupon_id) {
 function commerce_coupon_usage_commerce_coupon_coupon_may_redeem_alter(&$valid, $coupon, $order) {
   $uses = commerce_coupon_usage_get_number_of_uses($coupon->coupon_id);
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-  
+
   if ($coupon_wrapper->commerce_coupon_max_uses->value() && $uses >= $coupon_wrapper->commerce_coupon_max_uses->value()) {
     drupal_set_message(t('Coupon has exceeded maximum number of uses.'), 'error');
     $valid = FALSE;

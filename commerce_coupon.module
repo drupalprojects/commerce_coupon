@@ -83,6 +83,14 @@ function commerce_coupon_commerce_coupon_type_info() {
  * Implements hook_menu().
  */
 function commerce_coupon_menu() {
+  // Find coupon auto-complete
+  $items['commerce/coupons/find'] = array(
+    'title' => 'Find coupon',
+    'page callback' => 'commerce_coupon_find_coupon_autocomplete',
+    'type' => MENU_CALLBACK,
+    'access arguments' => array('View any commerce_coupon of any type')
+  );
+
   // Remove coupon from order.
   $items['commerce/coupons/order/remove/%commerce_coupon/%commerce_order'] = array(
     'title' => 'Delete coupon from order',
@@ -200,7 +208,36 @@ function commerce_coupon_theme() {
     'commerce_coupon_type_admin_overview' => array(
       'variables' => array('coupon_type' => NULL),
     ),
+    'commerce_coupon_manage_discount_coupons' => array(
+      'render element' => 'elements'
+    ),
+    'commerce_coupon_discount_coupons_summary' => array(
+      'render element' => 'element'
+    )
   );
+}
+
+/*
+ * Menu callback: find coupon by code autocomplete
+ */
+function commerce_coupon_find_coupon_autocomplete($string = '') {
+  $return = array();
+  $query = new EntityFieldQuery;
+  $results = $query
+    ->entityCondition('entity_type', 'commerce_coupon')
+    ->propertyCondition('code', $string, 'CONTAINS')
+    ->propertyOrderBy('code')
+    ->range(0, 3)
+    ->execute();
+
+  if (!empty($results['commerce_coupon'])) {
+    $coupons = commerce_coupon_load_multiple(array_keys($results['commerce_coupon']));
+    foreach ($coupons as $coupon) {
+      $return[$coupon->code] = $coupon->code;
+    }
+  }
+
+  drupal_json_output($return);
 }
 
 /*
@@ -336,8 +373,8 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
 
     if (isset($map[$discount->type])) {
       $rule->condition('commerce_coupon_order_has_discount_coupon_code', array(
-          'order:select' => $map[$discount->type],
-          'commerce_discount' => $discount->name)
+        'order:select' => $map[$discount->type],
+        'commerce_discount' => $discount->name)
       );
     }
   }
@@ -347,22 +384,38 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
  * Entity metadata getter: coupon properties on discounts
  */
 function commerce_coupon_get_discount_properties($discount, $options, $name) {
-  switch ($name) {
-    case 'coupons':
-      // Load coupons that reference this discount.
-      $query = new EntityFieldQuery;
-      $results = $query
-        ->entityCondition('entity_type', 'commerce_coupon')
-        ->fieldCondition('commerce_discount_reference', 'target_id', $discount->discount_id)
-        ->execute();
+    switch ($name) {
+      case 'coupons':
+        if (!empty($discount->discount_id)) {
+          // Load coupons that reference this discount.
+          $query = new EntityFieldQuery;
+          $results = $query
+            ->entityCondition('entity_type', 'commerce_coupon')
+            ->fieldCondition('commerce_discount_reference', 'target_id', $discount->discount_id)
+            ->execute();
 
-      if (isset($results['commerce_coupon'])) {
-        return array_keys($results['commerce_coupon']);
-      }
-      return array();
+          if (isset($results['commerce_coupon'])) {
+            return array_keys($results['commerce_coupon']);
+          }
+        }
+        return array();
 
-      break;
-  }
+        break;
+      case 'coupon_count':
+        if (!empty($discount->discount_id)) {
+          $query = new EntityFieldQuery;
+          return $query
+            ->entityCondition('entity_type', 'commerce_coupon')
+            ->fieldCondition('commerce_discount_reference', 'target_id', $discount->discount_id)
+            ->propertyCondition('status', 1)
+            ->count()
+            ->execute();
+        }
+        return 0;
+
+        break;
+    }
+
 }
 
 /*
@@ -496,9 +549,9 @@ function commerce_coupon_redeem_coupon_code($code, $order) {
 function commerce_coupon_load_by_code($code) {
   $query = new EntityFieldQuery();
   $result = $query->entityCondition('entity_type', 'commerce_coupon')
-    ->propertyCondition('code', $code)
-    ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT') // TODO is this still necessary?
-    ->execute();
+      ->propertyCondition('code', $code)
+      ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT') // TODO is this still necessary?
+      ->execute();
 
   if (empty($result)) {
     return;
@@ -613,7 +666,7 @@ function commerce_coupon_load_multiple($commerce_coupon_ids = array(), $conditio
 function commerce_coupon_code_exists($code) {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_coupon')
-    ->propertyCondition('code', $code);
+      ->propertyCondition('code', $code);
 
   $result = $query->execute();
 
@@ -635,7 +688,7 @@ function commerce_coupon_code_exists($code) {
 function commerce_coupon_get_number_of_uses($coupon_id) {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_order')
-    ->fieldCondition('commerce_coupons', 'target_id', $coupon_id, '=');
+      ->fieldCondition('commerce_coupons', 'target_id', $coupon_id, '=');
   return $query->count()->execute();
 }
 
@@ -957,4 +1010,525 @@ function _commerce_coupon_load_argument_order($handler) {
   }
 
   return isset($order) ? $order : FALSE;
+}
+
+/*
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state) {
+  // Attach a UI for adding associated coupon entities.
+  if (isset($form_state['triggering_element'])) {
+    $trigger = end($form_state['triggering_element']['#array_parents']);
+  }
+  else {
+    $trigger = NULL;
+  }
+
+  $form['#validate'][] = 'commerce_coupon_form_attach_coupons_validate';
+  $form['#submit'][] = 'commerce_coupon_form_attach_coupons';
+
+  // We do not want to show the management tools if there are more than 100
+  // coupons attached to this discount.
+  $discount_wrapper = entity_metadata_wrapper('commerce_discount', $form_state['commerce_discount']);
+  $coupon_count = isset($form_state['coupons']) ? count($form_state['coupons']) : $discount_wrapper->coupon_count->value();
+  if ($coupon_count <= 100) {
+    // Keep track of coupons that have been added if there is a reasonably small
+    // amount.
+    if (!isset($form_state['coupons'])) {
+      $form_state['coupons'] = $discount_wrapper->coupons->value();
+      // Keep track of these so we know which to get rid of at the end.
+      $form_state['original_coupons'] = $form_state['coupons'];
+    }
+    $coupons =& $form_state['coupons'];
+  }
+
+  // Handle certain triggers
+  switch ($trigger) {
+    case 'remove_coupon':
+      $edit_delta = $form_state['triggering_element']['#delta'];
+      unset($coupons[$edit_delta]);
+
+      break;
+    case 'edit_coupon':
+      $edit_delta = $form_state['triggering_element']['#delta'];
+      // Store the index of the coupon that we are editing.
+      $form_state['edit_coupon'] = $coupons[$edit_delta];
+      $form_state['edit_coupon']->delta = $edit_delta;
+
+      break;
+  }
+
+  // Keep track of whether there is a coupon being edited currently.
+  if (isset($form_state['edit_coupon'])) {
+    $coupon = $form_state['edit_coupon'];
+  }
+
+  // Establish a container
+  $form['coupons'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Coupon conditions'),
+    '#tree' => TRUE,
+    '#prefix' => '<div id="commerce-coupon-discount-coupon-form">',
+    '#suffix' => '</div>'
+  );
+
+  // Ajax specifications.
+  $ajax = array(
+    'callback' => 'commerce_coupon_discount_coupon_form_ajax',
+    'wrapper' => 'commerce-coupon-discount-coupon-form'
+  );
+
+  // Add new coupons
+  $form['coupons']['add'] = array(
+    '#type' => 'button',
+    '#value' => t('Add new coupon'),
+    '#ajax' => $ajax,
+    '#limit_validation_errors' => array(array('coupons', 'coupon_form'))
+  );
+
+  // Find/add existing coupon
+  $form['coupons']['add_existing'] = array(
+    '#type' => 'button',
+    '#value' => t('Add existing coupon'),
+    '#ajax' => $ajax,
+    '#limit_validation_errors' => array(array('coupons', 'find_coupon_code'))
+  );
+
+  if ($trigger == 'add') {
+    $coupon = commerce_coupon_create('discount_coupon');
+
+    $form['coupons']['coupon_form'] = array(
+      '#type' => 'container'
+    );
+    // Attach the coupon form
+    commerce_coupon_attach_ajax_coupon_entity_form(
+      $form['coupons']['coupon_form'],
+      $form_state,
+      $coupon,
+      $ajax,
+      array(array('coupons'))
+    );
+
+    // Add responsive visibility states to the code line
+    $form['coupons']['coupon_form']['code']['#states'] = array(
+      'disabled' => array(
+        'input[name="coupons[coupon_form][generate]"]' => array('checked' => TRUE)
+      )
+    );
+
+    $form['coupons']['coupon_form']['save_coupon']['#limit_validation_errors'] = array(
+      array('coupons', 'coupon_form')
+    );
+    unset($form_state['edit_coupon']);
+  }
+  else if ($trigger == 'add_existing') {
+    $form['coupons']['find_coupon_code'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Add existing coupon code'),
+      '#autocomplete_path' => 'commerce/coupons/find',
+    );
+    // Add existing button
+    $form['coupons']['add_existing_coupon'] = array(
+      '#type' => 'button',
+      '#value' => t('Add'),
+      '#ajax' => $ajax,
+      '#limit_validation_errors' => array(
+        array('coupons', 'find_coupon_code')
+      )
+    );
+    // Cancel add existing button
+    $form['coupons']['cancel_add_existing'] = array(
+      '#type' => 'button',
+      '#value' => t('Cancel'),
+      '#ajax' => $ajax,
+      '#limit_validation_errors' => array()
+    );
+  }
+
+  // Attach coupons management table
+  $form['coupons']['manage_coupons'] = array(
+    '#theme' => 'commerce_coupon_manage_discount_coupons',
+  );
+
+  if (isset($coupons)) {
+    foreach ($coupons as $delta => $coupon) {
+      $form['coupons']['manage_coupons'][$delta]['#coupon'] = $coupon;
+      if (isset($edit_delta) && $delta == $edit_delta) {
+        // If this one is selected, attach a coupon form
+        $form['coupons']['manage_coupons'][$delta]['coupon_form'] = array(
+          '#type' => 'container'
+        );
+        commerce_coupon_attach_ajax_coupon_entity_form(
+          $form['coupons']['manage_coupons'][$delta]['coupon_form'],
+          $form_state,
+          $coupon,
+          $ajax,
+          array(array('coupons', 'manage_coupons', $delta))
+        );
+
+        // Add responsive visibility states to the code line
+        $form['coupons']['manage_coupons'][$delta]['coupon_form']['code']['#states'] = array(
+          'disabled' => array(
+            'input[name="coupons[manage_coupons][' . $delta .'][coupon_form][generate]"]' => array('checked' => TRUE)
+          )
+        );
+      }
+      else {
+        $form['coupons']['manage_coupons'][$delta]['edit_coupon'] = array(
+          '#type' => 'button',
+          '#ajax' => $ajax,
+          '#value' => t('edit'),
+          '#limit_validation_errors' => array(),
+          '#delta' => $delta,
+          '#name' => 'edit-coupon-' . $delta,
+        );
+        $form['coupons']['manage_coupons'][$delta]['remove_coupon'] = array(
+          '#type' => 'button',
+          '#ajax' => $ajax,
+          '#value' => t('remove'),
+          '#limit_validation_errors' => array(),
+          '#delta' => $delta,
+          '#name' => 'remove-coupon-' . $delta,
+        );
+      }
+    }
+  }
+  else {
+    // This means there are too many coupons for the management widget to
+    // handle. Provide a summary.
+    $form['coupons']['coupons_summary'] = array(
+      '#theme' => 'commerce_coupon_discount_coupons_summary',
+      '#count' => $coupon_count,
+    );
+  }
+
+  // Clear the input if save was successful
+  unset($form_state['values']['coupons']['coupon_form']);
+  unset($form_state['input']['coupons']['coupon_form']);
+
+  $form_state['coupons'] = $coupons;
+}
+
+/*
+ * Form submit callback: save a coupon from the discount UI
+ */
+function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
+  if (!empty($form_state['coupons']) && !empty($form_state['commerce_discount']->discount_id)) {
+    // Save coupons
+    foreach ($form_state['coupons'] as $coupon) {
+      if ($coupon->coupon_id || !commerce_coupon_load_by_code($coupon->code)) {
+        // Add a reference to this discount.
+        $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+        $delta = $coupon_wrapper->commerce_discount_reference->count();
+        $coupon->commerce_discount_reference[LANGUAGE_NONE][$delta]['target_id'] = $form_state['commerce_discount']->discount_id;
+
+        // Save discount.
+        commerce_coupon_save($coupon);
+      }
+    }
+  }
+
+  // Remove coupons
+  if (!empty($form_state['original_coupons'])) {
+    foreach ($form_state['original_coupons'] as $original_coupon) {
+      if (!commerce_coupon_coupon_list_has_code($original_coupon->code, $form_state['coupons'])) {
+        // If the coupon code is no longer attached to this discount and it is
+        // attached to no other discounts, delete it completely.
+        $remove_coupon = commerce_coupon_load_by_code($original_coupon->code);
+        $wrapper = entity_metadata_wrapper('commerce_coupon', $remove_coupon);
+        $delete = TRUE;
+
+        if (!empty($form_state['commerce_discount']->discount_id)) {
+          foreach ($wrapper->commerce_discount_reference->value() as $discount) {
+            if ($discount->discount_id != $form_state['commerce_discount']->discount_id) {
+              $delete = FALSE;
+            }
+          }
+        }
+
+        if ($delete) {
+          commerce_coupon_delete($original_coupon->coupon_id);
+        }
+      }
+    }
+  }
+
+  // Rebuild the rules again.
+  entity_defaults_rebuild(array('rules_config'));
+}
+
+/*
+ * Form validate callback: validate a new coupon from the discount UI
+ */
+function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
+  $trigger = end($form_state['triggering_element']['#array_parents']);
+
+  switch ($trigger) {
+    case 'add_coupon':
+    case 'save_coupon':
+      $coupon = !isset($form_state['edit_coupon']) ? commerce_coupon_create('discount_coupon') : $form_state['edit_coupon'];
+
+      // Determine whether it is the "add new" form or an edit form
+      if (isset($coupon->delta)) {
+        $coupon_fields_form =& $form['coupons']['manage_coupons'][$coupon->delta]['coupon_form']['commerce_coupon_fields'];
+        $coupon_values = $form_state['values']['coupons']['manage_coupons'][$coupon->delta]['coupon_form'];
+      }
+      else {
+        $coupon_fields_form =& $form['coupons']['coupon_form']['commerce_coupon_fields'];
+        $coupon_values = $form_state['values']['coupons']['coupon_form'];
+      }
+
+      // Validate fields
+      field_attach_form_validate('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
+
+      // If the form has passed validation, prepare the coupon for submission.
+      if (!form_get_errors()) {
+        if (!empty($coupon_values['generate'])) {
+          // Generate a code.
+          $code = commerce_coupon_generate_coupon_code('discount_coupon');
+
+          // Make sure the code is not already staged.
+          if (!empty($form_state['coupons'])) {
+            foreach ($form_state['coupons'] as $staged_coupon) {
+              $coupon_codes[] = $staged_coupon->code;
+            }
+            $n = 0;
+            while (in_array($code, $coupon_codes) && $n < 10) {
+              $code = commerce_coupon_generate_coupon_code('discount_coupon');
+              $n++;
+            }
+          }
+        }
+        else {
+          $code = $coupon_values['code'];
+        }
+
+        $coupon->code = $code;
+        $coupon->status = $coupon_values['status'];
+
+        field_attach_submit('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
+        // Add it to the list of coupons that we save.
+        if (isset($coupon->delta)) {
+          $form_state['coupons'][$coupon->delta] = $coupon;
+          // If the coupon is already in the database, we must save it
+          // immediately. This is to take care of cases where a user could
+          // switch the codes of two coupons. If we allow the database to get
+          // out of sync with what is in the form, it becomes prohibitively
+          // difficult to enforce uniqueness.
+          if (isset($coupon->coupon_id)) {
+            commerce_coupon_save($coupon);
+          }
+        }
+        else {
+          $form_state['coupons'][] = $coupon;
+        }
+
+        // Reset the edit coupon tracker
+        unset($form_state['edit_coupon']);
+      }
+
+      break;
+    case 'cancel_coupon':
+      unset($form_state['edit_coupon']);
+
+      break;
+    case 'add_existing_coupon':
+      $code = $form_state['values']['coupons']['find_coupon_code'];
+      $coupon = commerce_coupon_load_by_code($code);
+      if (!$coupon) {
+        form_set_error('coupons][find_coupon_code', t('Please enter a valid coupon code'));
+      }
+      else if (commerce_coupon_coupon_list_has_code($coupon->code, $form_state['coupons'])) {
+        form_set_error('coupons][find_coupon_code', t('The coupon code you entered has already been added to this discount.'));
+      }
+      else {
+        $form_state['coupons'][] = $coupon;
+      }
+      break;
+  }
+}
+
+/**
+ * Helper function to determine whether or not a list of coupons contains a
+ * particular code.
+ *
+ * @param type $code
+ * @param type $coupons
+ * @return boolean
+ */
+function commerce_coupon_coupon_list_has_code($code, $coupons) {
+  foreach ($coupons as $coupon) {
+    if ($coupon->code == $code) {
+      return TRUE;
+    }
+  }
+}
+
+/*
+ * Form ajax callback: handle ajax rebuilding for all discount coupon form
+ * operations.
+ */
+function commerce_coupon_discount_coupon_form_ajax(&$form, &$form_state) {
+  return $form['coupons'];
+}
+
+/**
+ * Attach an ajax coupon entity form to a form or form fragment.
+ *
+ * @param type $form
+ * @param type $form_state
+ * @param type $coupon
+ * @param type $show_discounts_field
+ */
+function commerce_coupon_attach_ajax_coupon_entity_form(&$form, &$form_state, $coupon, $ajax, $limit_validation_errors, $show_discounts_field = FALSE) {
+  commerce_coupon_attach_coupon_entity_form($form, $form_state, $coupon, $show_discounts_field);
+
+  $form['code']['#element_validate'][] = 'commerce_coupon_code_validate_staged';
+
+  $form['cancel_coupon'] = array(
+    '#type' => 'button',
+    '#value' => t('Cancel'),
+    '#ajax' => $ajax,
+    '#limit_validation_errors' => array()
+  );
+
+  $form['save_coupon'] = array(
+    '#type' => 'button',
+    '#value' => t('Save'),
+    '#ajax' => $ajax,
+    '#limit_validation_errors' => $limit_validation_errors
+  );
+}
+
+/*
+ * Form validate callback: make sure that the code entered is not the same as a
+ * coupon code staged in the form.
+ */
+function commerce_coupon_code_validate_staged($element, &$form_state) {
+  $code = $element['#value'];
+  $coupon_form_values = drupal_array_get_nested_value($form_state['values'], array_slice($element['#array_parents'], 0, -1));
+  $generate = $coupon_form_values['generate'];
+
+  if (isset($form_state['coupons']) && !$generate) {
+    $element_delta = $element['#array_parents'][2];
+    foreach ($form_state['coupons'] as $delta => $coupon) {
+      // Make sure that this code isn't used in one of the staged coupons.
+      if ($code == $coupon->code && $delta != $element_delta) {
+        form_set_error(implode('][', $element['#array_parents']), t('The code that you entered already exists.'));
+      }
+    }
+  }
+}
+
+/**
+ * Attach a coupon entity form to a form or form fragment.
+ *
+ * @param type $form
+ * @param type $form_state
+ * @param type $coupon
+ */
+function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon, $show_discounts_field = FALSE) {
+
+  // Coupon code
+  $form['code'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Coupon code'),
+    '#default_value' => $coupon->code,
+    '#coupon_id' => isset($coupon->coupon_id) ? $coupon->coupon_id : '',
+    '#element_validate' => array('commerce_coupon_validate_code'),
+  );
+
+  // Generate code
+  $form['generate'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Generate code'),
+    '#description' => t('If you check this, a random code will be generated.'),
+    '#default_value' => FALSE,
+  );
+
+  $form['commerce_coupon_fields'] = array(
+    '#type' => 'container',
+  );
+
+  // Attach fields.
+  field_attach_form('commerce_coupon', $coupon, $form['commerce_coupon_fields'], $form_state);
+
+  // Possibly do not show the discount reference field
+  if (!$show_discounts_field) {
+    $form['commerce_coupon_fields']['commerce_discount_reference']['#access'] = 0;
+  }
+
+  // Status
+  $form['status'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Enabled'),
+    '#default_value' => $coupon->status,
+  );
+}
+
+/*
+ * Theme callback: build discount coupon management table
+ */
+function theme_commerce_coupon_manage_discount_coupons($variables) {
+  $elements = $variables['elements'];
+  $table['headers'] = array(t('Code'), '', '');
+  $table['rows'] = array();
+
+  foreach (element_children($elements) as $delta) {
+    $element = $elements[$delta];
+    if (isset($element['edit_coupon']) && isset($element['remove_coupon'])) {
+      $edit_button = $element['edit_coupon'];
+      $remove_button = $element['remove_coupon'];
+
+      $row = array(check_plain($element['#coupon']->code), drupal_render($edit_button), drupal_render($remove_button));
+    }
+    else {
+      $form = $element['coupon_form'];
+      $row = array(drupal_render($form));
+    }
+    $table['rows'][] = $row;
+  }
+
+  if (!empty($table['rows'])) {
+    return theme('table', $table);
+  }
+}
+
+/*
+ * Theme callback: render discount coupons summary
+ */
+function commerce_coupon_discount_coupons_summary($variables) {
+  $output = '<div class="commerce-coupon-discount-coupons-summary"><strong>';
+  $output .= t('Attached coupons');
+  $output .= ':</strong>';
+  $output .= check_plain($variables['element']['#count']) . '</div>';
+}
+
+/*
+ * Element validate callback: validate coupon code
+ */
+function commerce_coupon_validate_code($element, &$form_state) {
+  $path = implode('][', $element['#array_parents']);
+  $coupon_form_values = drupal_array_get_nested_value($form_state['values'], array_slice($element['#array_parents'], 0, -1));
+  // Ensure code is not empty unless we are generating a random one
+  if (empty($coupon_form_values['generate'])) {
+    if (empty($element['#value'])) {
+      form_set_error($path, t('You must enter a code.'));
+      return;
+    }
+
+    $code = $element['#value'];
+
+    // Do not allow existing coupon codes, unless it is merely saving itself.
+    $coupon = commerce_coupon_load_by_code($code);
+
+    if ($coupon && (empty($element['#coupon_id']) || $element['#coupon_id'] != $coupon->coupon_id)) {
+      form_set_error($path, t('The code that you entered already exists.'));
+    }
+  }
+
+  // Ensure unique code if inserting
+  if (!empty($form_state['edit_coupon']->is_new) && commerce_coupon_load_by_code($element['#value'])) {
+    form_set_error($path, t('The code that you entered already exists.'));
+  }
 }

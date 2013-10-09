@@ -11,7 +11,7 @@ function commerce_coupon_type_settings_form($form, &$form_state, $coupon_type) {
     '#default_value' => variable_get('commerce_coupon_default_code_size', 8),
     '#description' => t('Set the coupon code length for auto generated codes of this type.'),
   );
-  
+
   return system_settings_form($form);
 }
 
@@ -108,40 +108,14 @@ function commerce_coupon_form($form, &$form_state, $coupon) {
   // Ensure this include file is loaded when the form is rebuilt from the cache.
   $form_state['build_info']['files']['form'] = drupal_get_path('module', 'commerce_coupon') . '/includes/commerce_coupon_ui.forms.inc';
   $form_state['coupon'] = $coupon;
-  
-  // Coupon code
-  $form['code'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Coupon code'),
-    '#default_value' => $coupon->code,
-    '#element_validate' => array('commerce_coupon_validate_code'),      
-    '#states' => array(
-      'disabled' => array(
-        ':input[name="generate"]' => array('checked' => TRUE)
-      )
+
+  commerce_coupon_attach_coupon_entity_form($form, $form_state, $coupon, TRUE);
+
+  // Add responsive disabling of code element based on state of generate.
+  $form['code']['#states'] = array(
+    'disabled' => array(
+      ':input[name="generate"]' => array('checked' => TRUE)
     )
-  );
-  
-  // Generate code
-  $form['generate'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Generate code'),
-    '#description' => t('If you check this, a random code will be generated.'),
-    '#default_value' => FALSE,
-  );  
-  
-  $form['commerce_coupon_fields'] = array(
-    '#type' => 'container',
-  );
-  
-  // Attach fields.
-  field_attach_form('commerce_coupon', $coupon, $form['commerce_coupon_fields'], $form_state);
-  
-  // Status
-  $form['status'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enabled'),
-    '#default_value' => $coupon->status,    
   );
 
   $form['actions'] = array(
@@ -159,23 +133,9 @@ function commerce_coupon_form($form, &$form_state, $coupon) {
 }
 
 /*
- * Element validate callback: validate coupon code
- */
-function commerce_coupon_validate_code($element, &$form_state) {
-  // Ensure code is not empty unless we are generating a random one
-  if (empty($form_state['values']['generate']) && empty($element['#value'])) {
-    form_set_error('code', t('You must enter a code.'));
-  }
-  // Ensure unique code if inserting
-  if (!empty($form_state['coupon']->is_new) && commerce_coupon_load_by_code($element['#value'])) {
-    form_set_error('code', t('This coupon code already exists.'));
-  }
-}
-
-/*
  * Form submit callback: submit coupon entity form
  */
-function commerce_coupon_form_submit(&$form, &$form_state) {    
+function commerce_coupon_form_submit(&$form, &$form_state) {
   $coupon = &$form_state['coupon'];
   $coupon->code = !empty($form_state['values']['code']) ? $form_state['values']['code'] : commerce_coupon_generate_coupon_code('discount_coupon');
   $coupon->status = $form_state['values']['status'];
@@ -186,9 +146,9 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
   // Save the coupon.
   commerce_coupon_save($coupon);
   $form_state['redirect'] = 'admin/commerce/coupons';
-  
+
   // Rebuild rules defaults so that discount rules get updated.
-  entity_defaults_rebuild(array('rules_config'));  
+  entity_defaults_rebuild(array('rules_config'));
 
   // Redirect based on the button clicked.
   drupal_set_message(t('Coupon saved.'));
@@ -198,7 +158,7 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
  * Form callback: coupon delete confirmation form
  */
 function commerce_coupon_delete_form($form, &$form_state, $coupon) {
-  $form_state['commerce_coupon'] = $coupon;  
+  $form_state['commerce_coupon'] = $coupon;
 
   // Ensure this include file is loaded when the form is rebuilt from the cache.
   $form_state['build_info']['files']['form'] = drupal_get_path('module', 'commerce_coupon') . '/includes/commerce_coupon.admin.inc';
@@ -230,8 +190,8 @@ function commerce_coupon_delete_form_submit($form, &$form_state) {
 
   if (commerce_coupon_delete($coupon->coupon_id)) {
     // Rebuild rules defaults so that discount rules get updated.
-    entity_defaults_rebuild(array('rules_config'));      
-  
+    entity_defaults_rebuild(array('rules_config'));
+
     drupal_set_message(t('%code has been deleted.', array('%code' => $code)));
     watchdog('commerce_coupon', 'Deleted coupon %code.', array('%code' => $code), WATCHDOG_NOTICE);
   }

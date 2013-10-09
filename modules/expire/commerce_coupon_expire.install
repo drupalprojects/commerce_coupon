@@ -12,14 +12,14 @@ function commerce_coupon_expire_install() {
  */
 function _commerce_coupon_expire_extra_install_helper() {
   field_info_cache_clear();
-  
+
   $fields = field_info_fields();
   $instances = field_info_instances();
-    
+
   /*
    * Coupon expiration date
    */
-  
+
   if (empty($fields['commerce_coupon_expiration'])) {
     // Create field.
     $field = array(
@@ -47,7 +47,7 @@ function _commerce_coupon_expire_extra_install_helper() {
     );
     field_create_field($field);
   }
-  
+
   // Create instance
   if (empty($instances['commerce_coupon']['discount_coupon']['commerce_coupon_expiration'])) {
     $instance = array(

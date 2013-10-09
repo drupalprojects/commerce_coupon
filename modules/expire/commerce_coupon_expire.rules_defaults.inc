@@ -12,9 +12,9 @@ function commerce_coupon_expire_default_rules_configuration() {
         "USES VARIABLES" : { "coupon" : { "label" : "Coupon", "type" : "commerce_coupon" } },
         "ACTION SET" : [ { "data_set" : { "data" : [ "coupon:status" ], "value" : 1 } } ]
       }
-    }'          
+    }'
   );
-  
+
   $rules['rules_schedule_coupon_expiration_insert'] = entity_import('rules_config',
     '{ "rules_schedule_coupon_expiration_insert" : {
         "LABEL" : "Schedule coupon expiration (insert)",
@@ -39,9 +39,9 @@ function commerce_coupon_expire_default_rules_configuration() {
           }
         ]
       }
-    }'          
+    }'
   );
-  
+
   $rules['rules_schedule_coupon_expiration_update'] = entity_import('rules_config',
     '{ "rules_schedule_coupon_expiration_update" : {
         "LABEL" : "Schedule coupon expiration (update)",
@@ -76,9 +76,9 @@ function commerce_coupon_expire_default_rules_configuration() {
           }
         ]
       }
-    }'          
+    }'
   );
-  
+
   $rules['rules_deschedule_coupon_expiration_delete'] = entity_import('rules_config',
     '{ "rules_deschedule_coupon_expiration_delete" : {
         "LABEL" : "Deschedule coupon expiration (delete)",
@@ -101,9 +101,9 @@ function commerce_coupon_expire_default_rules_configuration() {
           }
         ]
       }
-    }'          
+    }'
   );
-  
+
   $rules['rules_deschedule_coupon_expiration_update'] = entity_import('rules_config',
     '{ "rules_deschedule_coupon_expiration_update" : {
         "LABEL" : "Deschedule coupon expiration (update)",
@@ -127,8 +127,8 @@ function commerce_coupon_expire_default_rules_configuration() {
           }
         ]
       }
-    }'          
-  );  
-  
+    }'
+  );
+
   return $rules;
 }
