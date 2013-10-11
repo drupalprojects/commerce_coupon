@@ -18,8 +18,6 @@ class commerce_coupon_handler_field_discount_value_display extends views_handler
     $order = _commerce_coupon_load_argument_order($this);
     $coupon = commerce_coupon_load($this->get_value($values, 'coupon_id'));
     
-    // Don't show anything if there are no discounts belonging to this coupon
-    // present on the order.
     if ($order && $coupon) {
       $discounts = commerce_coupon_order_coupon_code_discounts($coupon->code, $order);
       
@@ -31,20 +29,24 @@ class commerce_coupon_handler_field_discount_value_display extends views_handler
         // coupon that has a discount  
         foreach ($discounts as $discount) {
           $display = '';
-          drupal_alter('commerce_coupon_discount_savings_value', $display, $discount, $order);
+          drupal_alter('commerce_coupon_discount_value_display', $display, $discount, $order);
           if ($display) {
             $items[] = $display;
           }
         }
-      }
-      $variables = array(
-        'items' => $items,
-        'type' => 'ul',
-        'title' => '',
-        'attributes' => array()
-      );
+        $variables = array(
+          'items' => $items,
+          'type' => 'ul',
+          'title' => '',
+          'attributes' => array()
+        );
 
-      return theme_item_list($variables);
+        $output = theme_item_list($variables);
+      }
+      
+      // Allow modules to alter the entire row.
+      drupal_alter('commerce_coupon_value_display', $output, $coupon, $order);
+      return $output;
     }
   }
 }

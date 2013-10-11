@@ -139,6 +139,9 @@ function commerce_coupon_add_coupon_callback($form, &$form_state) {
   // Re-render coupon pane
   $coupon_pane = $form['commerce_coupon'];
   $commands[] = ajax_command_replace('#commerce-checkout-coupon-ajax-wrapper', drupal_render($coupon_pane));
+  
+  // Allow other modules to alter the commands
+  drupal_alter('commerce_coupon_add_coupon_ajax', $commands, $form_state['order']);
 
   return array('#type' => 'ajax', '#commands' => $commands);
 }

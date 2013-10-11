@@ -38,5 +38,22 @@ function commerce_coupon_views_data_alter(&$data) {
         'handler' => 'commerce_coupon_handler_field_coupon_edit',
       ),
     );
+    
+    // Change created into a date field
+    $data['commerce_coupon']['created'] = array(
+      'title' => t('Created date'),
+      'help' => t('The date the order was created.'),
+      'field' => array(
+        'handler' => 'views_handler_field_date',
+        'click sortable' => TRUE,
+      ),
+      'sort' => array(
+        'handler' => 'views_handler_sort_date',
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_date',
+      ),
+    );
+    
   }
 }

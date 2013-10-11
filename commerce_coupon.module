@@ -213,6 +213,9 @@ function commerce_coupon_theme() {
     ),
     'commerce_coupon_discount_coupons_summary' => array(
       'render element' => 'element'
+    ),
+    'commerce_coupon_add_list' => array(
+      'render element' => 'content'
     )
   );
 }
@@ -726,9 +729,10 @@ function commerce_coupon_views_api() {
 /*
  * Implements hook_commerce_coupon_discount_savings_value_alter().
  */
-function commerce_coupon_commerce_coupon_discount_savings_value_alter(&$text, $discount, $order) {
+function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $discount, $order) {
+  
   // Common variables
-  $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
+  $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);  
   $offer_wrapper = $discount_wrapper->commerce_discount_offer;
   $offer_type = $offer_wrapper->type->value();
   $offer = $offer_wrapper->value();
@@ -825,7 +829,7 @@ function commerce_coupon_order_coupon_code_discounts($code, $order) {
   $coupon = commerce_coupon_load_by_code($code);
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
 
-  if ($coupon_wrapper->commerce_discount_reference->value()) {
+  if ($coupon->type == 'discount_coupon' && $coupon_wrapper->commerce_discount_reference->value()) {
 
     // Line item level discounts are not stored on the order, so we have to dig
     // through the price components
@@ -970,7 +974,7 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
     // Invalidate coupons that exist on the order without their discount present
     // - meaning an inline condition on the discount was not satisfied.
-    if (!commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {
+    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {
       drupal_set_message(t('One or more conditions for coupon @code are currently not satisfied.', array('@code' => $coupon->code)), 'error');
       $valid = FALSE;
     }
