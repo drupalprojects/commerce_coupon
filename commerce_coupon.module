@@ -25,6 +25,7 @@ function commerce_coupon_entity_info() {
       'bundle' => 'type'
     ),
     'module' => 'commerce_coupon',
+    'token type' => 'commerce-coupon',
     'permission labels' => array(
       'singular' => t('coupon'),
       'plural' => t('coupons'),

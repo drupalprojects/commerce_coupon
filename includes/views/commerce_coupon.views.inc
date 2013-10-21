@@ -55,5 +55,14 @@ function commerce_coupon_views_data_alter(&$data) {
       ),
     );
     
+    // Add a special code argument handler
+    $data['commerce_coupon']['code']['argument'] = array(
+      'handler' => 'commerce_coupon_handler_argument_coupon_code'
+    );
+    
+    // Add a special coupon id argument handler
+    $data['commerce_coupon']['coupon_id']['argument'] = array(
+      'handler' => 'commerce_coupon_handler_argument_coupon_id'
+    );    
   }
 }
