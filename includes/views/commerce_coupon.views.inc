@@ -10,6 +10,8 @@
  */
 function commerce_coupon_views_data_alter(&$data) {
   if (isset($data['commerce_coupon'])) {
+    $data['commerce_coupon']['table']['base']['access query tag'] = 'commerce_coupon_access';
+    
     $data['commerce_coupon']['remove_from_order'] = array(
       'field' => array(
         'title' => t('Remove from Order'),

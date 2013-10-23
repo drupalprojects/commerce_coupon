@@ -116,13 +116,15 @@ function commerce_coupon_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
     'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    'access callback' => 'commerce_coupon_access',
+    'access arguments' => array('update', 3),      
   );
   $items['admin/commerce/coupons/%commerce_coupon/delete'] = array(
     'title' => 'Delete',
     'page callback' => 'commerce_coupon_coupon_delete_form_wrapper',
     'page arguments' => array(3),
     'access callback' => 'commerce_coupon_access',
-    'access arguments' => array('update', 3),
+    'access arguments' => array('delete', 3),
     'type' => MENU_LOCAL_TASK,
     'weight' => 20,
     'context' => MENU_CONTEXT_INLINE,
@@ -160,13 +162,13 @@ function commerce_coupon_menu() {
       'title' => $coupon_type['label'],
       'page callback' => 'drupal_get_form',
       'page arguments' => array('commerce_coupon_type_settings_form', $coupon_type),
-      'access arguments' => array('administer coupon types'),
+      'access arguments' => array('administer coupons'),
       'file' => 'includes/commerce_coupon.admin.inc',
     );
 
     $items['admin/commerce/coupons/types/' . $type_arg . '/edit'] = array(
       'title' => 'Edit',
-      'access arguments' => array('administer coupon types'),
+      'access arguments' => array('administer coupons'),
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
     );
@@ -301,16 +303,30 @@ function commerce_coupon_admin_menu_map() {
  * Provides the basic access objects
  */
 function commerce_coupon_permission() {
-  $permissions = array(
-    'administer coupon settings' => array(
-      'title' => t('Administer Coupon Settings'),
-      'description' => t('Allows users to manage coupon settings.'),
-    ),
-  );
+  
+  foreach (commerce_coupon_get_types() as $type => $info) {
+    $permissions['redeem coupons of type ' . $type] = array(
+      'title' => t('Redeem any %type coupon', array('%type' => $info['label']))
+    );       
+  }
 
   $permissions += commerce_entity_access_permissions('commerce_coupon');
+  
+  // There is currently no concept of "own" coupons.
+  foreach ($permissions as $name => $permission) {
+    if (strstr($name, ' own ')) {
+      unset($permissions[$name]);
+    }
+  }
 
   return $permissions;
+}
+
+/**
+ * Implements hook_query_TAG_alter().
+ */
+function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterface $query) {
+  return commerce_entity_access_query_alter($query, 'commerce_coupon');
 }
 
 /**
@@ -511,6 +527,11 @@ function commerce_coupon_may_redeem_coupon_code($code, $order) {
       drupal_set_message(t('The coupon you have entered has already been applied to your order'), 'error');
       $valid = FALSE;
     }
+  }
+  
+  // Check user permissions.
+  if (!user_access('redeem coupons of type ' . $coupon->type)) {
+    $valid = FALSE;
   }
 
   // Allow other modules to alter whether a coupon is acceptable to redeem for
