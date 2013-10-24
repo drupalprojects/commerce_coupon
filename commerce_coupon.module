@@ -509,33 +509,36 @@ function commerce_coupon_may_redeem_coupon_code($code, $order) {
   // Trim trailing spaces
   $code = trim($code);
   $coupon = commerce_coupon_load_by_code($code);
+  $errors = array();
 
   if (!$coupon || !$coupon->status) {
-    drupal_set_message(t('Your coupon code is not valid.'), 'error');
-    return FALSE;
+    $error = t('Your coupon code is not valid.');
   }
-
-  $valid = TRUE;
 
   // The same coupon cannot be added twice.
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
     if ($order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
-      drupal_set_message(t('The coupon you have entered has already been applied to your order'), 'error');
-      $valid = FALSE;
+      $error = t('The coupon you have entered has already been applied to your order');
+      break;
     }
   }
   
   // Check user permissions.
   if (!user_access('redeem coupons of type ' . $coupon->type)) {
-    $valid = FALSE;
+    $error = t('You cannot redeem this code.');
   }
 
   // Allow other modules to alter whether a coupon is acceptable to redeem for
   // this order.
-  drupal_alter('commerce_coupon_coupon_may_redeem', $valid, $coupon, $order);
-
-  return $valid;
+  drupal_alter('commerce_coupon_coupon_may_redeem', $error, $coupon, $order);
+  
+  if (!empty($error)) {
+    drupal_set_message($error, 'error');
+  }
+  else {
+    return TRUE;
+  }
 }
 
 /**
