@@ -299,8 +299,6 @@ function commerce_coupon_admin_menu_map() {
 
 /*
  * Implements hook_permission().
- *
- * Provides the basic access objects
  */
 function commerce_coupon_permission() {
   
@@ -435,7 +433,6 @@ function commerce_coupon_get_discount_properties($discount, $options, $name) {
 
         break;
     }
-
 }
 
 /*
