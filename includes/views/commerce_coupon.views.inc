@@ -41,6 +41,14 @@ function commerce_coupon_views_data_alter(&$data) {
       ),
     );
     
+    // uid relationship
+    $data['commerce_coupon']['uid']['relationship'] = array(
+      'handler' => 'views_handler_relationship',
+      'base' => 'users',
+      'field' => 'uid',
+      'label' => t('Recipient'),
+    );     
+    
     // Change created into a date field
     $data['commerce_coupon']['created'] = array(
       'title' => t('Created date'),

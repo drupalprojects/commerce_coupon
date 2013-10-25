@@ -309,13 +309,6 @@ function commerce_coupon_permission() {
   }
 
   $permissions += commerce_entity_access_permissions('commerce_coupon');
-  
-  // There is currently no concept of "own" coupons.
-  foreach ($permissions as $name => $permission) {
-    if (strstr($name, ' own ')) {
-      unset($permissions[$name]);
-    }
-  }
 
   return $permissions;
 }
@@ -324,7 +317,24 @@ function commerce_coupon_permission() {
  * Implements hook_query_TAG_alter().
  */
 function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterface $query) {
-  return commerce_entity_access_query_alter($query, 'commerce_coupon');
+  $tables = &$query->getTables();
+  
+  // Look for an existing commerce_coupon table.
+  foreach ($tables as $table) {
+    if ($table['table'] === 'commerce_coupon') {
+      $coupon_alias = $table['alias'];
+      break;
+    }
+  }
+
+  // If not found, attempt a join against the first table.
+  if (!isset($coupon_alias)) {
+    reset($tables);
+    $base_table = key($tables);
+    $coupon_alias = $query->innerJoin('commerce_coupon', 'co', '%alias.coupon_id = ' . $base_table . '.coupon_id');
+  }
+    
+  return commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);
 }
 
 /**
@@ -1248,7 +1258,7 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
         $delta = $coupon_wrapper->commerce_discount_reference->count();
         $coupon->commerce_discount_reference[LANGUAGE_NONE][$delta]['target_id'] = $form_state['commerce_discount']->discount_id;
 
-        // Save discount.
+        // Save coupon.
         commerce_coupon_save($coupon);
       }
     }
@@ -1331,6 +1341,7 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
 
         $coupon->code = $code;
         $coupon->status = $coupon_values['status'];
+        $coupon->uid = $coupon_values['uid'];
 
         field_attach_submit('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
         // Add it to the list of coupons that we save.
@@ -1471,6 +1482,11 @@ function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon
     '#description' => t('If you check this, a random code will be generated.'),
     '#default_value' => FALSE,
   );
+    
+  $form['uid'] = array(
+    '#type' => 'value',
+    '#value' => !empty($coupon->is_new) ? 0 : $coupon->uid
+  );
 
   $form['commerce_coupon_fields'] = array(
     '#type' => 'container',
@@ -1490,6 +1506,9 @@ function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon
     '#title' => t('Enabled'),
     '#default_value' => $coupon->status,
   );
+  
+  // Allow other modules to alter this form whereever it appears.
+  drupal_alter('commerce_coupon_coupon_entity_form', $form, $form_state, $coupon);
 }
 
 /*

@@ -16,6 +16,8 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
   public $type = 'discount_coupon';
 
   public $status;
+  
+  public $uid;
 
   /**
    * Create a default coupon.
@@ -31,7 +33,8 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
       'code' => '',
       'bulk' => FALSE,
       'created' => '',
-      'status' => TRUE
+      'status' => TRUE,
+      'uid' => 0
     );
 
     return parent::create($values);

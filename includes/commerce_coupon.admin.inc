@@ -107,7 +107,7 @@ function theme_commerce_coupon_type_admin_overview($variables) {
 function commerce_coupon_form($form, &$form_state, $coupon) {
   // Ensure this include file is loaded when the form is rebuilt from the cache.
   $form_state['build_info']['files']['form'] = drupal_get_path('module', 'commerce_coupon') . '/includes/commerce_coupon_ui.forms.inc';
-  $form_state['coupon'] = $coupon;
+  $form_state['commerce_coupon'] = $coupon;
 
   commerce_coupon_attach_coupon_entity_form($form, $form_state, $coupon, TRUE);
 
@@ -136,8 +136,8 @@ function commerce_coupon_form($form, &$form_state, $coupon) {
  * Form submit callback: submit coupon entity form
  */
 function commerce_coupon_form_submit(&$form, &$form_state) {
-  $coupon = &$form_state['coupon'];
-  $coupon->code = !empty($form_state['values']['code']) ? $form_state['values']['code'] : commerce_coupon_generate_coupon_code('discount_coupon');
+  $coupon = &$form_state['commerce_coupon'];
+  $coupon->code = !empty($form_state['values']['code']) ? $form_state['values']['code'] : commerce_coupon_generate_coupon_code($coupon->type);
   $coupon->status = $form_state['values']['status'];
 
   // Attach fields
