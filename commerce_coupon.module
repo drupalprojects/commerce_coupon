@@ -319,22 +319,13 @@ function commerce_coupon_permission() {
 function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterface $query) {
   $tables = &$query->getTables();
   
-  // Look for an existing commerce_coupon table.
+  // Find the commerce_coupon table.
   foreach ($tables as $table) {
     if ($table['table'] === 'commerce_coupon') {
       $coupon_alias = $table['alias'];
-      break;
+      return commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);
     }
   }
-
-  // If not found, attempt a join against the first table.
-  if (!isset($coupon_alias)) {
-    reset($tables);
-    $base_table = key($tables);
-    $coupon_alias = $query->innerJoin('commerce_coupon', 'co', '%alias.coupon_id = ' . $base_table . '.coupon_id');
-  }
-    
-  return commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);
 }
 
 /**
