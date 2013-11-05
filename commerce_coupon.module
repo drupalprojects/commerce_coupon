@@ -85,7 +85,7 @@ function commerce_coupon_type_get_name($type = NULL) {
   // Return a type name if specified and it exists.
   if (!empty($type)) {
     if (isset($coupon_types[$type])) {
-      return $coupon_types[$type]->label;
+      return $coupon_types[$type]['label'];
     }
     else {
       // Return FALSE if it does not exist.
@@ -95,7 +95,7 @@ function commerce_coupon_type_get_name($type = NULL) {
 
   // Otherwise turn the array values into the type name only.
   foreach ($coupon_types as $key => $value) {
-    $coupon_types[$key] = $value->label;
+    $coupon_types[$key] = $value['label'];
   }
 
   return $coupon_types;
