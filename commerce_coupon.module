@@ -69,6 +69,38 @@ function commerce_coupon_get_types() {
   return $cache;
 }
 
+/**
+ * Returns the name of the specified coupon type or all names keyed by type if
+ * no type is specified.
+ *
+ * @param $type
+ *   Optional parameter specifying the type whose name to return.
+ *
+ * @return CouponType Either the specified name, defaulting to the type
+ *  itself if the name is not found, or an array of all names keyed by type if no type is passed in.
+ */
+function commerce_coupon_type_get_name($type = NULL) {
+  $coupon_types = commerce_coupon_get_types();
+
+  // Return a type name if specified and it exists.
+  if (!empty($type)) {
+    if (isset($coupon_types[$type])) {
+      return $coupon_types[$type]->label;
+    }
+    else {
+      // Return FALSE if it does not exist.
+      return FALSE;
+    }
+  }
+
+  // Otherwise turn the array values into the type name only.
+  foreach ($coupon_types as $key => $value) {
+    $coupon_types[$key] = $value->label;
+  }
+
+  return $coupon_types;
+}
+
 /*
  * Implements hook_commerce_coupon_type_info().
  */
@@ -398,6 +430,8 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
     }
   }
 }
+
+
 
 /*
  * Entity metadata getter: coupon properties on discounts
