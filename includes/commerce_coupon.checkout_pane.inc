@@ -79,8 +79,10 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
     $code = $form_state['input']['commerce_coupon']['coupon_code'];
 
     if (!empty($code)) {
-      // It is necessary to reload the order to make sure it is up to date.
+      // It is necessary to reload the order to make sure it is up to date. 
+      // Update the cached order in the formstate.
       $order = commerce_order_load($order->order_id);
+      $form_state['order'] = $order;
 
       if (commerce_coupon_may_redeem_coupon_code($code, $order) && commerce_coupon_redeem_coupon_code($code, $order)) {
         // Clear the field value so that the coupon code does not get
@@ -141,7 +143,7 @@ function commerce_coupon_add_coupon_callback($form, &$form_state) {
   $commands[] = ajax_command_replace('#commerce-checkout-coupon-ajax-wrapper', drupal_render($coupon_pane));
   
   // Allow other modules to alter the commands
-  drupal_alter('commerce_coupon_add_coupon_ajax', $commands, $form_state['order']);
+  drupal_alter('commerce_coupon_add_coupon_ajax', $commands, $form, $form_state['order']);
 
   return array('#type' => 'ajax', '#commands' => $commands);
 }
