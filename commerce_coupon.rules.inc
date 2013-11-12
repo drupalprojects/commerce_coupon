@@ -40,6 +40,8 @@ function commerce_coupon_order_has_discount_coupon_code($order_wrapper, $discoun
   if ($discount_wrapper->coupons->value()) {
     if ($order_wrapper->commerce_coupons->value()) {
       // Return true if any of the discount coupons are on the order.
+      // TODO do not blindly load all of the discount coupons here - there could
+      // be millions.
       return array_intersect($discount_wrapper->coupons->raw(), $order_wrapper->commerce_coupons->raw());
     }
   }
