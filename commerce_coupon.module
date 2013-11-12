@@ -560,7 +560,7 @@ function commerce_coupon_may_redeem_coupon_code($code, $order) {
   }
   
   // Check user permissions.
-  if (!user_access('redeem coupons of type ' . $coupon->type)) {
+  if ($coupon && !user_access('redeem coupons of type ' . $coupon->type)) {
     $error = t('You cannot redeem this code.');
   }
 
