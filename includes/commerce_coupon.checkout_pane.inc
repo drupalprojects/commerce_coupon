@@ -77,15 +77,15 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
 
   if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {
     $code = $form_state['input']['commerce_coupon']['coupon_code'];
-    if (!empty($code)) {
-
-      // Reload the order so it is not out of date.
-      $order = commerce_order_load($order->order_id);     
+    if (!empty($code)) {  
       if (commerce_coupon_may_redeem_coupon_code($code, $order) && commerce_coupon_redeem_coupon_code($code, $order)) {
         // Clear the field value so that the coupon code does not get
         // resubmitted causing an error when user uses main "Continue to next
         // step" submit.
-        $pane_form['coupon_code']['#value'] = '';   
+        $pane_form['coupon_code']['#value'] = '';
+        
+        // Reload the order so it is not out of date.
+        $order = commerce_order_load($order->order_id);
 
         // Recalculate discounts.
         commerce_cart_order_refresh($order);
