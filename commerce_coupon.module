@@ -264,6 +264,7 @@ function commerce_coupon_find_coupon_autocomplete($string = '') {
   $query = new EntityFieldQuery;
   $results = $query
     ->entityCondition('entity_type', 'commerce_coupon')
+    ->propertyCondition('type', 'discount_coupon')
     ->propertyCondition('code', $string, 'CONTAINS')
     ->propertyOrderBy('code')
     ->range(0, 3)
@@ -585,6 +586,8 @@ function commerce_coupon_redeem_coupon_code($code, $order) {
 
 /**
  * Loads a coupon by its coupon code.
+ * @TODO the DANGEROUS ... tag is probably unnecessary if we are doing access
+ * control properly.
  *
  * @param $code
  *   The code of a coupon.
@@ -592,12 +595,16 @@ function commerce_coupon_redeem_coupon_code($code, $order) {
  * @return mixed
  *   A coupon object corresponding to the coupon code.
  */
-function commerce_coupon_load_by_code($code) {
+function commerce_coupon_load_by_code($code, $type = NULL) {
   $query = new EntityFieldQuery();
-  $result = $query->entityCondition('entity_type', 'commerce_coupon')
+  $query->entityCondition('entity_type', 'commerce_coupon')
       ->propertyCondition('code', $code)
-      ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT')
-      ->execute();
+      ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT');
+  
+  if ($type) {
+    $query->propertyCondition('type', $type);
+  }
+  $result = $query->execute();
 
   if (empty($result)) {
     return;
@@ -697,6 +704,8 @@ function commerce_coupon_load_multiple($commerce_coupon_ids = array(), $conditio
 
 /**
  * Checks if a given coupon code exists.
+ * @TODO this function can probably be replaced by 
+ * commerce_coupon_load_by_code().
  *
  * @param $code
  *   Coupon code to check.
@@ -1240,11 +1249,13 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
     // Save coupons
     foreach ($form_state['coupons'] as $coupon) {
       if ($coupon->coupon_id || !commerce_coupon_load_by_code($coupon->code)) {
-        // Add a reference to this discount.
+        // Add a reference to this discount if it is not referenced already.
         $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-        $delta = $coupon_wrapper->commerce_discount_reference->count();
-        $coupon->commerce_discount_reference[LANGUAGE_NONE][$delta]['target_id'] = $form_state['commerce_discount']->discount_id;
-
+        if (!commerce_coupon_coupon_has_discount($coupon_wrapper, $form_state['commerce_discount']->name)) {
+          $delta = !$coupon_wrapper->commerce_discount_reference->value() ? 0 : $coupon_wrapper->commerce_discount_reference->count();
+          $coupon->commerce_discount_reference[LANGUAGE_NONE][$delta]['target_id'] = $form_state['commerce_discount']->discount_id;
+        }
+        
         // Save coupon.
         commerce_coupon_save($coupon);
       }
@@ -1278,6 +1289,24 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
 
   // Rebuild the rules again.
   entity_defaults_rebuild(array('rules_config'));
+}
+
+/**
+ * Determine whether a coupon has a particular discount
+ * 
+ * @param EntityDrupalWrapper $coupon_wrapper
+ *  The coupon to check
+ * @param string $discount_name
+ *  The discount name to check for
+ */
+function commerce_coupon_coupon_has_discount($coupon_wrapper, $discount_name) {
+  if ($coupon_wrapper->type->value() == 'discount_coupon') {
+    foreach ($coupon_wrapper->commerce_discount_reference->value() as $discount) {
+      if ($discount->name == $discount_name) {
+        return TRUE;
+      }
+    }
+  }
 }
 
 /*
@@ -1358,7 +1387,7 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
       break;
     case 'add_existing_coupon':
       $code = $form_state['values']['coupons']['find_coupon_code'];
-      $coupon = commerce_coupon_load_by_code($code);
+      $coupon = commerce_coupon_load_by_code($code, 'discount_coupon');
       if (!$coupon) {
         form_set_error('coupons][find_coupon_code', t('Please enter a valid coupon code'));
       }
