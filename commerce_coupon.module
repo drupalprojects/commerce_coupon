@@ -544,7 +544,7 @@ function commerce_coupon_may_redeem_coupon_code($code, $order) {
   // Trim trailing spaces
   $code = trim($code);
   $coupon = commerce_coupon_load_by_code($code);
-  $errors = array();
+  $error = '';
 
   if (!$coupon || !$coupon->status) {
     $error = t('Your coupon code is not valid.');
@@ -944,7 +944,7 @@ function commerce_coupon_order_discount_ids($order) {
     $data = $line_item_wrapper->commerce_unit_price->data->value();
 
     foreach ($data['components'] as $key => $component) {
-      if ($component['name'] == 'discount' || !empty($component['price']['data']['discount_name'])) {
+      if (!empty($component['price']['data']['discount_name'])) {
         $order_discount_name = $component['price']['data']['discount_name'];
         $order_discount_wrapper = entity_metadata_wrapper('commerce_discount', $order_discount_name);
         // Make a list of discounts present via the order's line item price
