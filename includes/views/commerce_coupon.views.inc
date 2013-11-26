@@ -11,7 +11,7 @@
 function commerce_coupon_views_data_alter(&$data) {
   if (isset($data['commerce_coupon'])) {
     $data['commerce_coupon']['table']['base']['access query tag'] = 'commerce_coupon_access';
-    
+
     $data['commerce_coupon']['remove_from_order'] = array(
       'field' => array(
         'title' => t('Remove from Order'),
@@ -40,15 +40,15 @@ function commerce_coupon_views_data_alter(&$data) {
         'handler' => 'commerce_coupon_handler_field_coupon_edit',
       ),
     );
-    
+
     // uid relationship
     $data['commerce_coupon']['uid']['relationship'] = array(
       'handler' => 'views_handler_relationship',
       'base' => 'users',
       'field' => 'uid',
       'label' => t('Recipient'),
-    );     
-    
+    );
+
     // Change created into a date field
     $data['commerce_coupon']['created'] = array(
       'title' => t('Created date'),
@@ -64,15 +64,36 @@ function commerce_coupon_views_data_alter(&$data) {
         'handler' => 'views_handler_filter_date',
       ),
     );
-    
+
     // Add a special code argument handler
     $data['commerce_coupon']['code']['argument'] = array(
       'handler' => 'commerce_coupon_handler_argument_coupon_code'
     );
-    
+
     // Add a special coupon id argument handler
     $data['commerce_coupon']['coupon_id']['argument'] = array(
       'handler' => 'commerce_coupon_handler_argument_coupon_id'
-    );    
+    );
   }
+}
+
+/**
+ * Get the argument order if present.
+ *
+ * @param $handler
+ * @return bool|mixed
+ */
+function _commerce_coupon_load_argument_order($handler) {
+  // Determine if there is an order id argument. If multiple are present, use
+  // the first found.
+  if (isset($handler->view->argument)) {
+    foreach ($handler->view->argument as $alias => $argument) {
+      if ($argument instanceof commerce_order_handler_argument_order_order_id) {
+        $order_id = (int) $handler->view->argument[$alias]->value[0];
+        $order = commerce_order_load($order_id);
+      }
+    }
+  }
+
+  return isset($order) ? $order : FALSE;
 }

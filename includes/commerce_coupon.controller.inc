@@ -16,7 +16,7 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
   public $type = 'discount_coupon';
 
   public $status;
-  
+
   public $uid;
 
   /**
@@ -24,8 +24,8 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
    *
    * @param array $values
    *   An array of values to set, keyed by property name.
-   * @return
-   *   A product object with all default fields initialized.
+   *
+   * @return object A product object with all default fields initialized.
    */
   public function create(array $values = array()) {
     $values += array(
@@ -43,13 +43,12 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
   /**
    * Saves a coupon.
    *
-   * @param $commerce_coupon
-   *   The full coupon object to save.
-   * @param $transaction
+   * @param $entity
+   *   The full coupon object to save
+   * @param \DatabaseTransaction $transaction
    *   An optional transaction object.
    *
-   * @return
-   *   SAVED_NEW or SAVED_UPDATED depending on the operation performed.
+   * @return bool|int SAVED_NEW or SAVED_UPDATED depending on the operation performed.
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
 
