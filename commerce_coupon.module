@@ -797,8 +797,13 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
 
           break;
         case 'percentage':
-          $pct_display = field_view_field('commerce_discount_offer', $offer, 'commerce_percentage', 'default');
-          $text = drupal_render($pct_display) . ' ' . t('from order');
+          // Account for the different notations accepted by the percentage 
+          // field.
+          $rate = $offer_wrapper->commerce_percentage->value();
+          if ($rate < 1) {
+            $rate = $rate * 100;
+          }
+          $text = $rate . '% ' . t('from order');
 
           break;
         case 'free_shipping':
