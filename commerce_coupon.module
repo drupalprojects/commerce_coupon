@@ -792,22 +792,20 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
     case 'order_discount':
       switch ($offer_type) {
         case 'fixed_amount':
-          $price = field_view_field('commerce_discount_offer', $offer, 'commerce_fixed_amount', $price_display);
-          $text = drupal_render($price) . ' ' . t('from order');
+          $price = $offer_wrapper->commerce_fixed_amount->value();
+          $text = commerce_currency_format($price['amount'], $price['currency_code']) . ' ' . t('off order');
 
           break;
         case 'percentage':
-          // Account for the different notations accepted by the percentage 
-          // field.
           $rate = $offer_wrapper->commerce_percentage->value();
           if ($rate < 1) {
             $rate = $rate * 100;
           }
-          $text = $rate . '% ' . t('from order');
+          $text = $rate . '% ' . t('off order');
 
           break;
         case 'free_shipping':
-          $text = t('free shipping');
+          $text = t('Free shipping');
 
           break;
         case 'free_products':
@@ -818,7 +816,7 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
             $product_text = implode(', ', $product_names);
           }
 
-          $text = t('free product(s):') . ' ' . $product_text;
+          $text = t('Free product(s):') . ' ' . $product_text;
           break;
       }
 
@@ -847,16 +845,21 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
 
       switch ($offer_type) {
         case 'fixed_amount':
-          $offer_text = field_view_field('commerce_discount_offer', $offer, 'commerce_fixed_amount', $price_display);
+          $price = $offer_wrapper->commerce_fixed_amount->value();
+          $offer_text = commerce_currency_format($price['amount'], $price['currency_code']);
 
           break;
         case 'percentage':
-          $offer_text = field_view_field('commerce_discount_offer', $offer, 'commerce_percentage', 'default');
+          $rate = $offer_wrapper->commerce_percentage->value();
+          if ($rate < 1) {
+            $rate = $rate * 100;
+          }
+          $offer_text = $rate . '%';
 
           break;
       }
 
-      $text = drupal_render($offer_text) . ' ' . t('from') . ' ' . $product_text;
+      $text = $offer_text . ' ' . t('off') . ' ' . $product_text;
 
       break;
     default:
@@ -902,7 +905,6 @@ function commerce_coupon_order_has_discount($order, $discount) {
 
   return in_array($discount->discount_id, $order_discount_ids);
 }
-
 
 /**
  * Determine whether an order has a particular coupon code.
