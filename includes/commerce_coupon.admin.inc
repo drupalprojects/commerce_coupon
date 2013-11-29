@@ -200,3 +200,10 @@ function commerce_coupon_delete_form_submit($form, &$form_state) {
   }
   $form_state['redirect'] = 'admin/commerce/coupons';
 }
+
+/*
+ * Form validate callback: validate coupon entity form
+ */
+function commerce_coupon_form_validate($form, &$form_state) {
+  field_attach_form_validate('commerce_coupon', $form_state['commerce_coupon'], $form, &$form_state);
+}

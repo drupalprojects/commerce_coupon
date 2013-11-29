@@ -405,12 +405,89 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
     );
 
     if (isset($map[$discount->type])) {
-      $rule->condition('commerce_coupon_order_has_discount_coupon_code', array(
+      $rule->condition('commerce_coupon_discount_coupon_codes_exist_on_order', array(
         'order:select' => $map[$discount->type],
         'commerce_discount' => $discount->name)
       );
     }
   }
+}
+
+/**
+ * Evaluate the inline conditions found on a coupon. If there are no inline 
+ * conditions, this function returns TRUE.
+ * 
+ * @param EntityDrupalWrapper $coupon
+ * @param string $phase
+ *  Coupon condition evaluation happens in two phases: pre_redeem and 
+ *  post_redeem. pre_redeem fires before the coupon ever gets added to an order.
+ *  post_redeem fires when the coupon module is deciding whether or not a
+ *  particular coupon code should grant a particular discount.
+ *  
+ */
+function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_wrapper, $phase) {
+  $wrapper_properties = $coupon_wrapper->getPropertyInfo();  
+  
+  if (!module_exists('inline_conditions') || empty($wrapper_properties['commerce_coupon_conditions']) || !$coupon_wrapper->commerce_coupon_conditions->value()){
+    return TRUE;
+  }
+  
+  // The idea is to build and evaluate a condition set on the fly based on the 
+  // inline conditions for a given coupon.
+  $rule = rules_and();
+  
+  // Build the inline conditions for this phase.
+  foreach ($coupon_wrapper->commerce_coupon_conditions->value() as $value) {
+    // Get the condition info.    
+    $condition = inline_conditions_get_info($value['condition_name']);
+    
+    // Do nothing if it is the wrong phase.
+    if (empty($value['condition_settings']['phase']) || $condition['phase'] != $phase) {
+      continue;
+    }
+
+    // Give a chance to others module to alter the current field value.
+    drupal_alter('inline_conditions_build', $value);
+
+    // Ensure we got the condition and we have settings for the rule
+    // condition.
+    if (!$condition || empty($value['condition_settings'])) {
+      continue;
+    }
+
+    // Fullfil the parameters variable with the correct values.
+    $parameters = array('entity:select' => $condition['entity type']) + $value['condition_settings'];
+
+    $rule->condition($value['condition_name'], $parameters);
+  }
+  
+  // Incorporate the inline conditions into the rule.
+  inline_conditions_build($rule, $coupon_wrapper->commerce_coupon_conditions->value());
+  
+  // Evaluate the condition set. Feed the coupon wrapper in as the first
+  // argument. All other arguments are part of the condition settings.
+  $state = $rule->setUpState(array($coupon_wrapper->value()));
+  return $rule->evaluate($state);
+}
+
+/**
+ * Determine whether a coupon code grants a particular discount.
+ * 
+ * @param type $code
+ * @param type $discount_id
+ * @return type
+ */
+function commerce_coupon_code_grants_discount($code, $discount_id) {
+  $query = new EntityFieldQuery;
+  $results = $query
+    ->entityCondition('entity_type', 'commerce_coupon')
+    ->propertyCondition('type', 'discount_coupon')
+    ->propertyCondition('code', $code)
+    ->propertyCondition('status', TRUE)
+    ->fieldCondition('commerce_discount_reference', 'target_id', $discount_id)
+    ->execute();
+          
+  return !empty($results['commerce_coupon']);
 }
 
 /*
@@ -529,6 +606,7 @@ function commerce_coupon_may_redeem_coupon_code($code, $order) {
   // Trim trailing spaces.
   $code = trim($code);
   $coupon = commerce_coupon_load_by_code($code);
+  $error = &drupal_static('commerce_coupon_error_' . $code);
   $error = '';
 
   if (!$coupon || !$coupon->status) {
@@ -547,6 +625,13 @@ function commerce_coupon_may_redeem_coupon_code($code, $order) {
   // Check user permissions.
   if ($coupon && !user_access('redeem coupons of type ' . $coupon->type)) {
     $error = t('You cannot redeem this code.');
+  }
+  
+  // Evaluate any inline conditions found on this coupon
+  if ($coupon) {
+    // Modules implementing this must alter $error.
+    $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+    commerce_coupon_evaluate_inline_conditions($coupon_wrapper, 'pre_redeem');
   }
 
   // Allow other modules to alter whether a coupon is acceptable to redeem for
@@ -1013,7 +1098,9 @@ function commerce_coupon_remove_coupon_from_order($order, $coupon, $save = TRUE)
  */
 function commerce_coupon_module_implements_alter(&$implementations, $hook) {
   if ($hook == 'commerce_cart_order_refresh') {
-    // Move our implementation to the end of the list.
+    // Move our implementation to the end of the list. Its job is to clean up
+    // order-coupon references where the coupon's discount no longer exists on 
+    // the order.
     $group = $implementations['commerce_coupon'];
     unset($implementations['commerce_coupon']);
     $implementations['commerce_coupon'] = $group;
@@ -1029,17 +1116,9 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
 
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
     // Invalidate coupons that exist on the order without their discount
-    // present,  meaning an inline condition on the discount was not satisfied.
+    // present, meaning an inline condition on the discount was not satisfied.
     if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {
       drupal_set_message(t('One or more conditions for coupon @code are currently not satisfied.', array('@code' => $coupon->code)), 'error');
-      $valid = FALSE;
-    }
-    else {
-      // Other modules may set validity.
-      $valid = TRUE;
-      drupal_alter('commerce_coupon_coupon_is_valid', $valid, $coupon, $order);
-    }
-    if (!$valid) {
       // Remove invalid coupons.
       commerce_coupon_remove_coupon_from_order($order, $coupon, FALSE);
       $save = TRUE;
@@ -1133,8 +1212,10 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
     '#limit_validation_errors' => array(array('coupons', 'find_coupon_code'))
   );
 
-  if ($trigger == 'add') {
-    $coupon = commerce_coupon_create('discount_coupon');
+  if ($trigger == 'add' || (isset($coupon) && !empty($coupon->is_new) && !isset($form_state['edit_coupon']->delta))) {
+    if (!isset($coupon)) {
+      $coupon = commerce_coupon_create('discount_coupon');
+    }
 
     $form['coupons']['coupon_form'] = array(
       '#type' => 'container'
@@ -1158,7 +1239,8 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
     $form['coupons']['coupon_form']['save_coupon']['#limit_validation_errors'] = array(
       array('coupons', 'coupon_form')
     );
-    unset($form_state['edit_coupon']);
+
+    $form_state['edit_coupon'] = $coupon;
   }
   else if ($trigger == 'add_existing') {
     $form['coupons']['find_coupon_code'] = array(
@@ -1192,7 +1274,7 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
   if (isset($coupons)) {
     foreach ($coupons as $delta => $coupon) {
       $form['coupons']['manage_coupons'][$delta]['#coupon'] = $coupon;
-      if (isset($edit_delta) && $delta == $edit_delta) {
+      if (isset($form_state['edit_coupon']->delta) && $delta == $form_state['edit_coupon']->delta) {
         // If this one is selected, attach a coupon form
         $form['coupons']['manage_coupons'][$delta]['coupon_form'] = array(
           '#type' => 'container'
@@ -1309,7 +1391,7 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
 function commerce_coupon_coupon_has_discount($coupon_wrapper, $discount_name) {
   if ($coupon_wrapper->type->value() == 'discount_coupon') {
     foreach ($coupon_wrapper->commerce_discount_reference->value() as $discount) {
-      if ($discount->name == $discount_name) {
+      if ($discount && $discount->name == $discount_name) {
         return TRUE;
       }
     }
@@ -1321,25 +1403,30 @@ function commerce_coupon_coupon_has_discount($coupon_wrapper, $discount_name) {
  */
 function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
   $trigger = end($form_state['triggering_element']['#array_parents']);
+  if (isset($form_state['edit_coupon'])) {
+    $coupon = $form_state['edit_coupon'];
+  }
+  
+  // Determine whether it is the "add new" form or an edit form
+  if (isset($coupon)) {
+    if (isset($coupon->delta)) {
+      $coupon_fields_form =& $form['coupons']['manage_coupons'][$coupon->delta]['coupon_form']['commerce_coupon_fields'];
+      $coupon_values = $form_state['values']['coupons']['manage_coupons'][$coupon->delta]['coupon_form'];
+    }
+    else {
+      $coupon_fields_form =& $form['coupons']['coupon_form']['commerce_coupon_fields'];
+      $coupon_values = $form_state['values']['coupons']['coupon_form'];
+    }  
+  }
+    
+  if (isset($coupon_fields_form) && $trigger != 'cancel_coupon') {
+    // Validate fields
+    field_attach_form_validate('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
+  }  
 
   switch ($trigger) {
     case 'add_coupon':
     case 'save_coupon':
-      $coupon = !isset($form_state['edit_coupon']) ? commerce_coupon_create('discount_coupon') : $form_state['edit_coupon'];
-
-      // Determine whether it is the "add new" form or an edit form
-      if (isset($coupon->delta)) {
-        $coupon_fields_form =& $form['coupons']['manage_coupons'][$coupon->delta]['coupon_form']['commerce_coupon_fields'];
-        $coupon_values = $form_state['values']['coupons']['manage_coupons'][$coupon->delta]['coupon_form'];
-      }
-      else {
-        $coupon_fields_form =& $form['coupons']['coupon_form']['commerce_coupon_fields'];
-        $coupon_values = $form_state['values']['coupons']['coupon_form'];
-      }
-
-      // Validate fields
-      field_attach_form_validate('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
-
       // If the form has passed validation, prepare the coupon for submission.
       if (!form_get_errors()) {
         if (!empty($coupon_values['generate'])) {
@@ -1511,7 +1598,7 @@ function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon
 
   // Possibly do not show the discount reference field
   if (!$show_discounts_field) {
-    $form['commerce_coupon_fields']['commerce_discount_reference']['#access'] = 0;
+    unset($form['commerce_coupon_fields']['commerce_discount_reference']);
   }
 
   // Status
