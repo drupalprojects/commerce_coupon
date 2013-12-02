@@ -31,10 +31,12 @@ function commerce_coupon_usage_flush_caches() {
  * Implements hook_inline_conditions_info().
  */
 function commerce_coupon_usage_inline_conditions_info() {
+  // Usage module only runs its conditions when the user is attempting to redeem
+  // a coupon, which we call the "pre-redeem" phase.
   $conditions['commerce_coupon_usage_evaluate_usage'] = array(
     'label' => t('Maximum usage'),
     'entity type' => 'commerce_coupon',
-    'phase' => 'pre_redeem',
+    'phase' => array('pre_redeem'),
     'callbacks' => array(
       'configure' => 'commerce_coupon_usage_evaluate_usage_configure',
       'build' => 'commerce_coupon_usage_evaluate_usage_build',

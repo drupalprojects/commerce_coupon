@@ -29,24 +29,34 @@ function commerce_coupon_rules_condition_info() {
  * particular discount has been saved on an order.
  */
 function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $discount_name) {
+  $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount_name);
+  
   // It is possible for the order to be null. This happens if we are dealing
   // with a dummy line item created just to run pricing rules. In this case we
   // do not let the discount proceed.
-  if (!$order_wrapper->value()) {
+  if (!$order_wrapper->value() || !$discount_wrapper->value()) {
     return; 
   }
   
-  $has_coupons = FALSE;  
-  $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount_name);
+  // Determine if this discount uses coupons.
+  $has_coupons = $discount_wrapper->coupon_count->value();
   
-  if ($discount_wrapper->value() && $order_wrapper->commerce_coupons->value()) {
+  if ($order_wrapper->commerce_coupons->value()) {
     // At least one of the coupon codes granting this discount must be 1) active
     // and 2) pass its inline conditions.
     foreach ($order_wrapper->commerce_coupons as $coupon_wrapper) {
       if (commerce_coupon_code_grants_discount($coupon_wrapper->code->value(), $discount_wrapper->discount_id->value())) {
         $has_coupons = TRUE;
+        $outcome = FALSE;
         
-        if (commerce_coupon_evaluate_inline_conditions($coupon_wrapper, 'post_redeem')) {
+        if (commerce_coupon_evaluate_inline_conditions($coupon_wrapper, 'post_redeem') && commerce_coupon_access('redeem', $coupon_wrapper->value())) {
+          $outcome = TRUE;
+        }
+        
+        // Allow other modules to set validity.
+        drupal_alter('commerce_coupon_coupon_still_valid', $outcome, $order_wrapper, $coupon_wrapper);
+        
+        if ($outcome) {
           return TRUE;
         }
       }

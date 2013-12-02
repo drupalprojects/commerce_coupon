@@ -335,7 +335,14 @@ function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterf
   foreach ($tables as $table) {
     if ($table['table'] === 'commerce_coupon') {
       $coupon_alias = $table['alias'];
-      commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);
+      if (module_exists('commerce_coupon_user')) {
+        // If the coupon user module is active, use an overidden version of the
+        // query access function.
+        commerce_coupon_user_coupon_access_query_alter($query, $coupon_alias);
+      }
+      else {
+        commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);
+      }      
     }
   }
 }
@@ -344,8 +351,8 @@ function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterf
  * Checks coupon access for various operations.
  *
  * @param $op
- *   The operation being performed. One of 'view', 'update', 'create' or
- *   'delete'.
+ *   The operation being performed. One of 'view', 'update', 'create', 'redeem'
+ *   or 'delete'.
  * @param $coupon
  *   Optionally a coupon to check access for. If nothing is given access
  *   permissions for all coupons are returned.
@@ -354,8 +361,25 @@ function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterf
  *
  * @return bool
  */
-function commerce_coupon_access($op, $coupon = NULL, $account = NULL) {
-  return commerce_entity_access($op, $coupon, $account, 'commerce_coupon');
+function commerce_coupon_access($op, $coupon = NULL, $account = NULL) {  
+  switch ($op) {
+    case 'view':
+      if (module_exists('commerce_coupon_user')) {
+        return commerce_coupon_user_received_coupon_access($op, $coupon, $account);
+      }
+    case 'update':
+    case 'create':
+    case 'delete':
+      return commerce_entity_access($op, $coupon, $account, 'commerce_coupon');
+    case 'redeem':
+      // If the user can redeem all coupons of this type:
+      if (user_access('redeem coupons of type ' . $coupon->type)) {      
+        return TRUE;
+      }
+      if (module_exists('commerce_coupon_user')) {
+        return commerce_coupon_user_received_coupon_access($op, $coupon, $account);
+      }
+  }  
 }
 
 /*
@@ -415,7 +439,8 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
 
 /**
  * Evaluate the inline conditions found on a coupon. If there are no inline 
- * conditions, this function returns TRUE.
+ * conditions, this function returns TRUE. The idea is to build and evaluate a 
+ * condition set dynamically based on the inline conditions for a given coupon.
  * 
  * @param EntityDrupalWrapper $coupon
  * @param string $phase
@@ -432,42 +457,46 @@ function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_
     return TRUE;
   }
   
-  // The idea is to build and evaluate a condition set on the fly based on the 
-  // inline conditions for a given coupon.
-  $rule = rules_and();
+  $execute = FALSE;
+
+  // Add an input parameter for a Coupon entity.  
+  $component_parameter = array(
+    'commerce_coupon' => array(
+      'type' => 'commerce_coupon',
+      'label' => t('Coupon'),
+      'description' => t('The coupon entity whose inline conditions are being evaluated.')
+    )
+  );
+  $rule = rules_and($component_parameter);
   
   // Build the inline conditions for this phase.
   foreach ($coupon_wrapper->commerce_coupon_conditions->value() as $value) {
     // Get the condition info.    
     $condition = inline_conditions_get_info($value['condition_name']);
     
-    // Do nothing if it is the wrong phase.
-    if (empty($value['condition_settings']['phase']) || $condition['phase'] != $phase) {
+    // Check for a valid condition. Also, only proceed if the condition has 
+    // asked to be run in the "pre_redeem" phase.
+    if (!$condition || empty($value['condition_settings']) || empty($condition['phase']) || !in_array($phase, $condition['phase'])) {
       continue;
     }
+    
+    $execute = TRUE;
 
     // Give a chance to others module to alter the current field value.
     drupal_alter('inline_conditions_build', $value);
 
-    // Ensure we got the condition and we have settings for the rule
-    // condition.
-    if (!$condition || empty($value['condition_settings'])) {
-      continue;
-    }
-
-    // Fullfil the parameters variable with the correct values.
+    // Build the condition parameters and add the condition.
     $parameters = array('entity:select' => $condition['entity type']) + $value['condition_settings'];
-
     $rule->condition($value['condition_name'], $parameters);
   }
   
-  // Incorporate the inline conditions into the rule.
-  inline_conditions_build($rule, $coupon_wrapper->commerce_coupon_conditions->value());
+  // Run this method to manually to prepare the variables as Rules normally 
+  // would.
+  $rule->processSettings(TRUE);
   
-  // Evaluate the condition set. Feed the coupon wrapper in as the first
-  // argument. All other arguments are part of the condition settings.
-  $state = $rule->setUpState(array($coupon_wrapper->value()));
-  return $rule->evaluate($state);
+  // Evaluate the condition set if necessary. Feed the coupon wrapper in as the 
+  // first argument. All other arguments are part of the condition settings.
+  return $execute ? $rule->executeByArgs(array($coupon_wrapper->value())) : TRUE;
 }
 
 /**
@@ -623,13 +652,14 @@ function commerce_coupon_may_redeem_coupon_code($code, $order) {
   }
 
   // Check user permissions.
-  if ($coupon && !user_access('redeem coupons of type ' . $coupon->type)) {
-    $error = t('You cannot redeem this code.');
+  if ($coupon && !commerce_coupon_access('redeem', $coupon)) {
+    $error = t('Unable to redeem this code.');
   }
   
   // Evaluate any inline conditions found on this coupon
   if ($coupon) {
-    // Modules implementing this must alter $error.
+    // Modules implementing pre_redeem inline conditions must alter $error if 
+    // they want to prevent 
     $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
     commerce_coupon_evaluate_inline_conditions($coupon_wrapper, 'pre_redeem');
   }
@@ -1566,7 +1596,8 @@ function commerce_coupon_code_validate_staged($element, &$form_state) {
  * Attach a coupon entity form to a form or form fragment.
  */
 function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon, $show_discounts_field = FALSE) {
-
+  global $user;
+  
   // Coupon code
   $form['code'] = array(
     '#type' => 'textfield',
@@ -1586,7 +1617,7 @@ function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon
 
   $form['uid'] = array(
     '#type' => 'value',
-    '#value' => !empty($coupon->is_new) ? 0 : $coupon->uid
+    '#value' => !empty($coupon->is_new) ? $user->uid : $coupon->uid
   );
 
   $form['commerce_coupon_fields'] = array(
