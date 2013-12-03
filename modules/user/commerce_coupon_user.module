@@ -32,15 +32,10 @@ function commerce_coupon_user_flush_caches() {
   _commerce_coupon_user_install_helper();
 }
 
-/**
- * Overidden version of commerce_entity_access_query_alter(). Takes care of 
- * view permissions for received coupons.
- * 
- * @param type $entity_type
- * @param type $base_table
- * @return type
+/*
+ * Implements hook_commerce_coupon_access_query_substitute().
  */
-function commerce_coupon_user_coupon_access_query_alter($query, $base_table = NULL, $account = NULL) {
+function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $base_table = NULL, $account = NULL) {
   global $user;
 
   // Read the account from the query if available or default to the current user.
@@ -168,14 +163,36 @@ function commerce_coupon_user_coupon_access_query_alter($query, $base_table = NU
     // we falsify this query. View checks are access grants, not access denials.
     $query->where('1 = 0');
   }
+  
+  return $query;
+}
+
+/*
+ * Implements hook_commerce_coupon_access_redeem().
+ */
+function commerce_coupon_user_commerce_coupon_access_redeem($coupon, $account = NULL) {
+  return commerce_coupon_user_received_coupon_access('redeem', $coupon, $account = NULL);
+}
+
+/*
+ * Implements hook_commerce_coupon_access_view().
+ */
+function commerce_coupon_user_commerce_coupon_access_view($coupon, $account = NULL) {
+  return commerce_coupon_user_received_coupon_access('view', $coupon, $account = NULL);
 }
 
 /**
- * Determine view or redeem access for a coupon.
- *  
- * @param type $op
- * @param type $coupon
- * @param type $account
+ * Evaluate access per operation for coupons based on user-coupon permissions.
+ * 
+ * @param string $op
+ *  Either "view" or "redeem"
+ * 
+ * @param CommerceCoupon $coupon
+ *  Commerce coupon entity
+ * 
+ * @param object $account
+ *  User entity
+ * 
  * @return boolean
  */
 function commerce_coupon_user_received_coupon_access($op, $coupon, $account = NULL) {

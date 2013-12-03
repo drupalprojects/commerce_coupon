@@ -329,20 +329,29 @@ function commerce_coupon_permission() {
  * Implements hook_query_TAG_alter().
  */
 function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterface $query) {
-  $tables = &$query->getTables();
+  $tables = &$query->getTables();  
+  // Only modules that need to change the query itself (see Commerce Coupon 
+  // User) should implement this. Simple changes to just the query conditions 
+  // can be implemented using
+  // hook_commerce_entity_access_condition_commerce_coupon_alter().  
+  $modules = module_implements('commerce_coupon_access_query_substitute');
 
   // Find the commerce_coupon table.
   foreach ($tables as $table) {
-    if ($table['table'] === 'commerce_coupon') {
+    if ($table['table'] == 'commerce_coupon') {
       $coupon_alias = $table['alias'];
-      if (module_exists('commerce_coupon_user')) {
-        // If the coupon user module is active, use an overidden version of the
-        // query access function.
-        commerce_coupon_user_coupon_access_query_alter($query, $coupon_alias);
+      // If there are any modules implementing the query substitute hook:
+      if ($modules) {
+        foreach ($modules as $module) {
+          // The last module wins.
+          $query = module_invoke($module, 'commerce_coupon_access_query_substitute', $query, $coupon_alias);
+        }
       }
+      // Run the regular query access as a fallback.
       else {
         commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);
-      }      
+      }
+      break;
     }
   }
 }
@@ -361,25 +370,29 @@ function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterf
  *
  * @return bool
  */
-function commerce_coupon_access($op, $coupon = NULL, $account = NULL) {  
+function commerce_coupon_access($op, $coupon = NULL, $account = NULL) {
+  // If there are modules that implement the coupon access hook:
+  $hook = 'commerce_coupon_access_' . $op;
+  $modules = module_implements($hook);
+  if ($modules) {
+    foreach ($modules as $module) {
+      // Last module wins.
+      $access = module_invoke($module, $hook, $coupon, $account);
+    }
+    return $access;
+  }
+  
+  // Otherwise route to defaults.
   switch ($op) {
     case 'view':
-      if (module_exists('commerce_coupon_user')) {
-        return commerce_coupon_user_received_coupon_access($op, $coupon, $account);
-      }
     case 'update':
     case 'create':
     case 'delete':
       return commerce_entity_access($op, $coupon, $account, 'commerce_coupon');
     case 'redeem':
       // If the user can redeem all coupons of this type:
-      if (user_access('redeem coupons of type ' . $coupon->type)) {      
-        return TRUE;
-      }
-      if (module_exists('commerce_coupon_user')) {
-        return commerce_coupon_user_received_coupon_access($op, $coupon, $account);
-      }
-  }  
+      return user_access('redeem coupons of type ' . $coupon->type);
+  }
 }
 
 /*
@@ -894,13 +907,7 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
   $offer_wrapper = $discount_wrapper->commerce_discount_offer;
   $offer_type = $offer_wrapper->type->value();
-  $offer = $offer_wrapper->value();
   $discount_type = $discount_wrapper->type->value();
-
-  $price_display = array(
-    'type' => 'commerce_price_formatted_amount',
-    'label' => 'hidden'
-  );
 
   // Savings value implementations on behalf of commerce discount.
   switch ($discount_type) {
