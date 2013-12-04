@@ -330,29 +330,38 @@ function commerce_coupon_permission() {
  */
 function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterface $query) {
   $tables = &$query->getTables();  
-  // Only modules that need to change the query itself (see Commerce Coupon 
-  // User) should implement this. Simple changes to just the query conditions 
-  // can be implemented using
-  // hook_commerce_entity_access_condition_commerce_coupon_alter().  
-  $modules = module_implements('commerce_coupon_access_query_substitute');
 
   // Find the commerce_coupon table.
   foreach ($tables as $table) {
     if ($table['table'] == 'commerce_coupon') {
       $coupon_alias = $table['alias'];
-      // If there are any modules implementing the query substitute hook:
-      if ($modules) {
-        foreach ($modules as $module) {
-          // The last module wins.
-          $query = module_invoke($module, 'commerce_coupon_access_query_substitute', $query, $coupon_alias);
-        }
-      }
-      // Run the regular query access as a fallback.
-      else {
-        commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);
-      }
+      commerce_coupon_apply_access_query_substitute($query, $coupon_alias);
       break;
     }
+  }
+}
+
+/**
+ * Find modules that implement hook_commerce_coupon_access_query_substitute and
+ * determine their final result. Return FALSE if no implementing modules found.
+ * 
+ * @param type $query
+ * @param type $coupon_alias
+ */
+function commerce_coupon_apply_access_query_substitute($query, $coupon_alias) {
+  // Only modules that need to change the query itself (see Commerce Coupon 
+  // User) should implement this. Simple changes to just the query conditions 
+  // can be implemented using
+  // hook_commerce_entity_access_condition_commerce_coupon_alter().    
+  $modules = module_implements('commerce_coupon_access_query_substitute');
+  if ($modules) {
+    foreach ($modules as $module) {
+      // The last module wins.
+      $query = module_invoke($module, 'commerce_coupon_access_query_substitute', $query, $coupon_alias);
+    }    
+  }
+  else {
+    commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);
   }
 }
 

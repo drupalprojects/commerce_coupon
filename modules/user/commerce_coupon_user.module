@@ -65,8 +65,8 @@ function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $b
   
   if (!isset($recipient_table)) {
     $recipient_table = 'field_data_commerce_coupon_recipient';
-    $join_condition = $recipient_table . '.commerce_coupon_recipient_target_id=:uid';
-    $query->leftJoin($recipient_table, $recipient_table, $join_condition, array(':uid' => $account->uid));
+    $join_condition = $recipient_table . '.commerce_coupon_recipient_target_id=:uid AND ' . $recipient_table. '.entity_id=' . $base_table . '.coupon_id';
+    $query->leftJoin($recipient_table, $recipient_table, $join_condition, array(':uid' => $account->uid,));
   }
 
   // Do not apply any conditions for users with administrative view permissions.
@@ -196,8 +196,11 @@ function commerce_coupon_user_commerce_coupon_access_view($coupon, $account = NU
  * @return boolean
  */
 function commerce_coupon_user_received_coupon_access($op, $coupon, $account = NULL) {
-  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-  
+  if (user_access($op . ' coupons of type ' . $coupon->type)) {
+    return TRUE;
+  }
+    
+  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);  
   // If the coupon does not specify a recipient and the user is allowed to
   // redeem non-user-specific coupons of this type:
   if (!$coupon_wrapper->commerce_coupon_recipient->value() && user_access($op . ' non user specific coupons of type ' . $coupon->type)) {
