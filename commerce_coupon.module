@@ -452,7 +452,7 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
 
     if (isset($map[$discount->type])) {
       $rule->condition('commerce_coupon_discount_coupon_codes_exist_on_order', array(
-        'order:select' => $map[$discount->type],
+        'commerce_order:select' => $map[$discount->type],
         'commerce_discount' => $discount->name)
       );
     }
@@ -465,14 +465,13 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
  * condition set dynamically based on the inline conditions for a given coupon.
  * 
  * @param EntityDrupalWrapper $coupon
- * @param string $phase
- *  Coupon condition evaluation happens in two phases: pre_redeem and 
- *  post_redeem. pre_redeem fires before the coupon ever gets added to an order.
- *  post_redeem fires when the coupon module is deciding whether or not a
- *  particular coupon code should grant a particular discount.
+ * @param string $continuous_only
+ *  Inline conditions may specify that they should be checked continuously. If
+ *  the $continuous_only is passed into here as TRUE, it evaluates only the
+ *  continuous conditions.
  *  
  */
-function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_wrapper, $phase) {
+function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_wrapper, $continuous_only = FALSE) {
   $wrapper_properties = $coupon_wrapper->getPropertyInfo();  
   
   if (!module_exists('inline_conditions') || empty($wrapper_properties['commerce_coupon_conditions']) || !$coupon_wrapper->commerce_coupon_conditions->value()){
@@ -496,9 +495,9 @@ function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_
     // Get the condition info.    
     $condition = inline_conditions_get_info($value['condition_name']);
     
-    // Check for a valid condition. Also, only proceed if the condition has 
-    // asked to be run in the "pre_redeem" phase.
-    if (!$condition || empty($value['condition_settings']) || empty($condition['phase']) || !in_array($phase, $condition['phase'])) {
+    // Check for a valid condition. Also we are running only continuous inline 
+    // conditions, make sure the current condition is continuous.
+    if (!$condition || empty($value['condition_settings']) || ($continuous_only && empty($value['continuous']))) {
       continue;
     }
     
@@ -643,63 +642,7 @@ function commerce_coupon_generate_coupon_code($type, $length = NULL) {
 }
 
 /**
- * Determine whether a coupon may be applied to an order. This function will set
- * error messages if necessary.
- *
- * @param $code
- *   Coupon code to apply to the order.
- * @param $order
- *   Commerce order.
- *
- * @return boolean
- */
-function commerce_coupon_may_redeem_coupon_code($code, $order) {
-  // Trim trailing spaces.
-  $code = trim($code);
-  $coupon = commerce_coupon_load_by_code($code);
-  $error = &drupal_static('commerce_coupon_error_' . $code);
-  $error = '';
-
-  if (!$coupon || !$coupon->status) {
-    $error = t('Your coupon code is not valid.');
-  }
-
-  // The same coupon cannot be added twice.
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-  foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
-    if ($order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
-      $error = t('The coupon you have entered has already been applied to your order');
-      break;
-    }
-  }
-
-  // Check user permissions.
-  if ($coupon && !commerce_coupon_access('redeem', $coupon)) {
-    $error = t('Unable to redeem this code.');
-  }
-  
-  // Evaluate any inline conditions found on this coupon
-  if ($coupon) {
-    // Modules implementing pre_redeem inline conditions must alter $error if 
-    // they want to prevent 
-    $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-    commerce_coupon_evaluate_inline_conditions($coupon_wrapper, 'pre_redeem');
-  }
-
-  // Allow other modules to alter whether a coupon is acceptable to redeem for
-  // this order.
-  drupal_alter('commerce_coupon_coupon_may_redeem', $error, $coupon, $order);
-
-  if (!empty($error)) {
-    drupal_set_message($error, 'error');
-  }
-  else {
-    return TRUE;
-  }
-}
-
-/**
- * Apply a coupon to an order.
+ * Apply a coupon to an order and return success or failure.
  *
  * @param $code
  *  Coupon code to reedem.
@@ -709,22 +652,60 @@ function commerce_coupon_may_redeem_coupon_code($code, $order) {
  * @return bool
  */
 function commerce_coupon_redeem_coupon_code($code, $order) {
+  // Trim trailing spaces.
+  $code = trim($code);
   $coupon = commerce_coupon_load_by_code($code);
-
-  // Add the coupon to the order.
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-  $order_wrapper->commerce_coupons[] = $coupon;
-
-  // Invoke a rule event and save order.
-  rules_invoke_event('commerce_coupon_redeem', $coupon, $order);
-  commerce_order_save($order);
-  return TRUE;
+  $error = &drupal_static('commerce_coupon_error_' . $code);
+  $error = '';
+  
+  if ($coupon) {
+    // The same coupon cannot be added twice.
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
+      if ($order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
+        $error = t('The coupon you have entered has already been applied to your order');
+        break;
+      }
+    }
+    
+    // Check user permissions.
+    if (!$error) {
+      if (!commerce_coupon_access('redeem', $coupon) || !$coupon->status) {
+        $error = t('Unable to redeem this code.');
+      }
+      else {
+        $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+        
+        // Allow modules to alter whether the coupon is redeemable.
+        drupal_alter('commerce_coupon_redeem_error', $error, $coupon, $order);
+        
+        // Evaluate the redeem coupon rule.
+        if (!$error) {
+          rules_invoke_all('commerce_coupon_redeem', $coupon_wrapper, $order_wrapper);
+        }
+        
+        // Return TRUE if the coupon was successfully added. 
+        if (commerce_coupon_order_has_coupon_code($code, $order)) {
+          return TRUE;
+        }
+        else if (!$error) {
+          // If the coupon code was not redeemed, set a default error message.
+          $error = t('Unable to redeem coupon.');
+        }
+      }
+    }
+  }
+  else {
+    $error = t('Your coupon code is not valid.');
+  }
+  
+  if ($error) {
+    drupal_set_message($error, 'error');
+  }
 }
 
 /**
  * Loads a coupon by its coupon code.
- * @TODO the DANGEROUS ... tag is probably unnecessary if we are doing access
- * control properly.
  *
  * @param $code
  *   The code of a coupon.
@@ -735,8 +716,7 @@ function commerce_coupon_redeem_coupon_code($code, $order) {
 function commerce_coupon_load_by_code($code, $type = NULL) {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_coupon')
-      ->propertyCondition('code', $code)
-      ->addTag('DANGEROUS_ACCESS_CHECK_OPT_OUT');
+      ->propertyCondition('code', $code);
   
   if ($type) {
     $query->propertyCondition('type', $type);
@@ -841,8 +821,6 @@ function commerce_coupon_load_multiple($commerce_coupon_ids = array(), $conditio
 
 /**
  * Checks if a given coupon code exists.
- * @TODO this function can probably be replaced by 
- * commerce_coupon_load_by_code().
  *
  * @param $code
  *   Coupon code to check.

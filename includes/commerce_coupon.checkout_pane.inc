@@ -78,7 +78,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
   if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {
     $code = $form_state['input']['commerce_coupon']['coupon_code'];
     if (!empty($code)) {  
-      if (commerce_coupon_may_redeem_coupon_code($code, $order) && commerce_coupon_redeem_coupon_code($code, $order)) {
+      if (commerce_coupon_redeem_coupon_code($code, $order)) {
         // Clear the field value so that the coupon code does not get
         // resubmitted causing an error when user uses main "Continue to next
         // step" submit.
@@ -89,12 +89,6 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
 
         // Recalculate discounts.
         commerce_cart_order_refresh($order);
-
-        // If the coupon is still present on the order at this point, show a
-        // message.
-        if (commerce_coupon_order_has_coupon_code($code, $order)) {
-          drupal_set_message(t('Coupon code applied.'));
-        }
       }
     }
     else {
@@ -143,39 +137,6 @@ function commerce_coupon_add_coupon_callback($form, &$form_state) {
   drupal_alter('commerce_coupon_add_coupon_ajax', $commands, $form, $form_state['order']);
 
   return array('#type' => 'ajax', '#commands' => $commands);
-}
-
-/*
- * Checkout pane callback: coupon checkout form validate
- */
-function commerce_coupon_pane_checkout_form_validate($form, &$form_state, $checkout_pane, $order) {
-  // This is really only a failsafe for if the user has js disabled, or if they
-  // type in the coupon code and forget to hit "add coupon".
-  $code = $form_state['input']['commerce_coupon']['coupon_code'];
-  if ($code) {
-    // It is necessary to reload the order to make sure it is up to date.
-    $order = commerce_order_load($form_state['order']->order_id);
-    if (!commerce_coupon_may_redeem_coupon_code($code, $order)) {
-      return FALSE;
-    }
-    else {
-      $form_state['redeem_coupon_code'] = $code;
-    }
-  }
-
-  // If code is empty there is no need to do anything.
-  return TRUE;
-}
-
-/*
- * Checkout pane callback: coupon checkout form submit
- */
-function commerce_coupon_pane_checkout_form_submit($form, &$form_state, $checkout_pane, $order) {
-  if (isset($form_state['redeem_coupon_code'])) {
-    // It is necessary to reload the order to make sure it is up to date.
-    $order = commerce_order_load($form_state['order']->order_id);
-    commerce_coupon_redeem_coupon_code($form_state['redeem_coupon_code'], $order);
-  }
 }
 
 /*

@@ -36,7 +36,6 @@ function commerce_coupon_usage_inline_conditions_info() {
   $conditions['commerce_coupon_usage_evaluate_usage'] = array(
     'label' => t('Maximum usage'),
     'entity type' => 'commerce_coupon',
-    'phase' => array('pre_redeem'),
     'callbacks' => array(
       'configure' => 'commerce_coupon_usage_evaluate_usage_configure',
       'build' => 'commerce_coupon_usage_evaluate_usage_build',
