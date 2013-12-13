@@ -1,7 +1,0 @@
-name = "Coupon expire"
-description = "Allow expiration dates to be assigned to coupons"
-core = 7.x
-
-dependencies[] = commerce_coupon
-dependencies[] = rules_scheduler
-dependencies[] = date_popup

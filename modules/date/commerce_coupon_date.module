@@ -1,0 +1,68 @@
+<?php
+
+/*
+ * Implements hook_inline_conditions_info.
+ */
+function commerce_coupon_date_inline_conditions_info() {
+  $conditions['commerce_coupon_date_evaluate_date'] = array(
+    'label' => t('Date range'),
+    'entity type' => 'commerce_coupon',
+    'continuous' => TRUE,
+    'callbacks' => array(
+      'configure' => 'commerce_coupon_date_evaluate_date_configure',
+      'build' => 'commerce_coupon_date_evaluate_date_build',
+    ),
+  );
+  
+  return $conditions;
+}
+
+/*
+ * Inline conditions build callback: evaluate date range.
+ */
+function commerce_coupon_date_evaluate_date_build($coupon, $start = NULL, $end = NULL) {
+  $lower_pass = REQUEST_TIME >= $start;
+  $upper_pass = REQUEST_TIME <= $end;
+  
+  if ($start && $end) {
+    return $lower_pass && $upper_pass;
+  }
+  if ($end) {
+    return $upper_pass;
+  }
+  if ($start) {
+    return $lower_pass;
+  }
+}
+
+/*
+ * Inline conditions configure callback: date range form.
+ */
+function commerce_coupon_date_evaluate_date_configure($settings) {
+  if (is_string($settings)) {
+    $settings = unserialize($settings);
+  }
+  
+  $form['start'] = array(
+    '#type' => 'date_popup',
+    '#title' => t('Start date'),
+    '#date_format' => 'm/d/Y',
+    '#default_value' => !empty($settings['start']) ? $settings['start'] : ''
+  );
+  
+  $form['end'] = array(
+    '#type' => 'date_popup',
+    '#title' => t('End date'),
+    '#date_format' => 'm/d/Y',      
+    '#default_value' => !empty($settings['end']) ? $settings['end'] : ''
+  );  
+  
+  return $form;
+}
+
+/*
+ * Implements hook_flush_caches().
+ */
+function commerce_coupon_date_flush_caches() {
+  _commerce_coupon_install_inline_conditions_field();
+}

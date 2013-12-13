@@ -497,7 +497,7 @@ function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_
     
     // Check for a valid condition. Also we are running only continuous inline 
     // conditions, make sure the current condition is continuous.
-    if (!$condition || empty($value['condition_settings']) || ($continuous_only && empty($value['continuous']))) {
+    if (!$condition || empty($value['condition_settings']) || ($continuous_only && empty($condition['continuous']))) {
       continue;
     }
     
@@ -1703,4 +1703,44 @@ function commerce_coupon_validate_code($element, &$form_state) {
   if (!empty($form_state['edit_coupon']->is_new) && commerce_coupon_load_by_code($element['#value'])) {
     form_set_error($path, t('The code that you entered already exists.'));
   }
+}
+
+/**
+ * Helper function to install inline conditions field. Only called by
+ * submodules.
+ */
+function _commerce_coupon_install_inline_conditions_field() {
+  field_info_cache_clear();
+
+  $fields = field_info_fields();
+  $instances = field_info_instances();
+
+  if (empty($fields['commerce_coupon_conditions'])) {
+    // Create coupon conditions field
+    $field = array(
+      'entity_types' => array('commerce_coupon'),
+      'field_name' => 'commerce_coupon_conditions',
+      'type' => 'inline_conditions',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,        
+    );
+    field_create_field($field);
+  }
+
+  // Add coupon conditions field to discount coupons
+  if (empty($instances['commerce_coupon']['discount_coupon']['commerce_coupon_conditions'])) {
+    $instance = array(
+      'field_name' => 'commerce_coupon_conditions',
+      'entity_type' => 'commerce_coupon',
+      'settings'    => array(
+        'entity_type' => 'commerce_coupon',
+      ),        
+      'bundle' => 'discount_coupon',
+      'label' => t('Conditions'),
+      'widget'      => array(
+        'type' => 'inline_conditions',
+        'weight' => 10,
+      ),        
+    );
+    field_create_instance($instance);
+  }  
 }

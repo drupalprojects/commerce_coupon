@@ -23,8 +23,7 @@ function commerce_coupon_usage_get_number_of_uses($coupon_id) {
  * Implements hook_flush_caches().
  */
 function commerce_coupon_usage_flush_caches() {
-  module_load_install('commerce_coupon_usage');
-  _commerce_coupon_install_helper();
+  _commerce_coupon_install_inline_conditions_field();
 }
 
 /*

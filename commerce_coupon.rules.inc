@@ -124,7 +124,7 @@ function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $d
         $has_coupons = TRUE;
         $outcome = FALSE;
         
-        if (commerce_coupon_evaluate_inline_conditions($coupon_wrapper, 'post_redeem') && commerce_coupon_access('redeem', $coupon_wrapper->value())) {
+        if (commerce_coupon_evaluate_inline_conditions($coupon_wrapper, TRUE) && commerce_coupon_access('redeem', $coupon_wrapper->value())) {
           $outcome = TRUE;
         }
         
