@@ -196,7 +196,7 @@ function commerce_coupon_user_commerce_coupon_access_view($coupon, $account = NU
  * @return boolean
  */
 function commerce_coupon_user_received_coupon_access($op, $coupon, $account = NULL) {
-  if (user_access($op . ' coupons of type ' . $coupon->type)) {
+  if (user_access($op . ' coupons of type ' . $coupon->type) || user_access('redeem any coupon')) {
     return TRUE;
   }
     

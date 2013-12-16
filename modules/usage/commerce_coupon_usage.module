@@ -64,7 +64,7 @@ function commerce_coupon_usage_evaluate_usage_build($coupon, $max_usage) {
  * Inline conditions configure callback: evaluate max usage for coupon
  */
 function commerce_coupon_usage_evaluate_usage_configure($settings) {
-  // Why is this necessary?
+  // Why is this necessary? 
   if (is_string($settings)) {
     $settings = unserialize($settings);
   }

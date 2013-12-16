@@ -314,13 +314,18 @@ function commerce_coupon_menu_local_tasks_alter(&$data, $router_item, $root_path
  */
 function commerce_coupon_permission() {
   $permissions = array();
+  // Add "redeem" permissions.
+  $permissions['redeem any coupon'] = array(
+    'title' => t('Redeem any coupon')
+  );
+  
   foreach (commerce_coupon_get_types() as $type => $info) {
     $permissions['redeem coupons of type ' . $type] = array(
       'title' => t('Redeem any %type coupon', array('%type' => $info['label']))
     );
   }
-
-  $permissions += commerce_entity_access_permissions('commerce_coupon');
+  
+  $permissions += commerce_entity_access_permissions('commerce_coupon');  
 
   return $permissions;
 }
@@ -400,7 +405,7 @@ function commerce_coupon_access($op, $coupon = NULL, $account = NULL) {
       return commerce_entity_access($op, $coupon, $account, 'commerce_coupon');
     case 'redeem':
       // If the user can redeem all coupons of this type:
-      return user_access('redeem coupons of type ' . $coupon->type);
+      return user_access('redeem coupons of type ' . $coupon->type) || user_access('redeem any coupon');
   }
 }
 
