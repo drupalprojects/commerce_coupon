@@ -1216,7 +1216,8 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
     '#title' => t('Coupon conditions'),
     '#tree' => TRUE,
     '#prefix' => '<div id="commerce-coupon-discount-coupon-form">',
-    '#suffix' => '</div>'
+    '#suffix' => '</div>',
+    '#attached' => array('css' => array(drupal_get_path('module', 'commerce_coupon') . '/css/commerce_coupon.css'))
   );
 
   // Ajax specifications.
@@ -1247,7 +1248,8 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
     }
 
     $form['coupons']['coupon_form'] = array(
-      '#type' => 'container'
+      '#type' => 'container',
+      '#parents' => array('coupons', 'coupon_form')
     );
     // Attach the coupon form
     commerce_coupon_attach_ajax_coupon_entity_form(
@@ -1306,8 +1308,10 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
       if (isset($form_state['edit_coupon']->delta) && $delta == $form_state['edit_coupon']->delta) {
         // If this one is selected, attach a coupon form
         $form['coupons']['manage_coupons'][$delta]['coupon_form'] = array(
-          '#type' => 'container'
+          '#type' => 'container',
+          '#parents' => array('coupons', 'manage_coupons', $delta, 'coupon_form')
         );
+        
         commerce_coupon_attach_ajax_coupon_entity_form(
           $form['coupons']['manage_coupons'][$delta]['coupon_form'],
           $form_state,
@@ -1448,7 +1452,7 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
     }  
   }
     
-  if (isset($coupon_fields_form) && $trigger != 'cancel_coupon') {
+  if (isset($coupon_fields_form) && $trigger != 'cancel_coupon' && $trigger != 'add_existing') {
     // Validate fields
     field_attach_form_validate('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
   }  
@@ -1483,6 +1487,7 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
         $coupon->uid = $coupon_values['uid'];
 
         field_attach_submit('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
+        
         // Add it to the list of coupons that we save.
         if (isset($coupon->delta)) {
           $form_state['coupons'][$coupon->delta] = $coupon;
@@ -1505,10 +1510,11 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
 
       break;
     case 'cancel_coupon':
+    case 'add_existing':
       unset($form_state['edit_coupon']);
 
       break;
-    case 'add_existing_coupon':
+    case 'add_existing_coupon':      
       $code = $form_state['values']['coupons']['find_coupon_code'];
       $coupon = commerce_coupon_load_by_code($code, 'discount_coupon');
       if (!$coupon) {
@@ -1618,9 +1624,13 @@ function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon
     '#type' => 'value',
     '#value' => !empty($coupon->is_new) ? $user->uid : $coupon->uid
   );
-
+  
+  $field_parents = $form['#parents'];
+  $field_parents[] = 'commerce_coupon_fields';
+  
   $form['commerce_coupon_fields'] = array(
     '#type' => 'container',
+    '#parents' => $field_parents
   );
 
   // Attach fields.
@@ -1647,7 +1657,7 @@ function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon
  */
 function theme_commerce_coupon_manage_discount_coupons($variables) {
   $elements = $variables['elements'];
-  $table['headers'] = array(t('Code'), '', '');
+  $table['header'] = array(t('Code'), '', '');
   $table['rows'] = array();
 
   foreach (element_children($elements) as $delta) {
@@ -1655,12 +1665,26 @@ function theme_commerce_coupon_manage_discount_coupons($variables) {
     if (isset($element['edit_coupon']) && isset($element['remove_coupon'])) {
       $edit_button = $element['edit_coupon'];
       $remove_button = $element['remove_coupon'];
+      
+      $edit_button_cell = array(
+        'data' => drupal_render($edit_button),
+        'class' => array('commerce-coupon-discount-coupon-edit-cell')
+      );
+      
+      $remove_button_cell = array(
+        'data' => drupal_render($remove_button),
+        'class' => array('commerce-coupon-discount-coupon-remove-cell')
+      );      
 
-      $row = array(check_plain($element['#coupon']->code), drupal_render($edit_button), drupal_render($remove_button));
+      $row = array(check_plain($element['#coupon']->code), $edit_button_cell, $remove_button_cell);
     }
     else {
       $form = $element['coupon_form'];
-      $row = array(drupal_render($form));
+      // Single cell row
+      $row = array(array(
+        'data' => drupal_render($form),
+        'colspan' => 3
+      ));
     }
     $table['rows'][] = $row;
   }
