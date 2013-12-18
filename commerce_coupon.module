@@ -1625,7 +1625,7 @@ function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon
     '#value' => !empty($coupon->is_new) ? $user->uid : $coupon->uid
   );
   
-  $field_parents = $form['#parents'];
+  $field_parents = !empty($form['#parents']) ? $form['#parents'] : array();
   $field_parents[] = 'commerce_coupon_fields';
   
   $form['commerce_coupon_fields'] = array(
