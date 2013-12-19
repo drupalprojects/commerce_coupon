@@ -106,7 +106,7 @@ function theme_commerce_coupon_type_admin_overview($variables) {
  */
 function commerce_coupon_form($form, &$form_state, $coupon) {
   // Ensure this include file is loaded when the form is rebuilt from the cache.
-  $form_state['build_info']['files']['form'] = drupal_get_path('module', 'commerce_coupon') . '/includes/commerce_coupon_ui.forms.inc';
+  $form_state['build_info']['files']['form'] = drupal_get_path('module', 'commerce_coupon') . '/includes/commerce_coupon.admin.inc';
   $form_state['commerce_coupon'] = $coupon;
 
   commerce_coupon_attach_coupon_entity_form($form, $form_state, $coupon, TRUE);
