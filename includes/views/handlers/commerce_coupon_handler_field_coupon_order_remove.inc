@@ -9,12 +9,12 @@ class commerce_coupon_handler_field_coupon_order_remove extends commerce_coupon_
 
     // If there's an ajax form in the page, get the right destination url.
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')  {
-      $dest = str_replace($GLOBALS['base_url'] . base_path(), '', $_SERVER['HTTP_REFERER']);
+      $dest = str_replace($GLOBALS['base_url'] . '/', '', $_SERVER['HTTP_REFERER']);
     }
     else {
       $dest = current_path();
     }
-
+    
     $text = !empty($this->options['text']) ? $this->options['text'] : t('Remove');
 
     return l(
