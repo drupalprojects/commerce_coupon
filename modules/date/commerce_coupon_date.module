@@ -47,18 +47,48 @@ function commerce_coupon_date_evaluate_date_configure($settings) {
     '#type' => 'date_popup',
     '#title' => t('Start date'),
     '#date_format' => 'm/d/Y',
-    '#default_value' => !empty($settings['start']) ? $settings['start'] : ''
+    '#default_value' => !empty($settings['start']) ? $settings['start'] : '',
+    '#element_validate' => array('commerce_coupon_date_range_start_validate')
   );
   
   $form['end'] = array(
     '#type' => 'date_popup',
     '#title' => t('End date'),
     '#date_format' => 'm/d/Y',      
-    '#default_value' => !empty($settings['end']) ? $settings['end'] : ''
+    '#default_value' => !empty($settings['end']) ? $settings['end'] : '',   
   );  
   
   return $form;
 }
+
+/*
+ * Element validate callback: validate start date
+ */
+function commerce_coupon_date_range_start_validate($element, &$form_state, $form) {
+  if (empty($element['#value']['date'])) {
+    return;
+  }
+  
+  $type = array_pop($element['#parents']);
+  $parents = $element['#parents'];
+  $parents[] = $type == 'start' ? 'end' : 'start';
+  $comp_value = drupal_array_get_nested_value($form_state['values'], $parents);
+  
+  if (!empty($comp_value['date'])) {
+    // Get a timestamp for start date.
+    $start_date_string = $element['#value']['date'];
+    $start_date = new DateTime($element['#value']['date'] . ' ' . $element['#value']['time']);
+    $start_ts = date_format($start_date, 'U');
+    // Get a timestamp for end date.
+    $end_date = new DateTime($comp_value['date'] . ' ' . $comp_value['time']);
+    $end_ts = date_format($end_date, 'U');
+            
+    if ($start_ts > $end_ts) {
+      form_set_error(implode('][', $parents), t('Start date must be less than end date.'));
+    }
+  }
+}
+
 
 /*
  * Implements hook_flush_caches().
