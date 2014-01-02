@@ -21,6 +21,9 @@ function commerce_coupon_date_inline_conditions_info() {
  * Inline conditions build callback: evaluate date range.
  */
 function commerce_coupon_date_evaluate_date_build($coupon, $start = NULL, $end = NULL) {
+  // We want end to be the end of the day on whatever day they choose.
+  $end += 86400;
+  
   $lower_pass = REQUEST_TIME >= $start;
   $upper_pass = REQUEST_TIME <= $end;
   
@@ -76,7 +79,6 @@ function commerce_coupon_date_range_start_validate($element, &$form_state, $form
   
   if (!empty($comp_value['date'])) {
     // Get a timestamp for start date.
-    $start_date_string = $element['#value']['date'];
     $start_date = new DateTime($element['#value']['date'] . ' ' . $element['#value']['time']);
     $start_ts = date_format($start_date, 'U');
     // Get a timestamp for end date.
