@@ -107,7 +107,7 @@ function commerce_coupon_type_get_name($type = NULL) {
  */
 function commerce_coupon_commerce_coupon_type_info() {
   $types['discount_coupon'] = array(
-    'label' => t('Discount coupon'),
+    'label' => t('Discount coupon'),    
   );
 
   return $types;
@@ -349,7 +349,8 @@ function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterf
 
 /**
  * Find modules that implement hook_commerce_coupon_access_query_substitute and
- * determine their final result. Return FALSE if no implementing modules found.
+ * determine their final result. If no implementing modules found, apply the 
+ * standard commerce_entity_access_query_alter function.
  * 
  * @param type $query
  * @param type $coupon_alias
@@ -362,9 +363,15 @@ function commerce_coupon_apply_access_query_substitute($query, $coupon_alias) {
   $modules = module_implements('commerce_coupon_access_query_substitute');
   if ($modules) {
     foreach ($modules as $module) {
-      // The last module wins.
-      $query = module_invoke($module, 'commerce_coupon_access_query_substitute', $query, $coupon_alias);
-    }    
+      // Each implementing module gets the original query as its argument to 
+      // avoid having to worry about undoing changes that previous implementers
+      // add in. The last implementing module is the "winner".
+      $new_query = module_invoke($module, 'commerce_coupon_access_query_substitute', $query, $coupon_alias);
+    }
+    
+    if (isset($new_query)) {
+      $query = $new_query;
+    }
   }
   else {
     commerce_entity_access_query_alter($query, 'commerce_coupon', $coupon_alias);

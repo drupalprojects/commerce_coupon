@@ -162,35 +162,6 @@ function commerce_coupon_schema() {
   return $schema;
 }
 
-/**
- * Add status field
- */
-function commerce_coupon_update_7001() {
-  if (!db_field_exists('commerce_coupon', 'status')) {
-    db_add_field('commerce_coupon', 'status', array(
-      'description' => 'Whether or not this coupon is enabled.',
-      'type' => 'int',
-      'not null' => TRUE,
-      'default' => 0
-    ));
-  }
-}
-
-/**
- * Add uid field
- */
-function commerce_coupon_update_7002() {
-  if (!db_field_exists('commerce_coupon', 'uid')) {
-    db_add_field('commerce_coupon', 'uid', array(
-      'description' => 'An identifier for the user who owns this coupon',
-      'type' => 'int',      
-      'not null' => TRUE,
-      'default' => 0,          
-    ));
-    db_add_index('commerce_coupon', 'uid', array('uid'));
-  }  
-}
-
 /*
  * Implements hook_uninstall().
  */
@@ -204,4 +175,12 @@ function commerce_coupon_uninstall() {
   if ($instance = field_info_instance('commerce_order', 'commerce_coupons', 'commerce_order')) {
     commerce_delete_instance($instance);
   }
+}
+
+
+/**
+ * Upgrade a Coupons 1.x site to 2.x
+ */
+function commerce_coupon_update_7200() {
+  
 }
