@@ -46,3 +46,18 @@ function _commerce_coupon_user_install_helper() {
     }
   }
 }
+
+/*
+ * Implements hook_uninstall().
+ */
+function commerce_coupon_user_uninstall() {
+  field_info_cache_clear();
+  module_load_include('module', 'commerce_coupon');
+  $instances = field_info_instances();
+  
+  foreach (commerce_coupon_get_types() as $bundle => $info) {
+    if (!empty($instances['commerce_coupon'][$bundle]['commerce_coupon_recipient'])) {
+      commerce_delete_instance($instances['commerce_coupon'][$bundle]['commerce_coupon_recipient']);
+    }
+  }
+}

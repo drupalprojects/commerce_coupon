@@ -187,6 +187,7 @@ function commerce_coupon_menu() {
   );
 
   foreach (commerce_coupon_get_types() as $type => $coupon_type) {
+    $coupon_type['type'] = $type;
     // Convert underscores to hyphens for the menu item argument.
     $type_arg = strtr($type, '_', '-');
 
@@ -1146,8 +1147,7 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
     // Invalidate coupons that exist on the order without their discount
     // present, meaning an inline condition on the discount was not satisfied.
-    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {
-      drupal_set_message(t('One or more conditions for coupon @code are currently not satisfied.', array('@code' => $coupon->code)), 'error');
+    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {      
       // Remove invalid coupons.
       commerce_coupon_remove_coupon_from_order($order, $coupon, FALSE);
       $save = TRUE;

@@ -190,3 +190,18 @@ function commerce_coupon_update_7002() {
     db_add_index('commerce_coupon', 'uid', array('uid'));
   }  
 }
+
+/*
+ * Implements hook_uninstall().
+ */
+function commerce_coupon_uninstall() {
+  module_load_include('module', 'commerce');
+  
+  // Delete any field instance attached to a coupon type.  
+  commerce_delete_instances('commerce_coupon');
+  
+  // Remove coupon reference field instance on order
+  if ($instance = field_info_instance('commerce_order', 'commerce_coupons', 'commerce_order')) {
+    commerce_delete_instance($instance);
+  }
+}
