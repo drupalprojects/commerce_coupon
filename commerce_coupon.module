@@ -182,7 +182,7 @@ function commerce_coupon_menu() {
     'page arguments' => array(commerce_coupon_create('discount_coupon')),
     'weight' => 10,
     'access callback' => 'commerce_coupon_access',
-    'access arguments' => array('create', 'discount'),
+    'access arguments' => array('create', commerce_coupon_create('discount_coupon')),
     'file' => 'includes/commerce_coupon.admin.inc',
   );
 
