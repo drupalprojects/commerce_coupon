@@ -148,7 +148,14 @@ function commerce_coupon_schema() {
         'type' => 'int',
         'not null' => TRUE,
         'default' => 0
-      )
+      ),
+      'data' => array(
+        'type' => 'blob',
+        'size' => 'big',
+        'not null' => FALSE,
+        'serialize' => TRUE,
+        'description' => 'Everything else, serialized.',
+      ),        
     ),
     'indexes' => array(
       'uid' => array('uid'),
@@ -170,7 +177,7 @@ function commerce_coupon_schema() {
 }
 
 /**
- * Add "changed" field and index on "code".
+ * Add "changed" and "data' fields and index on "code".
  */
 function commerce_coupon_update_7001() {
   // Add "changed" field.
@@ -184,6 +191,18 @@ function commerce_coupon_update_7001() {
     
     db_add_field('commerce_coupon', 'changed', $field);
   }
+  // Add "data" field.
+  if (!db_field_exists('commerce_coupon', 'data')) {
+    $field = array(
+      'type' => 'blob',
+      'size' => 'big',
+      'not null' => FALSE,
+      'serialize' => TRUE,
+      'description' => 'Everything else, serialized.',
+    );
+    
+    db_add_field('commerce_coupon', 'data', $field);
+  }  
   
   // Add index on code.
   db_add_index('commerce_coupon', 'code', array('code'));
@@ -210,26 +229,26 @@ function commerce_coupon_uninstall() {
  * install and use Commerce Coupon Update.
  */
 function commerce_coupon_update_7200() {
+  include_once DRUPAL_ROOT . '/includes/registry.inc';      
+  _registry_update();  
   
   $schema = drupal_get_schema_unprocessed('commerce_coupon', 'commerce_coupon');
   $fields = $schema['fields'];
-  
-  // Install fields  
-  commerce_coupon_install_helper();
       
   // Change "is active" field to "status".
   db_change_field('commerce_coupon', 'is_active', 'status', $fields['status']);  
-      
-  // Indexes
-  db_add_index('commerce_coupon', 'code', array('code'));
-  db_add_index('commerce_coupon', 'uid', array('uid'));  
-  
+
   // Add all the new columns
   db_add_field('commerce_coupon', 'bulk', $fields['bulk']);  
   db_add_field('commerce_coupon', 'code', $fields['code']);
   db_add_field('commerce_coupon', 'uid', $fields['uid']);
-
+         
+  // Indexes
+  db_add_index('commerce_coupon', 'code', array('code'));
+  db_add_index('commerce_coupon', 'uid', array('uid'));
   
-  // Disable Commerce Coupon UI
+  // Rebuild rules.
+  entity_defaults_rebuild(array('rules_config'));
+
   module_disable(array('commerce_coupon_ui'));
 }

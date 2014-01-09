@@ -63,6 +63,9 @@ function commerce_coupon_update_form_submit(&$form, &$form_state) {
  */
 function commerce_coupon_update_commerce_coupon_update_parameters($coupon) {
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+  
+  // Return all of the necessary parameters for converting the coupon into a 
+  // discount and an offer.
   switch ($coupon->type) {
     case 'commerce_coupon_pct':
       $offer_value = $coupon_wrapper->commerce_coupon_percent_amount->value();
@@ -79,14 +82,15 @@ function commerce_coupon_update_commerce_coupon_update_parameters($coupon) {
 
       break;
     case 'commerce_coupon_fixed':
-      $offer_value = $coupon_wrapper->commerce_coupon_fixed_amount->amount->value();
-      $offer_value_safe = str_replace('.', '', $offer_value);
+      $offer_price = $coupon_wrapper->commerce_coupon_fixed_amount->value();
+      $offer_amount = $offer_price['amount'];
+      $offer_price_formatted = commerce_currency_format($offer_amount, $offer_price['currency_code']);
 
       return array(
-        'offer value' => $offer_value,
-        'offer value safe' => $offer_value_safe,
-        'label' => t('@pct percent discount', array('@pct' => $offer_value)),
-        'discount name' => 'fixed_discount_' . $offer_value_safe,
+        'offer value' => $offer_price,
+        'offer value safe' => $offer_amount,
+        'label' => t('@pct discount', array('@pct' => $offer_price_formatted)),
+        'discount name' => 'fixed_discount_' . $offer_amount,
         'offer field' => 'commerce_fixed_amount',
         'offer type' => 'fixed_amount'
       );
@@ -104,16 +108,16 @@ function commerce_coupon_update_batch_worker($coupon_id, &$context) {
     $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
     
     // Update code column.
-    $code = $coupon_wrapper->commerce_coupon_code->value();
-    $coupon->code = $code;
+    if (empty($coupon->code)) {
+      $code = $coupon_wrapper->commerce_coupon_code->value();
+      $coupon->code = $code;
+    }
 
     // Find update information about this coupon type.
     $parameters = module_invoke_all('commerce_coupon_update_parameters', $coupon);
     if (empty($parameters)) {
       return;
-    }
-    
-    $coupon->type = 'discount_coupon';    
+    }   
     
     // Determine if there is a suitable discount to use.
     $query = new EntityFieldQuery;
@@ -157,30 +161,34 @@ function commerce_coupon_update_batch_worker($coupon_id, &$context) {
     }
 
     if ($discount) {
+      $conditions = array();
+      if (module_exists('commerce_coupon_usage') && !empty($coupon->commerce_coupon_number_of_uses)) {
+        // Add an inline condition for number of uses. 
+        $conditions[] = array(
+          'condition_name' => 'commerce_coupon_usage_evaluate_usage',
+          'condition_settings' => array(
+            'max_usage' => $coupon_wrapper->commerce_coupon_number_of_uses->value()
+          )
+        );        
+      }
+      
+      // Set the bundle now.
+      $coupon->type = 'discount_coupon';
+      
+      // Set inline conditions field. Must retrieve the wrapper again because 
+      // the bundle has changed.
+      $updated_coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+      if (!empty($conditions)) {
+        $updated_coupon_wrapper->commerce_coupon_conditions[] = $condition;
+      }
+      
+      // Set discount reference and save.
       $coupon->commerce_discount_reference[LANGUAGE_NONE][] = array('target_id' => $discount->discount_id);
       commerce_coupon_save($coupon);
+      
+      // Rebuild discount rules.
+      entity_defaults_rebuild(array('rules_config'));
     }
-  }
-}
-
-/**
- * Get the discount id of the first order discount that matches a set of offer 
- * ids.
- * 
- * @param type $offer_ids
- * @return type
- */
-function _commerce_coupon_update_get_single_discount_by_offer_id_set($offer_ids) {
-  $results = $query
-    ->entityCondition('commerce_discount')
-    ->propertyCondition('type', 'order_discount')
-    ->fieldCondition('commerce_discount_offer', $offer_ids)
-    ->execute();
-
-  if (!empty($results['commerce_discount'])) {
-    $discount_ids = array_keys($results['commerce_discount']);
-    // We only want to return the first one that matches.
-    return reset($discount_ids);
   }
 }
 
@@ -189,5 +197,10 @@ function _commerce_coupon_update_get_single_discount_by_offer_id_set($offer_ids)
  */
 function commerce_coupon_update_batch_finished($success, $results, $operations) {
   // Remove fields that we no longer need.
-  
+  module_disable(array('commerce_coupon_pct', 'commerce_coupon_fixed_amount'));
 }
+
+/*
+ * Stub function so that coupon type modules do not crash when they disable.
+ */
+function commerce_coupon_type_disable() {}
