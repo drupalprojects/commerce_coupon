@@ -214,20 +214,22 @@ function commerce_coupon_update_7200() {
   $schema = drupal_get_schema_unprocessed('commerce_coupon', 'commerce_coupon');
   $fields = $schema['fields'];
   
-  // Add all the new columns
-  db_add_field('commerce_coupon', 'code', $fields['code']);
-  db_add_field('commerce_coupon', 'uid', $fields['uid']);
-  
-  // Indexes
-  db_add_index('commerce_coupon', 'code', array('code'));
-  db_add_index('commerce_coupon', 'uid', array('uid'));
-  
-  // Unique keys
-  db_add_unique_key('commerce_coupon', 'code', array('code'));
-  
-  // Change "is active" field to "status".
-  db_change_field('commerce_coupon', 'is_active', 'status', $fields['status']);
-  
   // Install fields  
   commerce_coupon_install_helper();
+      
+  // Change "is active" field to "status".
+  db_change_field('commerce_coupon', 'is_active', 'status', $fields['status']);  
+      
+  // Indexes
+  db_add_index('commerce_coupon', 'code', array('code'));
+  db_add_index('commerce_coupon', 'uid', array('uid'));  
+  
+  // Add all the new columns
+  db_add_field('commerce_coupon', 'bulk', $fields['bulk']);  
+  db_add_field('commerce_coupon', 'code', $fields['code']);
+  db_add_field('commerce_coupon', 'uid', $fields['uid']);
+
+  
+  // Disable Commerce Coupon UI
+  module_disable(array('commerce_coupon_ui'));
 }
