@@ -1,0 +1,188 @@
+<?php
+
+/*
+ * Implements hook_menu().
+ */
+function commerce_coupon_update_menu() {
+  $items['admin/commerce/coupons/update'] = array(
+    'title' => 'Update',
+    'description' => 'Update coupon entities from 1.x to 2.x compatibility.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_coupon_update_form'),
+    'access arguments' => array('administer commerce_coupon entities')
+  );
+  
+  return $items;
+}
+
+/*
+ * Coupon update form
+ */
+function commerce_coupon_update_form(&$form, &$form_state) {
+  drupal_set_title(t('Coupons 1.x to 2.x upgrade'));
+  
+  $form['explanation'] = array(
+    '#type' => 'markup',
+    '#markup' => t('Explanation ..')
+  );
+  
+  $form['proceed'] = array(
+    '#type' => 'submit',
+    '#value' => t('Proceed'),    
+  );
+  
+  return $form;
+}
+
+/*
+ * Coupon update form submit
+ */
+function commerce_coupon_update_form_submit(&$form, &$form_state) {
+  drupal_set_message(t('Updating coupons'));  
+  $operations = array();
+  
+  // Load all coupon ids.
+  $coupon_ids = db_query('SELECT coupon_id FROM {commerce_coupon}')->fetchCol();
+  
+  foreach ($coupon_ids as $coupon_id) {
+    $operations[] = array('commerce_coupon_update_batch_worker', array($coupon_id));
+  }
+  
+  if (!empty($operations)) {
+    $batch = array(
+      'operations' => $operations,
+      'finished' => 'commerce_coupon_update_batch_finished'
+    );
+    
+    batch_set($batch);
+  }
+}
+
+/*
+ * Implements hook_commerce_coupon_update_parameters().
+ */
+function commerce_coupon_update_commerce_coupon_update_parameters($coupon) {
+    switch ($coupon->type) {
+      case 'commerce_coupon_pct':
+        $offer_value = $coupon_wrapper->commerce_coupon_perent->value();
+        $offer_value_safe = str_replace('.', '', $offer_value);
+        
+        return array(
+          'offer value' => $offer_value,
+          'offer value safe' => $offer_value_safe,
+          'label' => t('@pct percent discount', array('@pct' => $offer_value_safe)),
+          'discount name' => 'pct_discount_' . $offer_value_safe,
+          'offer field' => 'commerce_pct'
+        );
+        
+        break;
+      case 'commerce_coupon_fixed':
+        $offer_value = $coupon_wrapper->commerce_coupon_fixed_amount->amount->value();
+        $offer_value_safe = str_replace('.', '', $offer_value);
+        
+        return array(
+          'offer value' => $offer_value,
+          'offer value safe' => $offer_value_safe,
+          'label' => t('@pct percent discount', array('@pct' => $offer_value_safe)),
+          'discount name' => 'fixed_discount_' . $offer_value_safe,
+          'offer field' => 'commerce_fixed_amount'
+        );
+        
+        break;
+    }
+}
+
+/*
+ * Batch worker callback: process a single coupon entity
+ */
+function commerce_coupon_update_batch_worker($coupon_id, &$context) {
+  $coupon = commerce_coupon_load($coupon_id);
+  if ($coupon) {
+    $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+    
+    // Update code column.
+    $code = $coupon_wrapper->commerce_coupon_code->value();
+    $coupon->code = $code;
+
+    // Find update information about this coupon type.
+    $parameters = module_invoke_all('commerce_coupon_update_commerce_coupon_update_parameters', $coupon);
+    if (empty($parameters[$coupon->type])) {
+      return;
+    }
+    
+    // Determine if there is a suitable discount to use.
+    $query = new EntityFieldQuery;
+    $results = $query
+      ->entityCondition('entity_type', 'commerce_discount')
+      ->propertyCondition('type', 'order_discount')
+      ->propertyCondition('name', $parameters['discount_name'])
+      ->execute();    
+
+    // If there is a matching offer, load its discount, making sure that it
+    // is an order discount since all known coupon types at this point are
+    // at the order level.
+    if (!empty($results['commerce_discount'])) {
+      $discount_ids = array_keys($results['commerce_discount']);
+      $discount_id = reset($discount_ids);
+    }
+    else {
+      // Discount not found - create and save offer.
+      $offer = entity_create('commerce_discount_offer', array(
+        'type' => $parameters['offer_type'],
+      ));
+
+      $offer_wrapper = entity_metadata_wrapper('commerce_discount_offer', $offer);
+      $offer_wrapper->{$offer_field} = $parameters['offer value'];
+      $offer_wrapper->save();
+
+      // Create and save discount.
+      $discount = entity_create('commerce_discount', array(
+        'type' => 'order_discount',
+        'name' => 'pct_discount_' . $parameters['offer value safe'],
+        'label' => $parameters['label'],
+        'component_title' => $parameters['label']
+      ));
+
+      $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
+      // Set offer reference.
+      $discount_wrapper->commerce_discount_offer = $offer;
+
+      $discount_wrapper->save();
+      $discount_id = $discount->discount_id;
+    }
+
+    if ($discount_id) {
+      $coupon_wrapper->commerce_discount_reference[] = $discount_id;
+      $coupon_wrapper->save();
+    }    
+  }
+}
+
+/**
+ * Get the discount id of the first order discount that matches a set of offer 
+ * ids.
+ * 
+ * @param type $offer_ids
+ * @return type
+ */
+function _commerce_coupon_update_get_single_discount_by_offer_id_set($offer_ids) {
+  $results = $query
+    ->entityCondition('commerce_discount')
+    ->propertyCondition('type', 'order_discount')
+    ->fieldCondition('commerce_discount_offer', $offer_ids)
+    ->execute();
+
+  if (!empty($results['commerce_discount'])) {
+    $discount_ids = array_keys($results['commerce_discount']);
+    // We only want to return the first one that matches.
+    return reset($discount_ids);
+  }
+}
+
+/*
+ * Batch finished callback: cleanup after all coupon entities are processed.
+ */
+function commerce_coupon_update_batch_finished($success, $results, $operations) {
+  // Remove fields that we no longer need.
+  
+}

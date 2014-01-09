@@ -1,0 +1,5 @@
+name = Commerce Coupon Update
+description = Enables batch update functionality for Commerce Coupon entities
+core = 7.x
+
+dependencies[] = commerce_coupon

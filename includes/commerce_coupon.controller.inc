@@ -56,9 +56,11 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
       // Set the creation timestamp if not set, for new entities.
       if (empty($entity->created)) {
         $entity->created = REQUEST_TIME;
-      }
+      }    
     }
-
+    
+    // Set the "changed" field    
+    $entity->changed = REQUEST_TIME;
     return parent::save($entity);
   }
 }

@@ -137,6 +137,12 @@ function commerce_coupon_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'changed' => array(
+        'description' => 'The Unix timestamp when the coupon was most recently saved.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),        
       'status' => array(
         'description' => 'Whether or not this coupon is enabled.',
         'type' => 'int',
@@ -145,7 +151,8 @@ function commerce_coupon_schema() {
       )
     ),
     'indexes' => array(
-      'uid' => array('uid')        
+      'uid' => array('uid'),
+      'code' => array('code')
     ),
     'primary key' => array('coupon_id'),
     'foreign keys' => array(
@@ -160,6 +167,26 @@ function commerce_coupon_schema() {
   );
 
   return $schema;
+}
+
+/**
+ * Add "changed" field and index on "code".
+ */
+function commerce_coupon_update_7001() {
+  // Add "changed" field.
+  if (!db_field_exists('commerce_coupon', 'changed')) {
+    $field = array(
+      'description' => 'The Unix timestamp when the coupon was most recently saved.',
+      'type' => 'int',
+      'not null' => TRUE,
+      'default' => 0,
+    );
+    
+    db_add_field('commerce_coupon', 'changed', $field);
+  }
+  
+  // Add index on code.
+  db_add_index('commerce_coupon', 'code', array('code'));
 }
 
 /*
@@ -179,8 +206,28 @@ function commerce_coupon_uninstall() {
 
 
 /**
- * Upgrade a Coupons 1.x site to 2.x
+ * Upgrade a Coupons 1.x site to 2.x. To complete this operation, you must also
+ * install and use Commerce Coupon Update.
  */
 function commerce_coupon_update_7200() {
   
+  $schema = drupal_get_schema_unprocessed('commerce_coupon', 'commerce_coupon');
+  $fields = $schema['fields'];
+  
+  // Add all the new columns
+  db_add_field('commerce_coupon', 'code', $fields['code']);
+  db_add_field('commerce_coupon', 'uid', $fields['uid']);
+  
+  // Indexes
+  db_add_index('commerce_coupon', 'code', array('code'));
+  db_add_index('commerce_coupon', 'uid', array('uid'));
+  
+  // Unique keys
+  db_add_unique_key('commerce_coupon', 'code', array('code'));
+  
+  // Change "is active" field to "status".
+  db_change_field('commerce_coupon', 'is_active', 'status', $fields['status']);
+  
+  // Install fields  
+  commerce_coupon_install_helper();
 }
