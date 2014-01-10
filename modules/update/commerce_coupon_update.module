@@ -127,9 +127,7 @@ function commerce_coupon_update_batch_worker($coupon_id, &$context) {
       ->propertyCondition('name', $parameters['discount name'])
       ->execute();    
 
-    // If there is a matching offer, load its discount, making sure that it
-    // is an order discount since all known coupon types at this point are
-    // at the order level.
+    // Load matching discount.
     if (!empty($results['commerce_discount'])) {
       $discount_ids = array_keys($results['commerce_discount']);
       $discounts = entity_load('commerce_discount', $discount_ids);
