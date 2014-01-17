@@ -24,7 +24,7 @@ function _commerce_coupon_user_install_helper() {
       ),
       'field_name' => 'commerce_coupon_recipient',
       'type' => 'entityreference',
-      'cardinality' => '1',
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
     );
     field_create_field($field);
   }
@@ -60,4 +60,13 @@ function commerce_coupon_user_uninstall() {
       commerce_delete_instance($instances['commerce_coupon'][$bundle]['commerce_coupon_recipient']);
     }
   }
+}
+
+/**
+ * Change the recipient field to be multi-cardinality
+ */
+function commerce_coupon_user_update_7001() {
+  $field = field_read_field('commerce_coupon_recipient');
+  $field['cardinality'] = FIELD_CARDINALITY_UNLIMITED;
+  field_update_field($field);
 }

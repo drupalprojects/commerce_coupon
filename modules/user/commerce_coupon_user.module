@@ -216,7 +216,7 @@ function commerce_coupon_user_received_coupon_access($op, $coupon, $account = NU
     }
 
     // Evaluate "received coupon" permissions.
-    if ($coupon_wrapper->commerce_coupon_recipient->value() && $coupon_wrapper->commerce_coupon_recipient->raw() == $user->uid) {
+    if ($coupon_wrapper->commerce_coupon_recipient->value() && in_array($user->uid, $coupon_wrapper->commerce_coupon_recipient->raw())) {
       return TRUE;
     }
   }
