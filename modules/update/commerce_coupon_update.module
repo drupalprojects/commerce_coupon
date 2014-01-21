@@ -4,11 +4,19 @@
  * Implements hook_menu().
  */
 function commerce_coupon_update_menu() {
-  $items['admin/commerce/coupons/update'] = array(
-    'title' => 'Update',
+  $items['admin/commerce/coupons/update-coupons'] = array(
+    'title' => 'Update coupons',
     'description' => 'Update coupon entities from 1.x to 2.x compatibility.',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('commerce_coupon_update_form'),
+    'access arguments' => array('administer commerce_coupon entities')
+  );
+  
+  $items['admin/commerce/coupons/update-orders'] = array(
+    'title' => 'Update orders',
+    'description' => 'Update order entities from 1.x to 2.x coupon compatibility.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('commerce_coupon_update_order_form'),
     'access arguments' => array('administer commerce_coupon entities')
   );
   
@@ -23,7 +31,33 @@ function commerce_coupon_update_form() {
   
   $form['explanation'] = array(
     '#type' => 'markup',
-    '#markup' => t('Explanation ..')
+    '#prefix' => '<p>',
+    '#markup' => t('The coupon upgrade process takes existing coupons and both updates their
+      schema and creates/links them to the proper discount entity. Only fixed
+      amount and percent coupons are currently supported.'),
+    '#suffix' => '</p>'
+  );
+  
+  $form['proceed'] = array(
+    '#type' => 'submit',
+    '#value' => t('Proceed'),    
+  );
+  
+  return $form;
+}
+
+/*
+ * Coupon order update form.
+ */
+function commerce_coupon_update_order_form() {
+  drupal_set_title(t('Coupons 1.x to 2.x upgrade - order history'));
+  
+  $form['explanation'] = array(
+    '#type' => 'markup',
+    '#prefix' => '<p>',
+    '#markup' => t('This upgrade will fix references on orders that were created
+      using the 1.x coupon module.'),
+    '#suffix' => '</p>'
   );
   
   $form['proceed'] = array(
@@ -59,7 +93,6 @@ function commerce_coupon_update_commerce_coupon_line_item_title($line_item) {
  * Coupon update form submit
  */
 function commerce_coupon_update_form_submit(&$form, &$form_state) {
-  drupal_set_message(t('Updating coupons'));  
   $operations = array();
   
   // Load all coupon ids.
@@ -125,6 +158,8 @@ function commerce_coupon_update_commerce_coupon_update_parameters($coupon) {
  */
 function commerce_coupon_update_batch_worker($coupon_id, &$context) {
   $coupon = commerce_coupon_load($coupon_id);
+  $original_coupon = clone $coupon;
+  
   if ($coupon) {
     $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
     
@@ -203,10 +238,11 @@ function commerce_coupon_update_batch_worker($coupon_id, &$context) {
       
       // Set discount reference and save.
       $coupon->commerce_discount_reference[LANGUAGE_NONE][] = array('target_id' => $discount->discount_id);
-      commerce_coupon_save($coupon);
       
-      // Rebuild discount rules.
-      entity_defaults_rebuild(array('rules_config'));
+      // Allow other modules to alter the coupon before it is saved.
+      drupal_alter('commerce_coupon_update_pre_update', $original_coupon, $coupon, $discount);
+      
+      commerce_coupon_save($coupon);
     }
   }
 }
@@ -214,9 +250,66 @@ function commerce_coupon_update_batch_worker($coupon_id, &$context) {
 /*
  * Batch finished callback: cleanup after all coupon entities are processed.
  */
-function commerce_coupon_update_batch_finished($success, $results, $operations) {
-  // Remove fields that we no longer need.
+function commerce_coupon_update_batch_finished($success, $results, $operations) {      
+  // Rebuild discount rules.
+  entity_defaults_rebuild(array('rules_config'));  
+  
+  // Disable modules that we no longer need.
   module_disable(array('commerce_coupon_pct', 'commerce_coupon_fixed_amount'));
+  
+  drupal_set_message(t('Legacy coupons updated.'));
+}
+
+/*
+ * Form submit callback: create batch for order update form.
+ */
+function commerce_coupon_update_order_form_submit(&$form, &$form_state) {  
+  $operations = array();
+  
+  // Load all coupon ids.
+  $order_ids = db_query('SELECT order_id FROM {commerce_order}')->fetchCol();
+  
+  foreach ($order_ids as $order_id) {
+    $operations[] = array('commerce_coupon_update_order_batch_worker', array($order_id));
+  }
+  
+  if (!empty($operations)) {
+    $batch = array(
+      'operations' => $operations,
+      'finished' => 'commerce_coupon_update_order_batch_finished'
+    );
+    
+    batch_set($batch);
+  }
+}
+
+/*
+ * Batch worker callback: update an order.
+ */
+function commerce_coupon_update_order_batch_worker($order_id, &$context) {
+  $order = commerce_order_load($order_id);  
+  if (!$order) {
+    return;
+  }
+  
+  $original_order = clone $order;
+  
+  // Transfer coupon reference to the new field.
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  if ($order_wrapper->commerce_coupon_order_reference->value()) {
+    $order_wrapper->commerce_coupons = $order_wrapper->commerce_coupon_order_reference->value();
+    
+    // Allow modules to alter the order before it is saved.
+    drupal_alter('commerce_coupon_update_order_pre_update', $original_order, $order);
+    $order_wrapper->save();
+  }
+}
+
+/*
+ * Batch finished callback: cleanup after all order entities are processed.
+ */
+function commerce_coupon_update_order_batch_finished($success, $results, $operations) {      
+  drupal_set_message(t('Legacy orders updated.'));
 }
 
 /*

@@ -226,7 +226,7 @@ function commerce_coupon_uninstall() {
 
 /**
  * Upgrade a Coupons 1.x site to 2.x. To complete this operation, you must also
- * install and use Commerce Coupon Update.
+ * install and use Commerce Coupon Update. MAKE A BACKUP BEFORE DOING THIS.
  */
 function commerce_coupon_update_7200() {
   include_once DRUPAL_ROOT . '/includes/registry.inc';      
