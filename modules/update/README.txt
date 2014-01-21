@@ -25,3 +25,6 @@ Instructions:
   "commerce_coupon" line items will keep this same line item type even though 
   new orders use discount line items to store their offer-effect. This may 
   disrupt order reporting.
+* When you are satisfied that your order entities are upgraded properly, you can
+  delete the field on the order titled "Coupon" 
+  (commerce_coupon_order_reference).
