@@ -35,6 +35,27 @@ function commerce_coupon_update_form() {
 }
 
 /*
+ * Implements hook_commerce_line_item_type_info().
+ */
+function commerce_coupon_update_commerce_line_item_type_info() {
+  $types['commerce_coupon'] = array(
+    'type' => 'commerce_coupon',
+    'name' => t('Coupon (legacy)'),
+    'description' => t('Provides legacy support for Commerce Coupon 1.x line items.'),
+    'base' => 'commerce_coupon_update_commerce_coupon_line_item',
+  );
+  
+  return $types;
+}
+
+/*
+ * Line item title callback
+ */
+function commerce_coupon_update_commerce_coupon_line_item_title($line_item) {
+  return t('Coupon');
+}
+
+/*
  * Coupon update form submit
  */
 function commerce_coupon_update_form_submit(&$form, &$form_state) {
@@ -89,7 +110,7 @@ function commerce_coupon_update_commerce_coupon_update_parameters($coupon) {
       return array(
         'offer value' => $offer_price,
         'offer value safe' => $offer_amount,
-        'label' => t('@pct discount', array('@pct' => $offer_price_formatted)),
+        'label' => t('@amount discount', array('@amount' => $offer_price_formatted)),
         'discount name' => 'fixed_discount_' . $offer_amount,
         'offer field' => 'commerce_fixed_amount',
         'offer type' => 'fixed_amount'
@@ -125,7 +146,7 @@ function commerce_coupon_update_batch_worker($coupon_id, &$context) {
       ->entityCondition('entity_type', 'commerce_discount')
       ->propertyCondition('type', 'order_discount')
       ->propertyCondition('name', $parameters['discount name'])
-      ->execute();    
+      ->execute();
 
     // Load matching discount.
     if (!empty($results['commerce_discount'])) {
@@ -146,7 +167,7 @@ function commerce_coupon_update_batch_worker($coupon_id, &$context) {
       // Create and save discount.
       $discount = entity_create('commerce_discount', array(
         'type' => 'order_discount',
-        'name' => 'pct_discount_' . $parameters['offer value safe'],
+        'name' => $parameters['discount name'],
         'label' => $parameters['label'],
         'component_title' => $parameters['label']
       ));
