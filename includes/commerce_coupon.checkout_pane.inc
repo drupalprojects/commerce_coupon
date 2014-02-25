@@ -74,11 +74,12 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
       ),
     );
   }
-
+  
+  $error = '';
   if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {
     $code = $form_state['input']['commerce_coupon']['coupon_code'];
     if (!empty($code)) {  
-      if (commerce_coupon_redeem_coupon_code($code, $order)) {
+      if (commerce_coupon_redeem_coupon_code($code, $order, $error)) {
         // Clear the field value so that the coupon code does not get
         // resubmitted causing an error when user uses main "Continue to next
         // step" submit.
@@ -92,8 +93,22 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
       }
     }
     else {
-      drupal_set_message(t('Please enter a code.'), 'error');
+      $error = t('Please enter a code.');
     }
+
+    if (!$error) {
+      // If a coupon was invalidated during the cart refresh (e.g. if its 
+      // discounts failed their conditions), an error message will have been
+      // set.
+      $error = &drupal_static('commerce_coupon_error_' . $code);
+    }
+  
+    if (!$error) {
+      drupal_set_message(t('Coupon code applied.'));
+    }
+    else {
+      drupal_set_message($error, 'error');
+    }    
   }
 
   // Extract the View and display keys from the cart contents pane setting.

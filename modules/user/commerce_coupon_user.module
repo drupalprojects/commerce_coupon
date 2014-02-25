@@ -221,3 +221,20 @@ function commerce_coupon_user_received_coupon_access($op, $coupon, $account = NU
     }
   }
 }
+
+/*
+ * Implements hook_commerce_coupon_coupon_entity_form_alter().
+ */
+function commerce_coupon_user_commerce_coupon_coupon_entity_form_alter(&$form, &$form_state, $coupon) {
+  $lang = field_language('commerce_coupon', $coupon, 'commerce_coupon_recipient');
+  if (!empty($form['commerce_coupon_fields']['commerce_coupon_recipient'][$lang])) {
+    foreach (element_children($form['commerce_coupon_fields']['commerce_coupon_recipient'][$lang]) as $delta) {
+      $default_value =& $form['commerce_coupon_fields']['commerce_coupon_recipient'][$lang][$delta]['target_id']['#default_value'];
+      if ($default_value == 'Anonymous (0)') {
+        // It is important to actually keep this field empty, even if the user
+        // chose anonymous for some reason.
+        $default_value = '';
+      }
+    }
+  }
+}

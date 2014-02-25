@@ -661,15 +661,22 @@ function commerce_coupon_generate_coupon_code($type, $length = NULL) {
  *  Coupon code to reedem.
  * @param $order
  *   The order on which the coupon should be redeemed.
+ * @param $error
+ *   Passed by reference. Any resulting error messages will change this 
+ *   variable.
  *
  * @return bool
  */
-function commerce_coupon_redeem_coupon_code($code, $order) {
+function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
+  
   // Trim trailing spaces.
   $code = trim($code);
+  if (!$code) {
+    $error = t('Please enter a code.');
+    return;
+  }
+  
   $coupon = commerce_coupon_load_by_code($code);
-  $error = &drupal_static('commerce_coupon_error_' . $code);
-  $error = '';
   
   if ($coupon) {
     // The same coupon cannot be added twice.
@@ -677,43 +684,47 @@ function commerce_coupon_redeem_coupon_code($code, $order) {
     foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
       if ($order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
         $error = t('The coupon you have entered has already been applied to your order');
-        break;
       }
     }
     
-    // Check user permissions.
-    if (!$error) {
-      if (!commerce_coupon_access('redeem', $coupon) || !$coupon->status) {
-        $error = t('Unable to redeem this code.');
-      }
-      else {
-        $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-        
-        // Allow modules to alter whether the coupon is redeemable.
-        drupal_alter('commerce_coupon_redeem_error', $error, $coupon, $order);
-        
-        // Evaluate the redeem coupon rule.
-        if (!$error) {
-          rules_invoke_all('commerce_coupon_redeem', $coupon_wrapper, $order_wrapper);
-        }
-        
-        // Return TRUE if the coupon was successfully added. 
-        if (commerce_coupon_order_has_coupon_code($code, $order)) {
-          return TRUE;
-        }
-        else if (!$error) {
-          // If the coupon code was not redeemed, set a default error message.
-          $error = t('Unable to redeem coupon.');
-        }
-      }
+    // Check user permissions.    
+    if (!commerce_coupon_access('redeem', $coupon) || !$coupon->status) {
+      $error = t('Unable to redeem this code.');
+    }    
+
+    $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+    
+    // Allow other modules to alter the outcome and error message before the
+    // coupon gets sent through rules to be attached to the order.
+    drupal_alter('commerce_coupon_redeem_error', $error, $coupon, $order);
+    if ($error) {
+      return;
     }
+    
+    // Evaluate the redeem coupon rule.
+    rules_invoke_all('commerce_coupon_redeem', $coupon_wrapper, $order_wrapper);
+    
+    // We use a static variable for the error so that rule conditions can set
+    // it.
+    $error = &drupal_static('commerce_coupon_error_' . $code);
+
+    // Return TRUE if the coupon was successfully added. 
+    if (commerce_coupon_order_has_coupon_code($code, $order)) {
+      return TRUE;
+    }
+    else {
+      // If the coupon was not added, check the static error variable - one of 
+      // the coupon conditions may have set something specific.
+      $error = &drupal_static('commerce_coupon_error_' . $code);
+
+      if (!$error) {
+        // The coupon was not redeemed, so set a default error message.
+        $error = t('Unable to redeem coupon.');
+      }         
+    }    
   }
   else {
     $error = t('Your coupon code is not valid.');
-  }
-  
-  if ($error) {
-    drupal_set_message($error, 'error');
   }
 }
 
@@ -1154,10 +1165,14 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
     // Invalidate coupons that exist on the order without their discount
     // present, meaning an inline condition on the discount was not satisfied.
-    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {      
+    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {
       // Remove invalid coupons.
       commerce_coupon_remove_coupon_from_order($order, $coupon, FALSE);
-      $save = TRUE;
+      // Set a generic error message.
+      $error = &drupal_static('commerce_coupon_error_' . $coupon->code);
+      if (!$error) {
+        $error = t('Unable to redeem coupon.');
+      }
     }
   }
 

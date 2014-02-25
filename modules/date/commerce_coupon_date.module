@@ -28,14 +28,21 @@ function commerce_coupon_date_evaluate_date_build($coupon, $start = NULL, $end =
   $upper_pass = REQUEST_TIME <= $end;
   
   if ($start && $end) {
-    return $lower_pass && $upper_pass;
+    $outcome = $lower_pass && $upper_pass;
+  } 
+  else if ($end) {
+    $outcome = $upper_pass;
   }
-  if ($end) {
-    return $upper_pass;
+  else if ($start) {
+    $outcome = $lower_pass;
   }
-  if ($start) {
-    return $lower_pass;
+  
+  if (!$outcome) {
+    $error = &drupal_static('commerce_coupon_error_' . $coupon->code);
+    $error = t('This coupon is out of date.');
   }
+  
+  return $outcome;
 }
 
 /*

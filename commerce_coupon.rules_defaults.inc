@@ -16,10 +16,6 @@ function commerce_coupon_default_rules_configuration() {
     ->action('commerce_coupon_add_coupon_to_order', array(
       'commerce_coupon:select' => 'commerce_coupon',
       'commerce_order:select' => 'commerce_order'        
-    ))
-    ->action('drupal_message', array(
-      'message' => t('Coupon code applied'),
-      'type' => 'status'
     ));
   
   $rules['redeem_coupon_during_checkout'] = $rule;
