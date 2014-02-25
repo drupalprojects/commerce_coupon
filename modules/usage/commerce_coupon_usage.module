@@ -52,7 +52,7 @@ function commerce_coupon_usage_evaluate_usage_build($coupon, $max_usage) {
   
   if ($uses >= $max_usage) {
     // Set an error message in this static variable.
-    $error = &drupal_static('commerce_coupon_error_' . $coupon->code);
+    $error = &drupal_static('commerce_coupon_error_' . strtolower($coupon->code));
     $error = t('Coupon has exceeded maximum number of uses.');
   }
   else {
