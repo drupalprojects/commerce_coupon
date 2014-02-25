@@ -59,7 +59,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
   $pane_form['coupon_code'] = array(
     '#type' => 'textfield',
     '#title' => t('Coupon Code'),
-    '#description' => t('Enter here your coupon code.'),
+    '#description' => t('Enter your coupon code here.'),
   );
 
   if (variable_get('commerce_coupon_checkout_enable_add_button', TRUE)) {
