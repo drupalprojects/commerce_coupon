@@ -51,7 +51,6 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
    * @return bool|int SAVED_NEW or SAVED_UPDATED depending on the operation performed.
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
-
     if (empty($entity->{$this->idKey}) || !empty($entity->is_new)) {
       // Set the creation timestamp if not set, for new entities.
       if (empty($entity->created)) {

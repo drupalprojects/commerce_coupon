@@ -1050,7 +1050,7 @@ function commerce_coupon_order_has_coupon_code($code, $order) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   foreach ($order_wrapper->commerce_coupons as $delta => $coupon_wrapper) {
-    if ($coupon_wrapper->code->value() == $code) {
+    if (strcasecmp($coupon_wrapper->code->value(), $code) == 0) {
       return TRUE;
     }
   }
