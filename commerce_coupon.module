@@ -218,9 +218,31 @@ function commerce_coupon_menu() {
       'access arguments' => array('create', commerce_coupon_create($type)),
       'file' => 'includes/commerce_coupon.admin.inc',
     );
+    
+    // Edit conditions component - redirects to the normal component url
+    $items['admin/commerce/coupons/types/' . $type_arg . '/conditions'] = array(
+      'title' => t('Edit conditions component'),
+      'description' => t('Add or remove conditions from the component that is evaluated to determine coupon eligibility'),
+      'access arguments' => array('administer coupons'),
+      'page callback' => 'drupal_goto',
+      'page arguments' => array('admin/config/workflow/rules/components/manage/' . commerce_coupon_conditions_component_name($type)),
+      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+      'weight' => 100
+    );
   }
 
   return $items;
+}
+
+/**
+ * Finds the component name for a given coupon type.
+ * 
+ * @param type $type
+ * @return type
+ */
+function commerce_coupon_conditions_component_name($type) {
+  return 'coupon_type_' . $type . '_conditions';
 }
 
 /*
@@ -698,7 +720,7 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
     }
     else {
       // If the coupon was not added, check the static error variable - one of 
-      // the coupon conditions may have set something specific.
+      // the coupon conditions may have set something specific.      
       $error = &drupal_static('commerce_coupon_error_' . strtolower($code));
 
       if (!$error) {

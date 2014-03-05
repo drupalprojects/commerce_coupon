@@ -61,7 +61,7 @@ function commerce_coupon_default_rules_configuration() {
     // Allow other modules to alter the rule.
     drupal_alter('commerce_coupon_condition_component', $rule, $machine_name);
     
-    $rules['coupon_type_' . $machine_name . '_conditions'] = $rule;
+    $rules[commerce_coupon_conditions_component_name($machine_name)] = $rule;
   }
   
   return $rules;
