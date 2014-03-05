@@ -88,7 +88,7 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
         $pane_form['coupon_code']['#value'] = '';
         
         // Reload the order so it is not out of date.
-        $order = commerce_order_load($order->order_id);
+        $order = commerce_order_load($order->order_id);       
 
         // Recalculate discounts.
         commerce_cart_order_refresh($order);
@@ -105,8 +105,10 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
       $error = &drupal_static('commerce_coupon_error_' . strtolower($code));
     }
   
-    if (!$error) {
-      drupal_set_message(t('Coupon code applied.'));
+    if (!$error) {      
+      // Allow modules/rules to act when a coupon has been successfully added
+      // to the cart.
+      rules_invoke_all('commerce_coupon_applied_to_cart', $coupon, $order);
     }
     else {
       drupal_set_message($error, 'error');

@@ -7,7 +7,6 @@ function commerce_coupon_date_inline_conditions_info() {
   $conditions['commerce_coupon_date_evaluate_date'] = array(
     'label' => t('Date range'),
     'entity type' => 'commerce_coupon',
-    'continuous' => TRUE,
     'callbacks' => array(
       'configure' => 'commerce_coupon_date_evaluate_date_configure',
       'build' => 'commerce_coupon_date_evaluate_date_build',
