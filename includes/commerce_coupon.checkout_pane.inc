@@ -35,13 +35,6 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
     '#default_value' => variable_get('commerce_coupon_review_pane_view', 'order_coupon_list|checkout'),
   );
 
-  $form['commerce_coupon_checkout_enable_add_button'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable <em>Add coupon</em> button'),
-    '#description' => t('Enabling <em>Add coupon</em> button provides option to add multiple coupon codes from <em>Coupons</em> checkout pane.'),
-    '#default_value' => variable_get('commerce_coupon_checkout_enable_add_button', TRUE),
-  );
-
   return $form;
 }
 
@@ -62,18 +55,16 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
     '#description' => t('Enter your coupon code here.'),
   );
 
-  if (variable_get('commerce_coupon_checkout_enable_add_button', TRUE)) {
-    $pane_form['coupon_add'] = array(
-      '#type' => 'button',
-      '#value' => t('Add coupon'),
-      '#name' => 'coupon_add',
-      '#limit_validation_errors' => array(),
-      '#ajax' => array(
-        'callback' => 'commerce_coupon_add_coupon_callback',
-        'wrapper' => 'commerce-checkout-coupon-ajax-wrapper',
-      ),
-    );
-  }
+  $pane_form['coupon_add'] = array(
+    '#type' => 'button',
+    '#value' => t('Add coupon'),
+    '#name' => 'coupon_add',
+    '#limit_validation_errors' => array(),
+    '#ajax' => array(
+      'callback' => 'commerce_coupon_add_coupon_callback',
+      'wrapper' => 'commerce-checkout-coupon-ajax-wrapper',
+    ),
+  );
   
   $error = '';
   if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {
