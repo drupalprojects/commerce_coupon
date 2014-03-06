@@ -59,10 +59,10 @@ function commerce_coupon_entity_info_alter(&$entity_info) {
 /*
  * Gets a list of all coupon types by invoking a hook.
  */
-function commerce_coupon_get_types() {
+function commerce_coupon_get_types($reset = FALSE) {
   $cache = &drupal_static('commerce_coupon_type_info');
 
-  if (!isset($cache)) {
+  if (!isset($cache) || $reset) {
     $cache = module_invoke_all('commerce_coupon_type_info');
   }
 
@@ -186,7 +186,7 @@ function commerce_coupon_menu() {
     'file' => 'includes/commerce_coupon.admin.inc',
   );
 
-  foreach (commerce_coupon_get_types() as $type => $coupon_type) {
+  foreach (commerce_coupon_get_types(TRUE) as $type => $coupon_type) {
     $coupon_type['type'] = $type;
     // Convert underscores to hyphens for the menu item argument.
     $type_arg = strtr($type, '_', '-');
@@ -1804,20 +1804,22 @@ function _commerce_coupon_install_inline_conditions_field() {
   }
 
   // Add coupon conditions field to discount coupons
-  if (empty($instances['commerce_coupon']['discount_coupon']['commerce_coupon_conditions'])) {
-    $instance = array(
-      'field_name' => 'commerce_coupon_conditions',
-      'entity_type' => 'commerce_coupon',
-      'settings'    => array(
+  foreach (commerce_coupon_get_types(TRUE) as $machine_name => $type) {
+    if (empty($instances['commerce_coupon'][$machine_name]['commerce_coupon_conditions'])) {
+      $instance = array(
+        'field_name' => 'commerce_coupon_conditions',
         'entity_type' => 'commerce_coupon',
-      ),        
-      'bundle' => 'discount_coupon',
-      'label' => t('Conditions'),
-      'widget'      => array(
-        'type' => 'inline_conditions',
-        'weight' => 10,
-      ),        
-    );
-    field_create_instance($instance);
-  }  
+        'settings'    => array(
+          'entity_type' => 'commerce_coupon',
+        ),        
+        'bundle' => $machine_name,
+        'label' => t('Conditions'),
+        'widget'      => array(
+          'type' => 'inline_conditions',
+          'weight' => 10,
+        ),        
+      );
+      field_create_instance($instance);
+    }  
+  }
 }
