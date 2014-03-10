@@ -140,7 +140,6 @@ function commerce_coupon_usage_commerce_coupon_final_checkout_transaction_rollba
   commerce_coupon_usage_transaction_delete($transaction_id);
 }
 
-
 /*
  * Implements hook_commerce_coupon_final_checkout_validate().
  */
@@ -171,7 +170,6 @@ function commerce_coupon_usage_entity_info() {
     'controller class' => 'DrupalCommerceEntityController',
     'base table' => 'commerce_coupon_usage_transaction',
     'fieldable' => FALSE,
-    'locking mode' => 'pessimistic',
     'entity keys' => array(
       'id' => 'transaction_id',
       'label' => 'transaction_id',

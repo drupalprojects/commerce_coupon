@@ -1857,11 +1857,9 @@ function commerce_coupon_commerce_checkout_form_review_validate(&$form, &$form_s
     foreach (module_implements('commerce_coupon_final_checkout_validate') as $module) {
       $transaction_ids = module_invoke($module, 'commerce_coupon_final_checkout_validate', $form, $form_state, $order_wrapper);
       if (!empty($transaction_ids)) {
-        // Any module that implements this and returns TRUE is saying that they
-        // committed a coupon related transaction. We need to prepare the form
-        // to roll back those transactions if it rebuilds again due to errors in
-        // future validate/submit events such as requests to the payment 
-        // gateway.
+        // We need to prepare the form to roll back any coupon-related 
+        // transactions if it rebuilds again due to errors in future 
+        // validate/submit events such as requests to the payment gateway.
         $form_state['coupon_transaction_ids'][$module] = $transaction_ids;
       }
     }

@@ -70,7 +70,53 @@ function commerce_coupon_usage_schema() {
 /**
  * Add usage records for legacy orders with coupons.
  */
-function commerce_coupon_update_7001(&$sandbox) {
+function commerce_coupon_usage_update_7201(&$sandbox) {
+  $statuses = array_merge(commerce_order_statuses(array('state' => 'completed')), commerce_order_statuses(array('state' => 'pending')));
   
-}
+  $query = new EntityFieldQuery;
+  $query
+    ->entityCondition('entity_type', 'commerce_order')
+    ->fieldCondition('commerce_coupons', 'target_id', 'NULL', '!=')
+    ->propertyCondition('status', array_keys($statuses));
+  
+  if (!isset($sandbox['progress'])) {
+    $count_query = clone $query;
+    $sandbox['progress'] = 0;
+    $sandbox['current_id'] = 0;
+    $sandbox['max'] = $count_query->count()->execute();
+  }
+  
+  $result = $query
+    ->propertyCondition('order_id', $sandbox['current_id'], '>')
+    ->range(0, 4)
+    ->propertyOrderBy('order_id', 'ASC')
+    ->execute();
+  
+  if (!empty($result['commerce_order'])) {
+    $order_ids = array_keys($result['commerce_order']);
+    $orders = commerce_order_load_multiple($order_ids);
+    
+    foreach ($orders as $order) {
+      $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
+      foreach($order_wrapper->commerce_coupons as $coupon_wrapper) {
+        if ($coupon_wrapper->value()) {
+          // Write a usage record. Hard to really say order placed - just use 
+          // order created.
+          commerce_coupon_usage_transaction_write($coupon_wrapper->coupon_id->value(), $order->order_id, $order->uid, $order->created);
+        }
+      }
+    }
+
+    $sandbox['progress']++;
+    $sandbox['current_id'] = $order->order_id;
+    if (function_exists('drush_print')) {
+      drush_print(t('Processed @n orders', array('@n' => count($order_ids))));
+    }
+    
+    $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
+  }
+  else {
+    $sandbox['#finished'] = 1;
+  }
+}

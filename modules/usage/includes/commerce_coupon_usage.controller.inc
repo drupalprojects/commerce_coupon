@@ -66,8 +66,15 @@ class CommerceCouponUsageTransactionEntityController extends DrupalCommerceEntit
       $transaction = db_transaction();
     }
     
-    // Load the usage. Since locking mode is pessimistic, this query locks its
-    // rows.
+    // Lock the related coupon. Any future save operations will have to wait
+    // until this lock is cleared before the following query will return in
+    // their thread.
+    db_select('commerce_coupon', 'c')
+      ->condition('coupon_id', $entity->coupon_id)
+      ->forUpdate()
+      ->execute();
+    
+    // Load the usage.
     $usage = commerce_coupon_usage_get_usage($entity->coupon_id);
     
     // Only save if the coupon referenced will not exceed its maximum settings.
@@ -75,7 +82,9 @@ class CommerceCouponUsageTransactionEntityController extends DrupalCommerceEntit
       return parent::save($entity, $transaction);
     }
     
-    // Cancel the transaction if the coupon has no more uses.
+    // Cancel the transaction if the coupon has no more uses. This clears the
+    // lock on the control commerce_coupon row so that future save processes
+    // may run.
     $transaction->rollback();
   }  
 }
