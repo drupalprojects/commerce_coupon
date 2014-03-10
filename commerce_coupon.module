@@ -1823,3 +1823,47 @@ function _commerce_coupon_install_inline_conditions_field() {
     }  
   }
 }
+
+/*
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_coupon_form_commerce_checkout_form_review_alter(&$form, &$form_state) {
+  // If the form did not validate, cancel any pending transactions.
+  foreach (module_implements('commerce_coupon_final_checkout_transaction_rollback') as $module) {
+    if (!empty($form_state['coupon_transaction_ids'][$module])) {
+      foreach ($form_state['coupon_transaction_ids'][$module] as $transaction_id) {
+        module_invoke($module, 'commerce_coupon_final_checkout_transaction_rollback', $transaction_id);
+      }
+    }
+  }
+  
+  // Add our handler as the first validate handler.
+  array_unshift($form['buttons']['continue']['#validate'], 'commerce_coupon_commerce_checkout_form_review_validate');
+}
+
+/*
+ * Form validate callback: validate and record giftcard transactions at the end
+ * of checkout.
+ */
+function commerce_coupon_commerce_checkout_form_review_validate(&$form, &$form_state) {
+  // If the form was submitted via the continue button and there are no errors:
+  if (end($form_state['triggering_element']['#array_parents']) == 'continue' && !form_get_errors()) {
+    $order = $form_state['order'];
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    
+    // Allow modules to perform a final validation after checkout is done, but
+    // before the review checkout panes (most importantly the payment module
+    // panes) fire their checkout validate/submit functions.
+    foreach (module_implements('commerce_coupon_final_checkout_validate') as $module) {
+      $transaction_ids = module_invoke($module, 'commerce_coupon_final_checkout_validate', $form, $form_state, $order_wrapper);
+      if (!empty($transaction_ids)) {
+        // Any module that implements this and returns TRUE is saying that they
+        // committed a coupon related transaction. We need to prepare the form
+        // to roll back those transactions if it rebuilds again due to errors in
+        // future validate/submit events such as requests to the payment 
+        // gateway.
+        $form_state['coupon_transaction_ids'][$module] = $transaction_ids;
+      }
+    }
+  }
+}

@@ -1,22 +1,74 @@
 <?php
 
 /**
- * Returns the number of uses for this coupon. If any order references a coupon
- * that counts as a "use."
+ * Returns the number of uses for this coupon. 
  *
  * @param $coupon_id
  *   Coupon id to check.
+ * 
+ * @param $exclude_cart boolean
+ *   Exclude usage related to the current cart.
  *
  * @return integer
  *   Returns number of uses of the coupon in all orders.
  */
-function commerce_coupon_usage_get_number_of_uses($coupon_id) {
+function commerce_coupon_usage_get_usage($coupon_id, $exclude_cart = FALSE) {
   $query = new EntityFieldQuery();
+  $query
+    ->entityCondition('entity_type', 'commerce_coupon_usage_transaction')
+    ->propertyCondition('coupon_id', $coupon_id);
+  
+  if ($exclude_cart) {
+    global $user;
+    $cart_order_id = commerce_cart_order_id($user->uid);  
+    if ($cart_order_id ) {
+
+      $query->propertyCondition('order_id', $cart_order_id, '<>');
+    }
+  }
   return $query
-    ->entityCondition('entity_type', 'commerce_order')
-    ->fieldCondition('commerce_coupons', 'target_id', $coupon_id, '=')
     ->count()
     ->execute();
+}
+
+/**
+ * Get the maximum allowed uses for a particular coupon.
+ * 
+ * @param type $coupon_id
+ * @return type
+ */
+function commerce_coupon_usage_get_max_usage($coupon_id) {
+  $coupon = commerce_coupon_load($coupon_id);
+  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+  if ($coupon_wrapper->commerce_coupon_conditions->value()) {
+    $conditions = $coupon_wrapper->commerce_coupon_conditions->value();
+    $usage = 0;
+    foreach ($conditions as $condition) {
+      // It is possible that there could be more than one usage constraint
+      // although there is no real reason for doing this.
+      if ($condition['condition_name'] == 'commerce_coupon_usage_evaluate_usage' && !empty($condition['condition_settings']['max_usage'])) {
+        if (!$usage || $condition['condition_settings']['max_usage'] < $usage) {
+          $usage = $condition['condition_settings']['max_usage'];
+        }
+      }
+    }
+  }
+
+  return $usage;
+}
+
+/*
+ * Entity metadata property getter callback: get usage-related information about 
+ * a coupon
+ */
+function commerce_coupon_usage_property_getter($coupon, $options, $name) {
+  switch ($name) {
+    case 'usage':
+      return commerce_coupon_usage_get_usage($coupon->coupon_id);
+      
+    case 'max_usage':
+      return commerce_coupon_usage_get_max_usage($coupon->coupon_id);
+  }
 }
 
 /*
@@ -47,10 +99,11 @@ function commerce_coupon_usage_inline_conditions_info() {
 /*
  * Inline conditions build callback: evaluate max usage for coupon
  */
-function commerce_coupon_usage_evaluate_usage_build($coupon, $max_usage) {
-  $uses = commerce_coupon_usage_get_number_of_uses($coupon->coupon_id);
+function commerce_coupon_usage_evaluate_usage_build($coupon, $max_usage) {  
+  // Set the exclude_cart argument.
+  $usage = commerce_coupon_usage_get_usage($coupon->coupon_id, TRUE);
   
-  if ($uses >= $max_usage) {
+  if ($usage >= $max_usage) {
     // Set an error message in this static variable.
     $error = &drupal_static('commerce_coupon_error_' . strtolower($coupon->code));
     $error = t('Coupon has exceeded maximum number of uses.');
@@ -64,7 +117,6 @@ function commerce_coupon_usage_evaluate_usage_build($coupon, $max_usage) {
  * Inline conditions configure callback: evaluate max usage for coupon
  */
 function commerce_coupon_usage_evaluate_usage_configure($settings) {
-  // Why is this necessary? 
   if (is_string($settings)) {
     $settings = unserialize($settings);
   }
@@ -78,4 +130,216 @@ function commerce_coupon_usage_evaluate_usage_configure($settings) {
   );
 
   return $form;
+}
+
+/*
+ * Implements hook_commerce_coupon_final_checkout_transaction_rollback().
+ */
+function commerce_coupon_usage_commerce_coupon_final_checkout_transaction_rollback($transaction_id) {
+  // Rollback the usage record.
+  commerce_coupon_usage_transaction_delete($transaction_id);
+}
+
+
+/*
+ * Implements hook_commerce_coupon_final_checkout_validate().
+ */
+function commerce_coupon_usage_commerce_coupon_final_checkout_validate($form, $form_state, EntityDrupalWrapper $order_wrapper) {
+  $transaction_ids = array();
+  foreach ($order_wrapper->commerce_coupons as $coupon_wrapper) {
+    // Attempt to use the coupon.
+    $usage_id = commerce_coupon_usage_transaction_write($coupon_wrapper->coupon_id->value(), $order_wrapper->order_id->value());
+    if ($usage_id) {
+      $transaction_ids[] = $usage_id;
+    }
+    else {
+      form_set_error('', t('Unable to process payment. Please try again.'));
+      return FALSE;
+    }
+  }
+  return $transaction_ids;
+}
+
+/*
+ * Implements hook_entity_info().
+ */
+function commerce_coupon_usage_entity_info() {
+  $entity_info['commerce_coupon_usage_transaction'] = array(
+    'label' => t('Commerce coupon usage transaction'),
+    'plural label' => t('Commerce coupon usage transactions'),
+    'views controller class' => 'CommerceCouponUsageTransactionViewsController',      
+    'controller class' => 'DrupalCommerceEntityController',
+    'base table' => 'commerce_coupon_usage_transaction',
+    'fieldable' => FALSE,
+    'locking mode' => 'pessimistic',
+    'entity keys' => array(
+      'id' => 'transaction_id',
+      'label' => 'transaction_id',
+    ),
+    'bundles' => array(
+      'commerce_coupon_usage_transaction' => array(
+        'label' => t('Commerce coupon usage transaction')
+      )
+    ),
+    'module' => 'commerce_coupon_usage',
+  );
+
+  return $entity_info;
+}
+
+/**
+ * Write a new commerce coupon usage transaction record
+ * 
+ * @param type $coupon_id
+ * @param type $amount
+ * @return type
+ */
+function commerce_coupon_usage_transaction_write($coupon_id, $order_id, $uid = NULL, $date = 0) {
+  $values = array(
+    'coupon_id' => $coupon_id,
+    'order_id' => $order_id,
+    'date' => $date ? $date : REQUEST_TIME    
+  );
+  
+  if ($uid) {
+    $values['uid'] = $uid;
+  }
+  else {
+    // Otherwise try to find a user from the order
+    $order = commerce_order_load($order_id);
+    if ($order->uid) {
+      $values['uid'] = $order->uid;
+    }
+    else {
+      $values['uid'] = 0;
+    }
+  }
+  
+  $transaction = commerce_coupon_usage_transaction_new($values);
+  
+  // Insert record
+  commerce_coupon_usage_transaction_save($transaction);
+  return !empty($transaction->transaction_id) ? $transaction->transaction_id : NULL;
+}
+
+/**
+ * Create a stub coupon usage transaction entity.
+ * 
+ * @return type
+ */
+function commerce_coupon_usage_transaction_new($values) {
+  return entity_get_controller('commerce_coupon_usage_transaction')->create($values);
+}
+
+/**
+ * Save a coupon usage transaction entity.
+ * 
+ * @return type
+ */
+function commerce_coupon_usage_transaction_save($transaction) {
+  return entity_get_controller('commerce_coupon_usage_transaction')->save($transaction);
+}
+
+/**
+ * Load a coupon usage transaction entity
+ * 
+ * @param type $transaction_id
+ * @param type $reset
+ * @return type
+ */
+function commerce_coupon_usage_transaction_load($transaction_id, $reset = FALSE) {
+  $transactions = commerce_coupon_usage_transaction_load_multiple(array($transaction_id), array(), $reset);
+  return reset($transactions);
+}
+
+/**
+ * Load multiple coupon usage transaction entities based on certain conditions.
+ *
+ * @param $commerce_coupon_ids
+ *   An array of coupon IDs.
+ * @param $conditions
+ *   An array of conditions to match against the {commerce_coupon} table.
+ * @param $reset
+ *   A boolean indicating that the internal cache should be reset.
+ * @return
+ *   An array of coupon objects, indexed by coupon id.
+ *
+ * @see entity_load()
+ */
+function commerce_coupon_usage_transaction_load_multiple($transaction_ids = array(), $conditions = array(), $reset = FALSE) {
+  if (empty($transaction_ids) && empty($conditions)) {
+    return array();
+  }
+
+  return entity_load('commerce_coupon_usage_transaction', $transaction_ids, $conditions, $reset);
+}
+
+/**
+ * Deletes a coupon usage transaction by ID.
+ *
+ * @param $product_id
+ *   The ID of the product to delete.
+ *
+ * @return
+ *   TRUE on success, FALSE otherwise.
+ */
+function commerce_coupon_usage_transaction_delete($transaction_id) {
+  return commerce_coupon_usage_transaction_delete_multiple(array($transaction_id));
+}
+
+/**
+ * Deletes coupon usage transaction by ID.
+ *
+ * @param $transaction_ids
+ *   An array of product IDs to delete.
+ *
+ * @return
+ *   TRUE on success, FALSE otherwise.
+ */
+function commerce_coupon_usage_transaction_delete_multiple($transaction_ids) {
+  return entity_get_controller('commerce_coupon_usage_transaction')->delete($transaction_ids);
+}
+
+/*
+ * Implements hook_views_api().
+ */
+function commerce_coupon_usage_views_api() {
+  return array(
+    'api' => 3,
+    'path' => drupal_get_path('module', 'commerce_coupon_usage') . '/includes/views',
+  );
+}
+
+/*
+ * Implements hook_theme().
+ */
+function commerce_coupon_usage_theme() {
+  return array(
+    'commerce_coupon_usage_summary' => array(
+      'variables' => array('coupon_id' => 0, 'details_link_text' => 'Details'),
+    ),
+  );
+}
+
+/*
+ * Render a usage summary for a coupon
+ */
+function theme_commerce_coupon_usage_summary($variables) {
+  $coupon_id = $variables['coupon_id'];
+  $link_text = $variables['details_link_text'];
+  
+  if ($coupon_id) {
+    $usage = commerce_coupon_usage_get_usage($coupon_id);
+    $max_usage = commerce_coupon_usage_get_max_usage($coupon_id);
+    
+    $output = array(t('Uses: @usage', array('@usage' => $usage)));
+    if ($max_usage) {
+      $output[] = t('Maximum uses: @max_usage', array('@max_usage' => $max_usage));
+    }
+    if ($link_text) {
+      $output[] = l($link_text, 'admin/commerce/coupons/' . $coupon_id . '/usage', array('query' => drupal_get_destination()));
+    }
+
+    return implode('<br/>', $output);
+  }
 }
