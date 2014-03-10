@@ -1780,3 +1780,49 @@ function _commerce_coupon_install_inline_conditions_field() {
     field_create_instance($instance);
   }  
 }
+
+/*
+ * Implements hook_commerce_coupon_update_parameters().
+ */
+function commerce_coupon_commerce_coupon_legacy_mapping($coupon) {
+  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+  
+  // Return all of the necessary parameters for converting the coupon into a 
+  // discount and an offer.
+  switch ($coupon->type) {
+    case 'commerce_coupon_pct':
+      $offer_value = $coupon_wrapper->commerce_coupon_percent_amount->value();
+      $offer_value_safe = str_replace('.', '', $offer_value);
+
+      return array(
+        'offer value' => $offer_value,
+        'offer value safe' => $offer_value_safe,
+        'label' => t('@pct percent discount', array('@pct' => $offer_value)),
+        'discount name' => 'pct_discount_' . $offer_value_safe,
+        'offer field' => 'commerce_percentage',
+        'offer type' => 'percentage'
+      );
+
+      break;
+    case 'commerce_coupon_fixed':
+      $offer_price = $coupon_wrapper->commerce_coupon_fixed_amount->value();
+      $offer_amount = $offer_price['amount'];
+      $offer_price_formatted = commerce_currency_format($offer_amount, $offer_price['currency_code']);
+
+      return array(
+        'offer value' => $offer_price,
+        'offer value safe' => $offer_amount,
+        'label' => t('@amount discount', array('@amount' => $offer_price_formatted)),
+        'discount name' => 'fixed_discount_' . $offer_amount,
+        'offer field' => 'commerce_fixed_amount',
+        'offer type' => 'fixed_amount'
+      );
+
+      break;
+  }
+}
+
+/*
+ * Stub function so that coupon type modules do not crash when they disable.
+ */
+function commerce_coupon_type_disable() {}
