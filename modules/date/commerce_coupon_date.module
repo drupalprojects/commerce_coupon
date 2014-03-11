@@ -7,7 +7,6 @@ function commerce_coupon_date_inline_conditions_info() {
   $conditions['commerce_coupon_date_evaluate_date'] = array(
     'label' => t('Date range'),
     'entity type' => 'commerce_coupon',
-    'continuous' => TRUE,
     'callbacks' => array(
       'configure' => 'commerce_coupon_date_evaluate_date_configure',
       'build' => 'commerce_coupon_date_evaluate_date_build',
@@ -22,20 +21,39 @@ function commerce_coupon_date_inline_conditions_info() {
  */
 function commerce_coupon_date_evaluate_date_build($coupon, $start = NULL, $end = NULL) {
   // We want end to be the end of the day on whatever day they choose.
-  $end += 86400;
+  if ($end) {
+    $end += 86400;
+  }
   
+  // Error message building blocks.
+  $date_format = 'D, m/d/Y';  
+  $error_msg_prefix = t('Unfortunately, this coupon is only valid ');  
+  $lower_pass_msg = t('starting %start', array('%start' => format_date($start, 'custom', $date_format)));  
+  $upper_pass_msg = t('until %end', array('%end' => format_date($end, 'custom', $date_format)));
+  
+  // Comparisons
   $lower_pass = REQUEST_TIME >= $start;
   $upper_pass = REQUEST_TIME <= $end;
   
   if ($start && $end) {
-    return $lower_pass && $upper_pass;
+    $outcome = $lower_pass && $upper_pass;
+    $message = $error_msg_prefix . $lower_pass_msg . ' ' . $upper_pass_msg;
+  } 
+  else if ($end) {
+    $outcome = $upper_pass;
+    $message = $error_msg_prefix . $upper_pass_msg;    
   }
-  if ($end) {
-    return $upper_pass;
+  else if ($start) {
+    $outcome = $lower_pass;
+    $message = $error_msg_prefix . $lower_pass_msg;    
   }
-  if ($start) {
-    return $lower_pass;
+  
+  if (!$outcome) {
+    $error = &drupal_static('commerce_coupon_error_' . strtolower($coupon->code));
+    $error = $message;
   }
+  
+  return $outcome;
 }
 
 /*

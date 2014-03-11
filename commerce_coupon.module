@@ -59,10 +59,10 @@ function commerce_coupon_entity_info_alter(&$entity_info) {
 /*
  * Gets a list of all coupon types by invoking a hook.
  */
-function commerce_coupon_get_types() {
+function commerce_coupon_get_types($reset = FALSE) {
   $cache = &drupal_static('commerce_coupon_type_info');
 
-  if (!isset($cache)) {
+  if (!isset($cache) || $reset) {
     $cache = module_invoke_all('commerce_coupon_type_info');
   }
 
@@ -186,7 +186,7 @@ function commerce_coupon_menu() {
     'file' => 'includes/commerce_coupon.admin.inc',
   );
 
-  foreach (commerce_coupon_get_types() as $type => $coupon_type) {
+  foreach (commerce_coupon_get_types(TRUE) as $type => $coupon_type) {
     $coupon_type['type'] = $type;
     // Convert underscores to hyphens for the menu item argument.
     $type_arg = strtr($type, '_', '-');
@@ -218,9 +218,31 @@ function commerce_coupon_menu() {
       'access arguments' => array('create', commerce_coupon_create($type)),
       'file' => 'includes/commerce_coupon.admin.inc',
     );
+    
+    // Edit conditions component - redirects to the normal component url
+    $items['admin/commerce/coupons/types/' . $type_arg . '/conditions'] = array(
+      'title' => t('Edit conditions component'),
+      'description' => t('Add or remove conditions from the component that is evaluated to determine coupon eligibility'),
+      'access arguments' => array('administer coupons'),
+      'page callback' => 'drupal_goto',
+      'page arguments' => array('admin/config/workflow/rules/components/manage/' . commerce_coupon_conditions_component_name($type)),
+      'type' => MENU_LOCAL_TASK,
+      'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+      'weight' => 100
+    );
   }
 
   return $items;
+}
+
+/**
+ * Finds the component name for a given coupon type.
+ * 
+ * @param type $type
+ * @return type
+ */
+function commerce_coupon_conditions_component_name($type) {
+  return 'coupon_type_' . $type . '_conditions';
 }
 
 /*
@@ -484,7 +506,7 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
  *  continuous conditions.
  *  
  */
-function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_wrapper, $continuous_only = FALSE) {
+function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_wrapper) {
   $wrapper_properties = $coupon_wrapper->getPropertyInfo();  
   
   if (!module_exists('inline_conditions') || empty($wrapper_properties['commerce_coupon_conditions']) || !$coupon_wrapper->commerce_coupon_conditions->value()){
@@ -510,7 +532,7 @@ function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_
     
     // Check for a valid condition. Also we are running only continuous inline 
     // conditions, make sure the current condition is continuous.
-    if (!$condition || empty($value['condition_settings']) || ($continuous_only && empty($condition['continuous']))) {
+    if (!$condition || empty($value['condition_settings'])) {
       continue;
     }
     
@@ -661,15 +683,22 @@ function commerce_coupon_generate_coupon_code($type, $length = NULL) {
  *  Coupon code to reedem.
  * @param $order
  *   The order on which the coupon should be redeemed.
+ * @param $error
+ *   Passed by reference. Any resulting error messages will change this 
+ *   variable.
  *
- * @return bool
+ * @return CommerceCoupon or NULL
  */
-function commerce_coupon_redeem_coupon_code($code, $order) {
+function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
+  
   // Trim trailing spaces.
   $code = trim($code);
+  if (!$code) {
+    $error = t('Please enter a code.');
+    return;
+  }
+  
   $coupon = commerce_coupon_load_by_code($code);
-  $error = &drupal_static('commerce_coupon_error_' . $code);
-  $error = '';
   
   if ($coupon) {
     // The same coupon cannot be added twice.
@@ -677,44 +706,51 @@ function commerce_coupon_redeem_coupon_code($code, $order) {
     foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
       if ($order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
         $error = t('The coupon you have entered has already been applied to your order');
-        break;
       }
     }
-    
-    // Check user permissions.
-    if (!$error) {
-      if (!commerce_coupon_access('redeem', $coupon) || !$coupon->status) {
-        $error = t('Unable to redeem this code.');
-      }
-      else {
-        $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-        
-        // Allow modules to alter whether the coupon is redeemable.
-        drupal_alter('commerce_coupon_redeem_error', $error, $coupon, $order);
-        
-        // Evaluate the redeem coupon rule.
-        if (!$error) {
-          rules_invoke_all('commerce_coupon_redeem', $coupon_wrapper, $order_wrapper);
-        }
-        
-        // Return TRUE if the coupon was successfully added. 
-        if (commerce_coupon_order_has_coupon_code($code, $order)) {
-          return TRUE;
-        }
-        else if (!$error) {
-          // If the coupon code was not redeemed, set a default error message.
-          $error = t('Unable to redeem coupon.');
-        }
-      }
+
+    $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+
+    if (commerce_coupon_evaluate_conditions($coupon_wrapper, $order_wrapper)) {
+      // Add the coupon to the order.
+      $order_wrapper->commerce_coupons[] = $coupon_wrapper->value();
+      
+      commerce_order_save($order_wrapper->value());      
+      return $coupon;
+    }
+    else {
+      // If the coupon was not added, check the static error variable - one of 
+      // the coupon conditions may have set something specific.      
+      $error = &drupal_static('commerce_coupon_error_' . strtolower($code));
+
+      if (!$error) {
+        // If no condition has specified an error message, set a default one.
+        $error = t('Unable to redeem coupon.');
+      }  
     }
   }
   else {
     $error = t('Your coupon code is not valid.');
   }
+}
+
+/**
+ * Run the condition component for a coupon
+ * 
+ * @param type $coupon
+ */
+function commerce_coupon_evaluate_conditions($coupon_wrapper, $order_wrapper, $data = array()) {
+  $outcome = rules_invoke_component('coupon_type_' . $coupon_wrapper->type->value() . '_conditions', $coupon_wrapper, $order_wrapper, $data);
+  $context = array(
+    'coupon' => $coupon_wrapper,
+    'order' => $order_wrapper,
+    'data' => $data
+  );
   
-  if ($error) {
-    drupal_set_message($error, 'error');
-  }
+  // Allow other modules to alter the outcome.
+  drupal_alter('commerce_coupon_condition_outcome', $outcome, $context);
+  
+  return $outcome;
 }
 
 /**
@@ -1039,7 +1075,7 @@ function commerce_coupon_order_has_coupon_code($code, $order) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   foreach ($order_wrapper->commerce_coupons as $delta => $coupon_wrapper) {
-    if ($coupon_wrapper->code->value() == $code) {
+    if (strcasecmp($coupon_wrapper->code->value(), $code) == 0) {
       return TRUE;
     }
   }
@@ -1127,7 +1163,7 @@ function commerce_coupon_remove_coupon_from_order($order, $coupon, $save = TRUE)
   }
   if ($original_order <> $order && $save) {
     commerce_order_save($order);
-  }
+  }    
 }
 
 /*
@@ -1154,10 +1190,15 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
     // Invalidate coupons that exist on the order without their discount
     // present, meaning an inline condition on the discount was not satisfied.
-    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {      
+    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {
       // Remove invalid coupons.
       commerce_coupon_remove_coupon_from_order($order, $coupon, FALSE);
-      $save = TRUE;
+
+      $error = &drupal_static('commerce_coupon_error_' . strtolower($coupon->code));
+      if (!$error) {
+        // Set a generic error message unless something has 
+        $error = t('Unable to redeem coupon.');
+      }
     }
   }
 
@@ -1763,24 +1804,68 @@ function _commerce_coupon_install_inline_conditions_field() {
   }
 
   // Add coupon conditions field to discount coupons
-  if (empty($instances['commerce_coupon']['discount_coupon']['commerce_coupon_conditions'])) {
-    $instance = array(
-      'field_name' => 'commerce_coupon_conditions',
-      'entity_type' => 'commerce_coupon',
-      'settings'    => array(
+  foreach (commerce_coupon_get_types(TRUE) as $machine_name => $type) {
+    if (empty($instances['commerce_coupon'][$machine_name]['commerce_coupon_conditions'])) {
+      $instance = array(
+        'field_name' => 'commerce_coupon_conditions',
         'entity_type' => 'commerce_coupon',
-      ),        
-      'bundle' => 'discount_coupon',
-      'label' => t('Conditions'),
-      'widget'      => array(
-        'type' => 'inline_conditions',
-        'weight' => 10,
-      ),        
-    );
-    field_create_instance($instance);
-  }  
+        'settings'    => array(
+          'entity_type' => 'commerce_coupon',
+        ),        
+        'bundle' => $machine_name,
+        'label' => t('Conditions'),
+        'widget'      => array(
+          'type' => 'inline_conditions',
+          'weight' => 10,
+        ),        
+      );
+      field_create_instance($instance);
+    }  
+  }
 }
 
+/*
+ * Implements hook_form_FORM_ID_alter().
+ */
+function commerce_coupon_form_commerce_checkout_form_review_alter(&$form, &$form_state) {
+  // If the form did not validate, cancel any pending transactions.
+  foreach (module_implements('commerce_coupon_final_checkout_transaction_rollback') as $module) {
+    if (!empty($form_state['coupon_transaction_ids'][$module])) {
+      foreach ($form_state['coupon_transaction_ids'][$module] as $transaction_id) {
+        module_invoke($module, 'commerce_coupon_final_checkout_transaction_rollback', $transaction_id);
+      }
+    }
+  }
+  
+  // Add our handler as the first validate handler.
+  array_unshift($form['buttons']['continue']['#validate'], 'commerce_coupon_commerce_checkout_form_review_validate');
+}
+
+/*
+ * Form validate callback: validate and record giftcard transactions at the end
+ * of checkout.
+ */
+function commerce_coupon_commerce_checkout_form_review_validate(&$form, &$form_state) {
+  // If the form was submitted via the continue button and there are no errors:
+  if (end($form_state['triggering_element']['#array_parents']) == 'continue' && !form_get_errors()) {
+    $order = $form_state['order'];
+    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+    
+    // Allow modules to perform a final validation after checkout is done, but
+    // before the review checkout panes (most importantly the payment module
+    // panes) fire their checkout validate/submit functions.
+    foreach (module_implements('commerce_coupon_final_checkout_validate') as $module) {
+      $transaction_ids = module_invoke($module, 'commerce_coupon_final_checkout_validate', $form, $form_state, $order_wrapper);
+      if (!empty($transaction_ids)) {
+        // We need to prepare the form to roll back any coupon-related 
+        // transactions if it rebuilds again due to errors in future 
+        // validate/submit events such as requests to the payment gateway.
+        $form_state['coupon_transaction_ids'][$module] = $transaction_ids;
+      }
+    }
+  }
+}
+              
 /*
  * Implements hook_commerce_coupon_update_parameters().
  */

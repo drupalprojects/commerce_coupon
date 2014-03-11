@@ -7,7 +7,7 @@ class commerce_coupon_handler_field_coupon_delete extends commerce_coupon_handle
       return;
     }
 
-    $text = !empty($this->options['text']) ? $this->options['text'] : t('delete');
+    $text = !empty($this->options['text']) ? $this->options['text'] : t('Delete');
 
     return l($text, 'admin/commerce/coupons/' . $coupon_id . '/delete', array('query' => drupal_get_destination()));
   }

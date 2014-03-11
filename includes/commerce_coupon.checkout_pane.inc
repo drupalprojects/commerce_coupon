@@ -35,13 +35,6 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
     '#default_value' => variable_get('commerce_coupon_review_pane_view', 'order_coupon_list|checkout'),
   );
 
-  $form['commerce_coupon_checkout_enable_add_button'] = array(
-    '#type' => 'checkbox',
-    '#title' => t('Enable <em>Add coupon</em> button'),
-    '#description' => t('Enabling <em>Add coupon</em> button provides option to add multiple coupon codes from <em>Coupons</em> checkout pane.'),
-    '#default_value' => variable_get('commerce_coupon_checkout_enable_add_button', TRUE),
-  );
-
   return $form;
 }
 
@@ -59,41 +52,58 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
   $pane_form['coupon_code'] = array(
     '#type' => 'textfield',
     '#title' => t('Coupon Code'),
-    '#description' => t('Enter here your coupon code.'),
+    '#description' => t('Enter your coupon code here.'),
   );
 
-  if (variable_get('commerce_coupon_checkout_enable_add_button', TRUE)) {
-    $pane_form['coupon_add'] = array(
-      '#type' => 'button',
-      '#value' => t('Add coupon'),
-      '#name' => 'coupon_add',
-      '#limit_validation_errors' => array(),
-      '#ajax' => array(
-        'callback' => 'commerce_coupon_add_coupon_callback',
-        'wrapper' => 'commerce-checkout-coupon-ajax-wrapper',
-      ),
-    );
-  }
-
+  $pane_form['coupon_add'] = array(
+    '#type' => 'button',
+    '#value' => t('Add coupon'),
+    '#name' => 'coupon_add',
+    '#limit_validation_errors' => array(),
+    '#ajax' => array(
+      'callback' => 'commerce_coupon_add_coupon_callback',
+      'wrapper' => 'commerce-checkout-coupon-ajax-wrapper',
+    ),
+  );
+  
+  $error = '';
   if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add') {
     $code = $form_state['input']['commerce_coupon']['coupon_code'];
-    if (!empty($code)) {  
-      if (commerce_coupon_redeem_coupon_code($code, $order)) {
+    if (!empty($code)) {
+      $coupon = commerce_coupon_redeem_coupon_code($code, $order, $error);
+      
+      if ($coupon) {
         // Clear the field value so that the coupon code does not get
         // resubmitted causing an error when user uses main "Continue to next
         // step" submit.
         $pane_form['coupon_code']['#value'] = '';
         
         // Reload the order so it is not out of date.
-        $order = commerce_order_load($order->order_id);
+        $order = commerce_order_load($order->order_id);       
 
         // Recalculate discounts.
         commerce_cart_order_refresh($order);
       }
     }
     else {
-      drupal_set_message(t('Please enter a code.'), 'error');
+      $error = t('Please enter a code.');
     }
+
+    if (!$error) {
+      // If a coupon was invalidated during the cart refresh (e.g. if its 
+      // discounts failed their conditions), an error message will have been
+      // set.
+      $error = &drupal_static('commerce_coupon_error_' . strtolower($code));
+    }
+  
+    if (!$error) {      
+      // Allow modules/rules to act when a coupon has been successfully added
+      // to the cart.
+      rules_invoke_all('commerce_coupon_applied_to_cart', $coupon, $order);
+    }
+    else {
+      drupal_set_message($error, 'error');
+    }    
   }
 
   // Extract the View and display keys from the cart contents pane setting.

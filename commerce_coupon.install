@@ -206,6 +206,9 @@ function commerce_coupon_update_7001() {
   
   // Add index on code.
   db_add_index('commerce_coupon', 'code', array('code'));
+  
+  // Use a cache clear to rebuild rules and views.
+  drupal_flush_all_caches();  
 }
 
 /*
@@ -222,7 +225,6 @@ function commerce_coupon_uninstall() {
     commerce_delete_instance($instance);
   }
 }
-
 
 /**
  * Upgrade a Coupons 1.x site to 2.x. MAKE A BACKUP BEFORE DOING THIS.
@@ -408,7 +410,7 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
     $sandbox['orders']['current_id'] = 0;
     $sandbox['orders']['max'] = db_query('SELECT COUNT(DISTINCT order_id) FROM {commerce_order}')->fetchField();
   }
-  
+
   // Get the next four order ids
   $order_ids = db_select('commerce_order', 'o')
      ->fields('o', array('order_id'))

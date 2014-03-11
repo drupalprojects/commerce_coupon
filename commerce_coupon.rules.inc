@@ -36,55 +36,43 @@ function commerce_coupon_rules_condition_info() {
         'optional' => TRUE
       )
     )
-  );  
-
-  return $conditions;
-}
-
-/*
- * Implements hook_rules_action_info().
- */
-function commerce_coupon_rules_action_info() {
-  $actions['commerce_coupon_add_coupon_to_order'] = array(
-    'label' => t('Add coupon to order'),
+  );
+  
+  $conditions['commerce_coupon_current_user_may_redeem'] = array(
+    'label' => t('Current user may redeem coupon'),
     'group' => t('Commerce Coupon'),
     'parameter' => array(
       'commerce_coupon' => array(
         'type' => 'commerce_coupon',
         'label' => t('Coupon'),
-        'wrapped' => TRUE  
-      ),
+        'wrapped' => TRUE
+      ),    
       'commerce_order' => array(
         'type' => 'commerce_order',
         'label' => t('Order'),
-        'wrapped' => TRUE          
+        'wrapped' => TRUE
       ),
     )
   );
-  
-  return $actions;
+
+  return $conditions;
 }
 
 /*
  * Implements hook_rules_event_info().
  */
 function commerce_coupon_rules_event_info() {
-  $events['commerce_coupon_redeem'] = array(
-    'label' => t('User redeems a coupon during checkout'),
+  $events['commerce_coupon_applied_to_cart'] = array(
+    'label' => t('User has applied a coupon to a cart order'),
     'group' => t('Commerce Coupon'),
     'variables' => array(
       'commerce_coupon' => array(
         'type' => 'commerce_coupon',
         'label' => t('Coupon'),
-        'wrapped' => TRUE
-      ),        
-      // Skip-save is set because we need to force the order to save immediately
-      // so the checkout pane can load it when it embeds the view.
+      ),
       'commerce_order' => array(
         'type' => 'commerce_order',
         'label' => t('Order'),
-        'wrapped' => TRUE,
-        'skip save' => TRUE
       ),
     )
   );
@@ -97,6 +85,14 @@ function commerce_coupon_rules_event_info() {
  */
 function commerce_coupon_evaluate_coupon_inline_conditions_rule($coupon_wrapper, $continuous_only = FALSE) {
   return commerce_coupon_evaluate_inline_conditions($coupon_wrapper, $continuous_only);
+}
+
+/*
+ * Rules condition callback: evaluate whether the current user has the required
+ * permissions to redeem a coupon.
+ */
+function commerce_coupon_current_user_may_redeem($coupon) {
+  return commerce_coupon_access('redeem', $coupon);
 }
 
 /*
@@ -124,12 +120,9 @@ function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $d
         $has_coupons = TRUE;
         $outcome = FALSE;
         
-        if (commerce_coupon_evaluate_inline_conditions($coupon_wrapper, TRUE) && commerce_coupon_access('redeem', $coupon_wrapper->value())) {
+        if (commerce_coupon_evaluate_conditions($coupon_wrapper, $order_wrapper)) {
           $outcome = TRUE;
         }
-        
-        // Allow other modules to set validity.
-        drupal_alter('commerce_coupon_coupon_still_valid', $outcome, $order_wrapper, $coupon_wrapper);
         
         if ($outcome) {
           return TRUE;
@@ -141,14 +134,4 @@ function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $d
   // If no valid coupons were found, return FALSE if the discount is linked to
   // any coupons.
   return !$has_coupons;
-}
-
-/*
- * Rules action callback: add a coupon to an order
- */
-function commerce_coupon_add_coupon_to_order($coupon_wrapper, $order_wrapper) {
-  // Add the coupon to the order.
-  $order_wrapper->commerce_coupons[] = $coupon_wrapper->value();
-    
-  commerce_order_save($order_wrapper->value());
 }
