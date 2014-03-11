@@ -68,9 +68,23 @@ function commerce_coupon_usage_schema() {
 }
 
 /**
+ * Install commerce_coupon_usage_transaction table.
+ */
+function commerce_coupon_usage_update_7001() {
+  // Install the usage transaction table.
+  $table = drupal_get_schema_unprocessed('commerce_coupon_usage', 'commerce_coupon_usage_transaction');
+  if (!db_table_exists('commerce_coupon_usage_transaction')) {
+    db_create_table('commerce_coupon_usage_transaction', $table);
+  }
+
+  // Rebuild schema.
+  drupal_get_complete_schema(TRUE);
+}
+
+/**
  * Add usage records for legacy orders with coupons.
  */
-function commerce_coupon_usage_update_7201(&$sandbox) {
+function commerce_coupon_usage_update_7002(&$sandbox) {  
   $statuses = array_merge(commerce_order_statuses(array('state' => 'completed')), commerce_order_statuses(array('state' => 'pending')));
   
   $query = new EntityFieldQuery;
@@ -79,7 +93,7 @@ function commerce_coupon_usage_update_7201(&$sandbox) {
     ->fieldCondition('commerce_coupons', 'target_id', 'NULL', '!=')
     ->propertyCondition('status', array_keys($statuses));
   
-  if (!isset($sandbox['progress'])) {
+  if (!isset($sandbox['progress'])) {    
     $count_query = clone $query;
     $sandbox['progress'] = 0;
     $sandbox['current_id'] = 0;
@@ -93,6 +107,9 @@ function commerce_coupon_usage_update_7201(&$sandbox) {
     ->execute();
   
   if (!empty($result['commerce_order'])) {
+    // Ensure that the controller file gets loaded.
+    module_load_include('inc', 'commerce_coupon_usage', 'includes/commerce_coupon_usage.controller');    
+    
     $order_ids = array_keys($result['commerce_order']);
     $orders = commerce_order_load_multiple($order_ids);
     

@@ -168,7 +168,7 @@ function commerce_coupon_usage_entity_info() {
     'label' => t('Commerce coupon usage transaction'),
     'plural label' => t('Commerce coupon usage transactions'),
     'views controller class' => 'CommerceCouponUsageTransactionViewsController',      
-    'controller class' => 'DrupalCommerceEntityController',
+    'controller class' => 'CommerceCouponUsageTransactionEntityController',
     'base table' => 'commerce_coupon_usage_transaction',
     'fieldable' => FALSE,
     'entity keys' => array(

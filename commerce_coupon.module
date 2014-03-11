@@ -226,7 +226,7 @@ function commerce_coupon_menu() {
       'access arguments' => array('administer coupons'),
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/config/workflow/rules/components/manage/' . commerce_coupon_conditions_component_name($type)),
-      'type' => MENU_DEFAULT_LOCAL_TASK,
+      'type' => MENU_LOCAL_TASK,
       'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
       'weight' => 100
     );

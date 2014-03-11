@@ -35,7 +35,7 @@ function _commerce_coupon_usage_views_get_view_delta() {
 /**
  * Implements hook_views_default_views_alter().
  */
-function commerce_coupon_usage_views_default_views(&$views) {
+function commerce_coupon_usage_views_default_views() {
   $view = new view();
   $view->name = 'coupon_usage';
   $view->description = 'Summary of coupon usage';
@@ -113,4 +113,6 @@ function commerce_coupon_usage_views_default_views(&$views) {
   $handler->display->display_options['menu']['context_only_inline'] = 0;
 
   $views['coupon_usage'] = $view;
+  
+  return $views;
 }

@@ -73,16 +73,18 @@ class CommerceCouponUsageTransactionEntityController extends DrupalCommerceEntit
     // until this lock is cleared before the following query will return in
     // their thread.
     try {
-      db_select('commerce_coupon', 'c')
-        ->condition('coupon_id', $entity->coupon_id)
-        ->forUpdate()
+      db_select('commerce_coupon', 'c')     
+        ->fields('c', array('coupon_id'))
+        ->condition('c.coupon_id', $entity->coupon_id)
+        ->forUpdate()              
         ->execute();
 
       // Load the usage.
       $usage = commerce_coupon_usage_get_usage($entity->coupon_id);
 
-      // Only save if the coupon referenced will not exceed its maximum settings.
-      if ($max_usage > $usage) {
+      // Only save if the coupon referenced will not exceed its maximum
+      // usage settings. Zero max usage means unlimited.
+      if ($max_usage > $usage || !$max_usage) {
         return parent::save($entity, $transaction);
       }
       

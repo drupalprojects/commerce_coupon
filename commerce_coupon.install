@@ -177,6 +177,13 @@ function commerce_coupon_uninstall() {
   }
 }
 
+/**
+ * Rebuild rules and views
+ */
+function commerce_coupon_update_7001() {
+  // Use a cache clear to rebuild rules and views.
+  drupal_flush_all_caches();
+}
 
 /**
  * Upgrade a Coupons 1.x site to 2.x
