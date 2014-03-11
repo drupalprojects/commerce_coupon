@@ -12,12 +12,14 @@ class commerce_coupon_usage_views_handler_area_usage_summary extends views_handl
           // If it is single value:
           if (count($argument->value) == 1) {
             $coupon_id = reset($argument->value);
-            $variables = array(
-              'coupon_id' => $coupon_id,
-              'details_link_text' => FALSE
-            );
-            
-            return theme('commerce_coupon_usage_summary', $variables);
+            if (is_numeric($coupon_id) && $coupon_id) {
+              $variables = array(
+                'coupon_id' => $coupon_id,
+                'details_link_text' => FALSE
+              );
+
+              return theme('commerce_coupon_usage_summary', $variables);
+            }
           } 
         }
       }

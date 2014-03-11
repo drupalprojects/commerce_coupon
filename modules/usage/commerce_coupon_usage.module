@@ -40,9 +40,10 @@ function commerce_coupon_usage_get_usage($coupon_id, $exclude_cart = FALSE) {
 function commerce_coupon_usage_get_max_usage($coupon_id) {
   $coupon = commerce_coupon_load($coupon_id);
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+  $usage = 0;  
+  
   if ($coupon_wrapper->commerce_coupon_conditions->value()) {
     $conditions = $coupon_wrapper->commerce_coupon_conditions->value();
-    $usage = 0;
     foreach ($conditions as $condition) {
       // It is possible that there could be more than one usage constraint
       // although there is no real reason for doing this.

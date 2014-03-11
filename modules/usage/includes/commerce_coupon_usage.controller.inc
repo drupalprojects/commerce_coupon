@@ -50,6 +50,9 @@ class CommerceCouponUsageTransactionEntityController extends DrupalCommerceEntit
    *   SAVED_NEW or SAVED_UPDATED depending on the operation performed.
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
+    // Do a normal entity save if the entity is not new. Usage records are just
+    // boolean counters. We do not need atomic transaction handling on updates 
+    // since there is no "amount" field that can be changed.
     if (empty($entity->is_new)) {
       return parent::save($entity);
     }
@@ -83,7 +86,7 @@ class CommerceCouponUsageTransactionEntityController extends DrupalCommerceEntit
         return parent::save($entity, $transaction);
       }
       
-      // End the transaction if the balance is too low.
+      // End the transaction if the allowed usage has been reached.
       $transaction->rollback();
     }
     catch (Exception $e) {
