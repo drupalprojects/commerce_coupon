@@ -435,7 +435,6 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
                 
         if (module_exists('commerce_coupon_usage')) {
           $statuses = array_merge(commerce_order_statuses(array('state' => 'pending')), commerce_order_statuses(array('state' => 'completed')));
-          drush_print_r($statuses);
 
           // If the order is complete or pending, record a use of the coupon.
           if (in_array($order->status, array_keys($statuses))) {
