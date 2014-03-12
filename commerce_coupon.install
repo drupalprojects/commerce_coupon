@@ -289,7 +289,7 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
   $coupon_ids = db_select('commerce_coupon', 'c')
      ->fields('c', array('coupon_id'))
      ->condition('coupon_id', $sandbox['coupons']['current_id'], '>')
-     ->range(0, 1)
+     ->range(0, 5)
      ->orderBy('coupon_id', 'ASC')
      ->execute()
      ->fetchCol();
@@ -415,7 +415,7 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
   $order_ids = db_select('commerce_order', 'o')
      ->fields('o', array('order_id'))
      ->condition('order_id', $sandbox['orders']['current_id'], '>')
-     ->range(0, 1)
+     ->range(0, 5)
      ->orderBy('order_id', 'ASC')
      ->execute()
      ->fetchCol();
@@ -432,6 +432,16 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
 
         // Allow modules to alter the order before it is saved.
         drupal_alter('commerce_coupon_update_order_pre_update', $original_order, $order);
+                
+        if (module_exists('commerce_coupon_usage')) {
+          $statuses = array_merge(commerce_order_statuses(array('state' => 'pending')), commerce_order_statuses(array('state' => 'completed')));
+          drush_print_r($statuses);
+
+          // If the order is complete or pending, record a use of the coupon.
+          if (in_array($order->status, array_keys($statuses))) {
+            commerce_coupon_usage_record_usage($order);
+          }        
+        }
         $order_wrapper->save();
       }
       $sandbox['orders']['progress']++;

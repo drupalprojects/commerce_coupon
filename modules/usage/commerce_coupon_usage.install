@@ -114,15 +114,7 @@ function commerce_coupon_usage_update_7002(&$sandbox) {
     $orders = commerce_order_load_multiple($order_ids);
     
     foreach ($orders as $order) {
-      $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-
-      foreach($order_wrapper->commerce_coupons as $coupon_wrapper) {
-        if ($coupon_wrapper->value()) {
-          // Write a usage record. Hard to really say order placed - just use 
-          // order created.
-          commerce_coupon_usage_transaction_write($coupon_wrapper->coupon_id->value(), $order->order_id, $order->uid, $order->created);
-        }
-      }
+      commerce_coupon_usage_record_usage($order);
     }
 
     $sandbox['progress']++;

@@ -342,3 +342,21 @@ function theme_commerce_coupon_usage_summary($variables) {
     return implode('<br/>', $output);
   }
 }
+
+/**
+ * Record coupon usage for an order
+ * 
+ * @param $order
+ *  Order to record usage for
+ */
+function commerce_coupon_usage_record_usage($order) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  foreach($order_wrapper->commerce_coupons as $coupon_wrapper) {
+    if ($coupon_wrapper->value()) {
+      // Write a usage record. Hard to really know when the transaction took 
+      // place so just use the order created column.
+      commerce_coupon_usage_transaction_write($coupon_wrapper->coupon_id->value(), $order->order_id, $order->uid, $order->created);
+    }
+  }
+}
