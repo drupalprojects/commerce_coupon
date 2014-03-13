@@ -384,6 +384,11 @@ function commerce_coupon_usage_commerce_order_update($order) {
     foreach ($order_wrapper->commerce_coupons as $coupon_wrapper) {
       $coupon_id = $coupon_wrapper->coupon_id->value();      
       if (!$unchanged->commerce_coupons->value() || !in_array($coupon_id, $unchanged->commerce_coupons->raw()) || !in_array($unchanged->status->value(), $statuses)) {
+        // Never write a record for the same order and coupon twice.
+        if (commerce_coupon_usage_record_exists($order->order_id, $coupon_id)) {
+          continue;
+        }
+        
         $transaction_id = commerce_coupon_usage_transaction_write($coupon_id, $order->order_id);
         if (!$transaction_id) {
           drupal_set_message(t('You have exceeded the maximum usage settings for 
@@ -465,4 +470,21 @@ function commerce_coupon_reset_usage($order_ids = FALSE, $coupon_ids = FALSE) {
   if ($order_ids || $coupon_ids) {
     $query->execute();
   }
+}
+
+/**
+ * Load all coupon usage records associated with an order.
+ * 
+ * @param type $order_id
+ * @return type
+ */
+function commerce_coupon_usage_record_exists($order_id, $coupon_id) {
+  $query = new EntityFieldQuery;
+  $results = $query
+    ->entityCondition('entity_type', 'commerce_coupon_usage_transaction')
+    ->propertyCondition('order_id', $order_id)
+    ->propertyCondition('coupon_id', $coupon_id)          
+    ->execute();
+  
+  return !empty($results['commerce_coupon_usage_transaction']) ? $results['commerce_coupon_usage_transaction'] : array();
 }
