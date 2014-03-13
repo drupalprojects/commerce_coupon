@@ -344,7 +344,10 @@ function theme_commerce_coupon_usage_summary($variables) {
 }
 
 /**
- * Record coupon usage for an order
+ * Record coupon usage for an order. Uses the order's created date, not
+ * REQUEST_TIME. Use this function for recording transactions for orders created
+ * with coupons before usage tracking was enabled since date is just a best
+ * guess.
  * 
  * @param $order
  *  Order to record usage for
@@ -358,5 +361,108 @@ function commerce_coupon_usage_record_usage($order) {
       // place so just use the order created column.
       commerce_coupon_usage_transaction_write($coupon_wrapper->coupon_id->value(), $order->order_id, $order->uid, $order->created);
     }
+  }
+}
+  
+/*
+ * Implements hook_commerce_order_update().
+ */
+function commerce_coupon_usage_commerce_order_update($order) {
+  // This hook implementation mostly supports keeping track of coupon usage
+  // as completed/pending orders are changed from the order admin UI.
+  
+  $unchanged = entity_metadata_wrapper('commerce_order', $order->original);
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+  
+  $statuses = commerce_coupon_usage_tracked_order_statuses();
+  
+  // Only handle usage for completed orders          
+  if (in_array($order->status, $statuses)) {
+
+    // Add usage records for coupons present if coupon is present in current but 
+    // not original or if the original order was in a non-tracked status.
+    foreach ($order_wrapper->commerce_coupons as $coupon_wrapper) {
+      $coupon_id = $coupon_wrapper->coupon_id->value();      
+      if (!$unchanged->commerce_coupons->value() || !in_array($coupon_id, $unchanged->commerce_coupons->raw()) || !in_array($unchanged->status->value(), $statuses)) {
+        $transaction_id = commerce_coupon_usage_transaction_write($coupon_id, $order->order_id);
+        if (!$transaction_id) {
+          drupal_set_message(t('You have exceeded the maximum usage settings for 
+            coupon %code. Its usage on this order has not been recorded - you must
+            increase its maximum usage value, remove it from this order and add it again.', 
+            array('%code' => $coupon_wrapper->code->value())), 'warning');
+        }
+      }
+    }
+    
+    // Remove usage records for coupons absent after update but present before.
+    foreach ($unchanged->commerce_coupons as $coupon_wrapper) {
+      $coupon_id = $coupon_wrapper->coupon_id->value();
+      if (!$order_wrapper->commerce_coupons->value() || !in_array($coupon_id, $order_wrapper->commerce_coupons->raw())) {
+        $remove_coupon_ids[] = $coupon_id;
+      }
+    }
+    if (isset($remove_coupon_ids)) {
+      commerce_coupon_reset_usage(array($order->order_id), $remove_coupon_ids);
+    }
+  }
+  else if (in_array($unchanged->status->value(), $statuses)) {
+    // If the order is moving out of a tracked status, reset its usage.
+    commerce_coupon_reset_usage(array($unchanged->order_id->value()));
+  }
+}
+
+/*
+ * Implements hook_commerce_order_insert().
+ */
+function commerce_coupon_usage_commerce_order_insert($order) {
+  // Supports tracking coupon usage when orders are created in completed or
+  // pending statuses.
+  
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);  
+  if (in_array($order->status, commerce_coupon_usage_tracked_order_statuses())) {
+    foreach ($order_wrapper->commerce_coupons as $coupon_wrapper) {
+      $transaction_id = commerce_coupon_usage_transaction_write($coupon_wrapper->coupon_id->value(), $order->order_id);
+      if (!$transaction_id) {
+        drupal_set_message(t('You have exceeded the maximum usage settings for 
+          coupon %code. Its usage on this order cannot be recorded until you
+          increase its maximum usage settings.', array('%code' => $coupon_wrapper->code->value())), 'warning');
+      }
+    }
+  }  
+}
+
+/*
+ * Implements hook_commerce_order_delete().
+ */
+function commerce_coupon_usage_commerce_order_delete($order) {
+  commerce_coupon_reset_usage(array($order->order_id));
+}
+
+/**
+ * Fetch order statuses that indicate order coupons should have their usage
+ * tracked.
+ */
+function commerce_coupon_usage_tracked_order_statuses() {
+  $statuses = array_merge(commerce_order_statuses(array('state' => 'completed')), commerce_order_statuses(array('state' => 'pending')));
+  return array_keys($statuses);
+}
+
+/**
+ * Remove usage records related to a set of orders or a set of coupons or both.
+ * 
+ * @param type $order_id
+ * @param type $coupon_id
+ */
+function commerce_coupon_reset_usage($order_ids = FALSE, $coupon_ids = FALSE) {
+  $query = db_delete('commerce_coupon_usage_transaction');
+  if($order_ids) {
+    $query->condition('order_id', $order_ids);
+  }
+  
+  if ($coupon_ids) {
+    $query->condition('coupon_id', $coupon_ids);
+  }
+  if ($order_ids || $coupon_ids) {
+    $query->execute();
   }
 }
