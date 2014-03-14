@@ -1,5 +1,9 @@
 <?php
 
+// Define how many orders/coupons get processed per batch.
+define('COMMERCE_COUPON_ORDER_IMPORT_RATE', 15);
+define('COMMERCE_COUPON_COUPON_IMPORT_RATE', 5);
+
 /**
  * Update four coupons at a time.
  * 
@@ -17,7 +21,7 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
   $coupon_ids = db_select('commerce_coupon', 'c')
      ->fields('c', array('coupon_id'))
      ->condition('coupon_id', $sandbox['coupons']['current_id'], '>')
-     ->range(0, 5)
+     ->range(0, COMMERCE_COUPON_COUPON_IMPORT_RATE)
      ->orderBy('coupon_id', 'ASC')
      ->execute()
      ->fetchCol();
@@ -121,7 +125,7 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
   else {
     $sandbox['coupons']['#finished'] = 1;
   }
-  
+    
   $sandbox['coupons']['#finished'] = empty($sandbox['coupons']['max']) ? 1 : ($sandbox['coupons']['progress'] / $sandbox['coupons']['max']);
 }
 
@@ -141,7 +145,7 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
   $order_ids = db_select('commerce_order', 'o')
      ->fields('o', array('order_id'))
      ->condition('order_id', $sandbox['orders']['current_id'], '>')
-     ->range(0, 5)
+     ->range(0, COMMERCE_COUPON_ORDER_IMPORT_RATE)
      ->orderBy('order_id', 'ASC')
      ->execute()
      ->fetchCol();
@@ -164,7 +168,6 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
 
           // If the order is complete or pending, record a use of the coupon.
           if (in_array($order->status, array_keys($statuses))) {
-            drush_print('recording for order ' . $order->order_id);
             commerce_coupon_usage_record_usage($order);
           }        
         }

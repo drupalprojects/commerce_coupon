@@ -257,8 +257,12 @@ function commerce_coupon_update_7200(&$sandbox) {
     // Enable dependencies
     module_enable(array('commerce_discount', 'inline_conditions', 'commerce_coupon_usage'));
     
-    // Trigger discount/coupon module field installation.
-    drupal_flush_all_caches();
+    // Install coupon fields.
+    commerce_coupon_install_helper();
+    
+    // Add the inline conditions field because we're going to need it.
+    _commerce_coupon_install_inline_conditions_field();
+
     $sandbox['did_schema_updates'] = TRUE;
   }
   
@@ -271,6 +275,7 @@ function commerce_coupon_update_7200(&$sandbox) {
   _commerce_coupon_update_orders_multipass(&$sandbox, $drush);
   
   $sandbox['#finished'] = $sandbox['coupons']['#finished'] >= 1 && $sandbox['orders']['#finished'] >= 1;
+  // $sandbox['#finished'] = $sandbox['coupons']['#finished'] >= 1;
   if ($sandbox['#finished'] == TRUE) {
     module_disable(array('commerce_coupon_pct', 'commerce_coupon_fixed_amount'));
   }
