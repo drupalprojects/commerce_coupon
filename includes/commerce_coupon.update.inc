@@ -38,80 +38,78 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
 
       // Find update information about this coupon type.
       $parameters = module_invoke_all('commerce_coupon_legacy_mapping', $coupon);
-      if (empty($parameters)) {
-        return;
-      }   
-
-      // Determine if there is a suitable discount to use.
-      $query = new EntityFieldQuery;
-      $results = $query
-        ->entityCondition('entity_type', 'commerce_discount')
-        ->propertyCondition('type', 'order_discount')
-        ->propertyCondition('name', $parameters['discount name'])
-        ->execute();
-
-      // Load matching discount.
-      if (!empty($results['commerce_discount'])) {
-        $discount_ids = array_keys($results['commerce_discount']);
-        $discounts = entity_load('commerce_discount', $discount_ids);
-        $discount = reset($discounts);
-      }
-      else {
-        // Discount not found - create and save offer.
-        $offer = entity_create('commerce_discount_offer', array(
-          'type' => $parameters['offer type'],
-        ));
-        $offer_field = $parameters['offer field'];
-        $offer_wrapper = entity_metadata_wrapper('commerce_discount_offer', $offer);
-        $offer_wrapper->{$offer_field} = $parameters['offer value'];
-        $offer_wrapper->save();
-
-        // Create and save discount.
-        $discount = entity_create('commerce_discount', array(
-          'type' => 'order_discount',
-          'name' => $parameters['discount name'],
-          'label' => $parameters['label'],
-          'component_title' => $parameters['label']
-        ));
-
-        $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
-        // Set offer reference.
-        $discount_wrapper->commerce_discount_offer = $offer;
-
-        $discount_wrapper->save();
-      }
-
-      if ($discount) {
-        $conditions = array();
-        if (module_exists('commerce_coupon_usage') && !empty($coupon->commerce_coupon_number_of_uses)) {
-          // Add an inline condition for number of uses. 
-          $conditions[] = array(
-            'condition_name' => 'commerce_coupon_usage_evaluate_usage',
-            'condition_settings' => array(
-              'max_usage' => $coupon_wrapper->commerce_coupon_number_of_uses->value()
-            )
-          );
-        }
-
-        // Set the bundle now.
-        $coupon->type = 'discount_coupon';
-
-        // Set inline conditions field. The wrapper just gets too confused here
-        // b/c of the bundle change so we do not use it.
-        if (!empty($conditions)) {          
-          $lang = field_language('commerce_coupon', $coupon, 'commerce_coupon_conditions');          
-          $coupon->commerce_coupon_conditions[$lang] = $conditions;
-        }
-        
-        // Set discount reference and save.
-        $lang = field_language('commerce_coupon', $coupon, 'commerce_discount_reference');
-        $coupon->commerce_discount_reference[$lang][] = array('target_id' => $discount->discount_id);
-
-        // Allow other modules to alter the coupon before it is saved.
-        drupal_alter('commerce_coupon_update_pre_update', $original_coupon, $coupon, $discount);
-        commerce_coupon_save($coupon);
-      }
       
+      if (!empty($parameters)) {
+        // Determine if there is a suitable discount to use.
+        $query = new EntityFieldQuery;
+        $results = $query
+          ->entityCondition('entity_type', 'commerce_discount')
+          ->propertyCondition('type', 'order_discount')
+          ->propertyCondition('name', $parameters['discount name'])
+          ->execute();
+
+        // Load matching discount.
+        if (!empty($results['commerce_discount'])) {
+          $discount_ids = array_keys($results['commerce_discount']);
+          $discounts = entity_load('commerce_discount', $discount_ids);
+          $discount = reset($discounts);
+        }
+        else {
+          // Discount not found - create and save offer.
+          $offer = entity_create('commerce_discount_offer', array(
+            'type' => $parameters['offer type'],
+          ));
+          $offer_field = $parameters['offer field'];
+          $offer_wrapper = entity_metadata_wrapper('commerce_discount_offer', $offer);
+          $offer_wrapper->{$offer_field} = $parameters['offer value'];
+          $offer_wrapper->save();
+
+          // Create and save discount.
+          $discount = entity_create('commerce_discount', array(
+            'type' => 'order_discount',
+            'name' => $parameters['discount name'],
+            'label' => $parameters['label'],
+            'component_title' => $parameters['label']
+          ));
+
+          $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
+          // Set offer reference.
+          $discount_wrapper->commerce_discount_offer = $offer;
+
+          $discount_wrapper->save();
+        }
+
+        if ($discount) {
+          $conditions = array();
+          if (module_exists('commerce_coupon_usage') && !empty($coupon->commerce_coupon_number_of_uses)) {
+            // Add an inline condition for number of uses. 
+            $conditions[] = array(
+              'condition_name' => 'commerce_coupon_usage_evaluate_usage',
+              'condition_settings' => array(
+                'max_usage' => $coupon_wrapper->commerce_coupon_number_of_uses->value()
+              )
+            );
+          }
+
+          // Set the bundle now.
+          $coupon->type = 'discount_coupon';
+
+          // Set inline conditions field. The wrapper just gets too confused here
+          // b/c of the bundle change so we do not use it.
+          if (!empty($conditions)) {          
+            $lang = field_language('commerce_coupon', $coupon, 'commerce_coupon_conditions');          
+            $coupon->commerce_coupon_conditions[$lang] = $conditions;
+          }
+
+          // Set discount reference and save.
+          $lang = field_language('commerce_coupon', $coupon, 'commerce_discount_reference');
+          $coupon->commerce_discount_reference[$lang][] = array('target_id' => $discount->discount_id);
+
+          // Allow other modules to alter the coupon before it is saved.
+          drupal_alter('commerce_coupon_update_pre_update', $original_coupon, $coupon, $discount);
+          commerce_coupon_save($coupon);
+        }
+      }
       $sandbox['coupons']['progress']++;
       $sandbox['coupons']['current_id'] = $coupon->coupon_id;
     }

@@ -271,7 +271,6 @@ function commerce_coupon_update_7200(&$sandbox) {
   _commerce_coupon_update_orders_multipass(&$sandbox, $drush);
   
   $sandbox['#finished'] = $sandbox['coupons']['#finished'] >= 1 && $sandbox['orders']['#finished'] >= 1;
-  
   if ($sandbox['#finished'] == TRUE) {
     module_disable(array('commerce_coupon_pct', 'commerce_coupon_fixed_amount'));
   }
