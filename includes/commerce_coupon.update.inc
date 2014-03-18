@@ -147,18 +147,8 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
     // Calculate the number of orders to need to be processed.
     $count_query = clone $query;    
     $sandbox['orders']['max'] = $count_query->count()->execute();
-    drush_print('max: ' . $sandbox['orders']['max']);
   }
 
-  // Get the next four order ids
-  /*$order_ids = db_select('commerce_order', 'o')
-     ->fields('o', array('order_id'))
-     ->condition('order_id', $sandbox['orders']['current_id'], '>')
-     ->range(0, COMMERCE_COUPON_ORDER_IMPORT_RATE)
-     ->orderBy('order_id', 'ASC')
-     ->execute()
-     ->fetchCol();*/
-  
   $results = $query
     ->propertyCondition('order_id', $sandbox['orders']['current_id'], '>')
     ->range(0, COMMERCE_COUPON_ORDER_IMPORT_RATE)       
@@ -167,7 +157,6 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
   
   if (!empty($results['commerce_order'])) {
     $order_ids = $results['commerce_order'];
-    drush_print_r($order_ids);
     $orders = commerce_order_load_multiple(array_keys($results['commerce_order']));
     foreach ($orders as $order) {
       $original_order = clone $order;
