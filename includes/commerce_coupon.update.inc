@@ -193,4 +193,3 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
   
   $sandbox['orders']['#finished'] = empty($sandbox['orders']['max']) ? 1 : ($sandbox['orders']['progress'] / $sandbox['orders']['max']);
 }
-  
