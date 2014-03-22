@@ -188,6 +188,8 @@ function commerce_coupon_update_7001() {
 /**
  * Upgrade a Coupons 1.x site to 2.x
  */
+/*
 function commerce_coupon_update_7200() {
   
 }
+*/
