@@ -478,7 +478,7 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
 
   // Determine whether the discount has coupon references
-  if ($discount_wrapper->coupons->value()) {
+  if ($discount_wrapper->coupon_count->value()) {
     // Product level discounts must pass the line item's order.
     $map = array(
       'order_discount' => 'commerce-order',
@@ -1219,23 +1219,43 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
     $trigger = NULL;
   }
 
-  $form['#validate'][] = 'commerce_coupon_form_attach_coupons_validate';
-  $form['#submit'][] = 'commerce_coupon_form_attach_coupons';
-
   // We do not want to show the management tools if there are more than 100
   // coupons attached to this discount.
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $form_state['commerce_discount']);
   $coupon_count = isset($form_state['coupons']) ? count($form_state['coupons']) : $discount_wrapper->coupon_count->value();
-  if ($coupon_count <= 100) {
-    // Keep track of coupons that have been added if there is a reasonably small
-    // amount.
-    if (!isset($form_state['coupons'])) {
-      $form_state['coupons'] = $discount_wrapper->coupons->value();
-      // Keep track of these so we know which to get rid of at the end.
-      $form_state['original_coupons'] = $form_state['coupons'];
-    }
-    $coupons =& $form_state['coupons'];
+  
+  // Establish a container
+  $form['coupons'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Coupon conditions'),
+    '#tree' => TRUE,
+    '#prefix' => '<div id="commerce-coupon-discount-coupon-form">',
+    '#suffix' => '</div>',
+    '#attached' => array('css' => array(drupal_get_path('module', 'commerce_coupon') . '/css/commerce_coupon.css'))
+  );
+  
+  if ($coupon_count <= 100 || TRUE) {
+    // If there are too many coupons on this discount, do not try to manage 
+    // them all on the discount page.
+    $form['coupons']['count_message'] = array(
+      '#markup' => t('Currently there are @n coupons attached to this discount. Manage them through the ', array('@n' => $coupon_count)) . l('coupons UI', 'admin/commerce/coupons')
+    );
+    
+    return;
   }
+  
+  $form['#validate'][] = 'commerce_coupon_form_attach_coupons_validate';
+  $form['#submit'][] = 'commerce_coupon_form_attach_coupons';  
+  
+  // Keep track of coupons that have been added if there is a reasonably small
+  // amount.
+  if (!isset($form_state['coupons'])) {
+    $form_state['coupons'] = $discount_wrapper->coupons->value();
+    // Keep track of these so we know which to get rid of at the end.
+    $form_state['original_coupons'] = $form_state['coupons'];
+  }
+  $coupons =& $form_state['coupons'];
+
 
   // Handle certain triggers
   switch ($trigger) {
@@ -1257,16 +1277,6 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
   if (isset($form_state['edit_coupon'])) {
     $coupon = $form_state['edit_coupon'];
   }
-
-  // Establish a container
-  $form['coupons'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Coupon conditions'),
-    '#tree' => TRUE,
-    '#prefix' => '<div id="commerce-coupon-discount-coupon-form">',
-    '#suffix' => '</div>',
-    '#attached' => array('css' => array(drupal_get_path('module', 'commerce_coupon') . '/css/commerce_coupon.css'))
-  );
 
   // Ajax specifications.
   $ajax = array(
