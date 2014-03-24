@@ -1234,7 +1234,7 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
     '#attached' => array('css' => array(drupal_get_path('module', 'commerce_coupon') . '/css/commerce_coupon.css'))
   );
   
-  if ($coupon_count <= 100 || TRUE) {
+  if ($coupon_count > 100) {
     // If there are too many coupons on this discount, do not try to manage 
     // them all on the discount page.
     $form['coupons']['count_message'] = array(
