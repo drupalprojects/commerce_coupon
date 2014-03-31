@@ -202,10 +202,7 @@ function commerce_coupon_update_7001() {
     );
     
     db_add_field('commerce_coupon', 'data', $field);
-  }  
-  
-  // Add index on code.
-  db_add_index('commerce_coupon', 'code', array('code'));
+  }
   
   // Use a cache clear to rebuild rules and views.
   drupal_flush_all_caches();  
