@@ -1953,3 +1953,16 @@ function commerce_coupon_commerce_coupon_legacy_mapping($coupon) {
  * Stub function so that coupon type modules do not crash when they disable.
  */
 function commerce_coupon_type_disable() {}
+
+/*
+ * Implements hook_update_dependencies().
+ */
+function commerce_coupon_update_dependencies() {
+  // We need to have this discount update for a 1->2 upgrade to work because it
+  // contains a schema change and we are saving discounts.
+  $dependencies['commerce_coupon'][7200] = array(
+    'commerce_discount' => 7104
+  );
+  
+  return $dependencies;
+}
