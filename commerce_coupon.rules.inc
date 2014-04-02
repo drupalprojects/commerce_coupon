@@ -91,7 +91,8 @@ function commerce_coupon_evaluate_coupon_inline_conditions_rule($coupon_wrapper,
  * Rules condition callback: evaluate whether the current user has the required
  * permissions to redeem a coupon.
  */
-function commerce_coupon_current_user_may_redeem($coupon) {
+function commerce_coupon_current_user_may_redeem($coupon_wrapper) {
+  $coupon = $coupon_wrapper->value();
   return commerce_coupon_access('redeem', $coupon);
 }
 
