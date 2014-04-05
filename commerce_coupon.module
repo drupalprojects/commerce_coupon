@@ -730,7 +730,7 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
     if (commerce_coupon_evaluate_conditions($coupon_wrapper, $order_wrapper)) {
       // Add the coupon to the order.
       $order_wrapper->commerce_coupons[] = $coupon_wrapper->value();
-      
+
       commerce_order_save($order_wrapper->value());      
       return $coupon;
     }
@@ -1179,7 +1179,7 @@ function commerce_coupon_remove_coupon_from_order($order, $coupon, $save = TRUE)
   }
   if ($original_order <> $order && $save) {
     commerce_order_save($order);
-  }    
+  }
 }
 
 /*
@@ -1200,13 +1200,14 @@ function commerce_coupon_module_implements_alter(&$implementations, $hook) {
  * Implements hook_commerce_cart_order_refresh
  */
 function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
-  $save = FALSE;
   $order = $order_wrapper->value();
 
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
     // Invalidate coupons that exist on the order without their discount
     // present, meaning an inline condition on the discount was not satisfied.
-    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order)) {
+    // Free shipping discounts often do not apply immediately. For this reason, 
+    // do not remove coupon codes that exclusively grant free shipping.
+    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order) && !_commerce_coupon_free_shipping_single_discount($coupon)) {
       // Remove invalid coupons.
       commerce_coupon_remove_coupon_from_order($order, $coupon, FALSE);
 
@@ -1217,10 +1218,32 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
       }
     }
   }
+}
 
-  if ($save) {
-    commerce_order_save($order);
+/**
+ * Determine whether a coupon grants free shipping.
+ * 
+ * @param $exclusive
+ *  If set, this function will return TRUE only if the caller is requesting 
+ *  only coupons that exclusively grant free shipping.
+ */
+function _commerce_coupon_free_shipping_single_discount($coupon, $exclusive = TRUE) {
+  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+  
+  if ($coupon->type == 'discount_coupon') {
+    foreach ($coupon_wrapper->commerce_discount_reference as $discount_wrapper) {
+      if ($discount_wrapper->commerce_discount_offer->value() && $discount_wrapper->commerce_discount_offer->type->value() == 'free_shipping') {
+        $discount = $discount_wrapper->value();
+      }
+      else if ($discount->status && $exclusive){
+        // If the coupon grants any other kind of enabled discount, the purpose of this
+        // function is to return FALSE.
+        return;
+      }
+    }
   }
+  
+  return isset($discount) ? $discount : FALSE;
 }
 
 /*

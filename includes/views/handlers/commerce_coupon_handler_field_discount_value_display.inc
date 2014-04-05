@@ -21,6 +21,12 @@ class commerce_coupon_handler_field_discount_value_display extends views_handler
     if ($order && $coupon) {
       $discounts = commerce_coupon_order_coupon_code_discounts($coupon->code, $order);
       $output = '';
+      // Make sure that if the coupon grants free shipping, those discounts gets
+      // added too.
+      $free_shipping_discount = _commerce_coupon_free_shipping_single_discount($coupon, FALSE);
+      if ($free_shipping_discount) {
+        $discounts[] = $free_shipping_discount;
+      }
       
       if ($discounts) {
         $items = array();       
