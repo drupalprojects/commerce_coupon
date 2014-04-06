@@ -1892,18 +1892,22 @@ function _commerce_coupon_install_inline_conditions_field() {
 /*
  * Implements hook_form_FORM_ID_alter().
  */
-function commerce_coupon_form_commerce_checkout_form_review_alter(&$form, &$form_state) {
-  // If the form did not validate, cancel any pending transactions.
-  foreach (module_implements('commerce_coupon_final_checkout_transaction_rollback') as $module) {
-    if (!empty($form_state['coupon_transaction_ids'][$module])) {
-      foreach ($form_state['coupon_transaction_ids'][$module] as $transaction_id) {
-        module_invoke($module, 'commerce_coupon_final_checkout_transaction_rollback', $transaction_id);
+function commerce_coupon_form_commerce_checkout_form_alter(&$form, &$form_state) {
+  // We want to target whichever page has the payment pane.
+  if (isset($form['commerce_payment'])) {
+
+    // If the form did not validate, cancel any pending transactions.
+    foreach (module_implements('commerce_coupon_final_checkout_transaction_rollback') as $module) {
+      if (!empty($form_state['coupon_transaction_ids'][$module])) {
+        foreach ($form_state['coupon_transaction_ids'][$module] as $transaction_id) {
+          module_invoke($module, 'commerce_coupon_final_checkout_transaction_rollback', $transaction_id);
+        }
       }
     }
+
+    // Add our handler as the first validate handler.
+    array_unshift($form['buttons']['continue']['#validate'], 'commerce_coupon_commerce_checkout_form_review_validate');
   }
-  
-  // Add our handler as the first validate handler.
-  array_unshift($form['buttons']['continue']['#validate'], 'commerce_coupon_commerce_checkout_form_review_validate');
 }
 
 /*

@@ -50,20 +50,54 @@ function hook_commerce_coupon_access_OP($coupon, $account) {
 }
 
 /**
- * Change/add/remove an error when a coupon is about to be redeemed.
+ * Transaction related modules must implement a rollback hook to clean up 
+ * transactions in the event that payment validation fails after the transaction
+ * has been processed.
  * 
- * @param string $error
- *  The error message if it has been set; otherwise an empty string. Changing 
- *  this to a non-empty string will prevent the coupon from being redeemed.
+ * This hook fires when the review page rebuilds after a coupon-transaction
+ * module has done transactions. This is not the perfect setup because it can
+ * confuse off-site payment methods, but short of a split-payment API in
+ * Commerce, it is about as good as we can get.
  * 
- * @param CommerceCoupon $coupon
- *  The coupon that is being redeemed in checkout
+ * @see commerce_coupon_usage_commerce_coupon_final_checkout_transaction_rollback().
+ * @see hook_commerce_coupon_final_checkout_validate().
  * 
- * @param stdClass $order
- *  The order that the coupon is being applied to
+ * @param int $transaction_id
  */
-function hook_commerce_coupon_redeem_error_alter(&$error, $coupon, $order) {
-  $error = t('No coupons may be applied whatsoever.');
+function hook_commerce_coupon_final_checkout_transaction_rollback($transaction_id) {
+  mymodule_void_transaction($transaction_id);
+}
+
+/**
+ * Transaction related modules, such as Usage and Giftcards, do their 
+ * transactions in this hook, which fires before the payment validator that 
+ * actually processes payments.
+ * 
+ * 
+ * @see commerce_coupon_usage_commerce_coupon_final_checkout_validate().
+ * 
+ * @param array $form
+ *  The checkout form
+ * 
+ * @param array $form_state
+ *  The checkout form state
+ * 
+ * @param stdClass $order_wrapper
+ *  The checkout order
+ * 
+ * @return $transaction_ids
+ */
+function hook_commerce_coupon_final_checkout_validate(&$form, &$form_state, $order_wrapper) {
+  $transaction_ids = array();
+  $transaction = mymodule_do_transaction($order_wrapper);
+  if (!$transaction) {
+    form_set_error('', t('Transaction failed'));
+  }
+  else {
+    $transaction_ids[] = $transaction;
+  }
+  
+  return $transaction_ids;
 }
 
 /**
@@ -86,25 +120,19 @@ function hook_commerce_coupon_coupon_entity_form_alter($form, $form_state, $coup
 }
 
 /**
- * Determine whether a coupon still applies to a specific order. This fires 
- * when discount module is evaluating whether or not the coupon code for a given
- * discount still exists on an order.
- * 
- * @see commerce_coupon_discount_coupon_codes_exist_on_order() in 
- * commerce_coupon.rules.inc.
+ * Alter the outcome of whether a coupon applies to an order.
  * 
  * @param boolean $outcome
- *  Whether or not this coupon is still valid
+ *  The outcome of coupon condition check.
  * 
- * @param EntityDrupalWrapper $order_wrapper
- *  The order that the coupon is attached to
- * 
- * @param EntityDrupalWrapper $coupon_wrapper
- *  The coupon being checked
+ * @param array $context
+ *  An array containing:
+ *  - order: the order that the coupon is being applied to.
+ *  - coupon: the coupon
+ *  - data: an arbitrary array of contextual data. Not currently used.
  */
-function hook_commerce_coupon_coupon_still_valid_alter(&$outcome, $order_wrapper, $coupon_wrapper) {
-  // Invalidate coupons on orders older than a day
-  if ($order_wrapper->created->value() + 86400 < REQUEST_TIME) {
+function commerce_coupon_condition_outcome(&$outcome, $context) {
+  if ($context['coupon']->type == 'mytype') {
     $outcome = FALSE;
   }
 }
@@ -163,7 +191,7 @@ function hook_commerce_coupon_discount_value_display_alter($display, $discount, 
  * @param stdClass $order
  *  The order that the coupon is attached to
  */
-function hook_commerce_coupon_value_display($output, $coupon, $order) {
+function hook_commerce_coupon_value_display_alter($output, $coupon, $order) {
   // Change the display for all discount coupons
   if ($coupon->type == 'discount_coupon') {
     $output = t('Discount coupon');
