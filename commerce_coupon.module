@@ -1918,7 +1918,9 @@ function commerce_coupon_commerce_checkout_form_review_validate(&$form, &$form_s
     
     // Allow modules to perform a final validation after checkout is done, but
     // before the review checkout panes (most importantly the payment module
-    // panes) fire their checkout validate/submit functions.
+    // panes) fire their checkout validate/submit functions. This is for the 
+    // benefit of modules that do coupon-related transactions such as usage and
+    // giftcards.
     foreach (module_implements('commerce_coupon_final_checkout_validate') as $module) {
       $transaction_ids = module_invoke($module, 'commerce_coupon_final_checkout_validate', $form, $form_state, $order_wrapper);
       if (!empty($transaction_ids)) {
