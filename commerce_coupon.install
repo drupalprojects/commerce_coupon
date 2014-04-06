@@ -179,7 +179,7 @@ function commerce_coupon_schema() {
 /**
  * Add "changed" and "data' fields and index on "code".
  */
-function commerce_coupon_update_7001() {
+function commerce_coupon_update_7002() {
   // Add "changed" field.
   if (!db_field_exists('commerce_coupon', 'changed')) {
     $field = array(
@@ -203,9 +203,6 @@ function commerce_coupon_update_7001() {
     
     db_add_field('commerce_coupon', 'data', $field);
   }
-  
-  // Use a cache clear to rebuild rules and views.
-  drupal_flush_all_caches();  
 }
 
 /*
