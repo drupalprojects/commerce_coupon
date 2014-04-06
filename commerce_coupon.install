@@ -177,6 +177,14 @@ function commerce_coupon_schema() {
 }
 
 /**
+ * Clear cache to rebuild rules and views.
+ */
+function commerce_coupon_update_7001() {
+  // Make sure rules and views get rebuilt
+  drupal_flush_all_caches();
+}
+
+/**
  * Add "changed" and "data' fields and index on "code".
  */
 function commerce_coupon_update_7002() {
