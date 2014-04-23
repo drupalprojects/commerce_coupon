@@ -1235,7 +1235,7 @@ function _commerce_coupon_free_shipping_single_discount($coupon, $exclusive = TR
       if ($discount_wrapper->commerce_discount_offer->value() && $discount_wrapper->commerce_discount_offer->type->value() == 'free_shipping') {
         $discount = $discount_wrapper->value();
       }
-      else if ($discount->status && $exclusive){
+      else if ($discount_wrapper->status->value() && $exclusive){
         // If the coupon grants any other kind of enabled discount, the purpose of this
         // function is to return FALSE.
         return;
