@@ -1207,7 +1207,7 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
     // present, meaning an inline condition on the discount was not satisfied.
     // Free shipping discounts often do not apply immediately. For this reason, 
     // do not remove coupon codes that exclusively grant free shipping.
-    if ($coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order) && !_commerce_coupon_free_shipping_single_discount($coupon)) {
+    if ($coupon && $coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order) && !_commerce_coupon_free_shipping_single_discount($coupon)) {
       // Remove invalid coupons.
       commerce_coupon_remove_coupon_from_order($order, $coupon, FALSE);
 
