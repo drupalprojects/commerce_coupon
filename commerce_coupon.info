@@ -1,6 +1,6 @@
 name = "Commerce Coupon"
 description = "Coupon functionality for Drupal Commerce"
-project = "Commerce"
+package = "Commerce (contrib)"
 core = 7.x
 dependencies[] = commerce_discount
 
