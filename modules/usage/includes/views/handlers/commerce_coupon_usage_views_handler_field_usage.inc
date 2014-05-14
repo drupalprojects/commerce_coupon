@@ -15,7 +15,7 @@ class commerce_coupon_usage_views_handler_field_usage extends views_handler_fiel
     $this->add_additional_fields();
   }
   
-  function render(&$values) {
+  function render($values) {
     $coupon_id = $this->get_value($values, 'coupon_id');
     $variables = array(
       'coupon_id' => $coupon_id,
