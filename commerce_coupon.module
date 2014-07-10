@@ -107,7 +107,7 @@ function commerce_coupon_type_get_name($type = NULL) {
  */
 function commerce_coupon_commerce_coupon_type_info() {
   $types['discount_coupon'] = array(
-    'label' => t('Discount coupon'),    
+    'label' => t('Discount coupon'),
   );
 
   return $types;
@@ -218,7 +218,7 @@ function commerce_coupon_menu() {
       'access arguments' => array('create', commerce_coupon_create($type)),
       'file' => 'includes/commerce_coupon.admin.inc',
     );
-    
+
     // Edit conditions component - redirects to the normal component url
     $items['admin/commerce/coupons/types/' . $type_arg . '/conditions'] = array(
       'title' => t('Edit conditions component'),
@@ -237,7 +237,7 @@ function commerce_coupon_menu() {
 
 /**
  * Finds the component name for a given coupon type.
- * 
+ *
  * @param type $type
  * @return type
  */
@@ -341,14 +341,14 @@ function commerce_coupon_permission() {
   $permissions['redeem any coupon'] = array(
     'title' => t('Redeem any coupon')
   );
-  
+
   foreach (commerce_coupon_get_types() as $type => $info) {
     $permissions['redeem coupons of type ' . $type] = array(
       'title' => t('Redeem any %type coupon', array('%type' => $info['label']))
     );
   }
-  
-  $permissions += commerce_entity_access_permissions('commerce_coupon');  
+
+  $permissions += commerce_entity_access_permissions('commerce_coupon');
 
   return $permissions;
 }
@@ -357,7 +357,7 @@ function commerce_coupon_permission() {
  * Implements hook_query_TAG_alter().
  */
 function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterface $query) {
-  $tables = &$query->getTables();  
+  $tables = &$query->getTables();
 
   // Find the commerce_coupon table.
   foreach ($tables as $table) {
@@ -371,26 +371,26 @@ function commerce_coupon_query_commerce_coupon_access_alter(QueryAlterableInterf
 
 /**
  * Find modules that implement hook_commerce_coupon_access_query_substitute and
- * determine their final result. If no implementing modules found, apply the 
+ * determine their final result. If no implementing modules found, apply the
  * standard commerce_entity_access_query_alter function.
- * 
+ *
  * @param type $query
  * @param type $coupon_alias
  */
 function commerce_coupon_apply_access_query_substitute($query, $coupon_alias) {
-  // Only modules that need to change the query itself (see Commerce Coupon 
-  // User) should implement this. Simple changes to just the query conditions 
+  // Only modules that need to change the query itself (see Commerce Coupon
+  // User) should implement this. Simple changes to just the query conditions
   // can be implemented using
-  // hook_commerce_entity_access_condition_commerce_coupon_alter().    
+  // hook_commerce_entity_access_condition_commerce_coupon_alter().
   $modules = module_implements('commerce_coupon_access_query_substitute');
   if ($modules) {
     foreach ($modules as $module) {
-      // Each implementing module gets the original query as its argument to 
+      // Each implementing module gets the original query as its argument to
       // avoid having to worry about undoing changes that previous implementers
       // add in. The last implementing module is the "winner".
       $new_query = module_invoke($module, 'commerce_coupon_access_query_substitute', $query, $coupon_alias);
     }
-    
+
     if (isset($new_query)) {
       $query = $new_query;
     }
@@ -425,7 +425,7 @@ function commerce_coupon_access($op, $coupon = NULL, $account = NULL) {
     }
     return $access;
   }
-  
+
   // Otherwise route to defaults.
   switch ($op) {
     case 'view':
@@ -476,11 +476,11 @@ function commerce_coupon_remove_coupon_from_order_callback($coupon, $order) {
  */
 function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
-  
+
   // Cache the discount's coupon count so that calls to it during checkout don't
   // have to.
   commerce_coupon_cache_coupon_count($discount);
-  
+
   // Determine whether the discount has coupon references
   if ($discount_wrapper->coupon_count->value()) {
     // Product level discounts must pass the line item's order.
@@ -499,27 +499,27 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
 }
 
 /**
- * Evaluate the inline conditions found on a coupon. If there are no inline 
- * conditions, this function returns TRUE. The idea is to build and evaluate a 
+ * Evaluate the inline conditions found on a coupon. If there are no inline
+ * conditions, this function returns TRUE. The idea is to build and evaluate a
  * condition set dynamically based on the inline conditions for a given coupon.
- * 
+ *
  * @param EntityDrupalWrapper $coupon
  * @param string $continuous_only
  *  Inline conditions may specify that they should be checked continuously. If
  *  the $continuous_only is passed into here as TRUE, it evaluates only the
  *  continuous conditions.
- *  
+ *
  */
 function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_wrapper) {
-  $wrapper_properties = $coupon_wrapper->getPropertyInfo();  
-  
+  $wrapper_properties = $coupon_wrapper->getPropertyInfo();
+
   if (!module_exists('inline_conditions') || empty($wrapper_properties['commerce_coupon_conditions']) || !$coupon_wrapper->commerce_coupon_conditions->value()){
     return TRUE;
   }
-  
+
   $execute = FALSE;
 
-  // Add an input parameter for a Coupon entity.  
+  // Add an input parameter for a Coupon entity.
   $component_parameter = array(
     'commerce_coupon' => array(
       'type' => 'commerce_coupon',
@@ -528,18 +528,18 @@ function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_
     )
   );
   $rule = rules_and($component_parameter);
-  
+
   // Build the inline conditions for this phase.
   foreach ($coupon_wrapper->commerce_coupon_conditions->value() as $value) {
-    // Get the condition info.    
+    // Get the condition info.
     $condition = inline_conditions_get_info($value['condition_name']);
-    
-    // Check for a valid condition. Also we are running only continuous inline 
+
+    // Check for a valid condition. Also we are running only continuous inline
     // conditions, make sure the current condition is continuous.
     if (!$condition || empty($value['condition_settings'])) {
       continue;
     }
-    
+
     $execute = TRUE;
 
     // Give a chance to others module to alter the current field value.
@@ -549,19 +549,19 @@ function commerce_coupon_evaluate_inline_conditions(EntityDrupalWrapper $coupon_
     $parameters = array('entity:select' => $condition['entity type']) + $value['condition_settings'];
     $rule->condition($value['condition_name'], $parameters);
   }
-  
-  // Run this method to manually to prepare the variables as Rules normally 
+
+  // Run this method to manually to prepare the variables as Rules normally
   // would.
   $rule->processSettings(TRUE);
-  
-  // Evaluate the condition set if necessary. Feed the coupon wrapper in as the 
+
+  // Evaluate the condition set if necessary. Feed the coupon wrapper in as the
   // first argument. All other arguments are part of the condition settings.
   return $execute ? $rule->executeByArgs(array($coupon_wrapper->value())) : TRUE;
 }
 
 /**
  * Determine whether a coupon code grants a particular discount.
- * 
+ *
  * @param type $code
  * @param type $discount_id
  * @return type
@@ -575,7 +575,7 @@ function commerce_coupon_code_grants_discount($code, $discount_id) {
     ->propertyCondition('status', TRUE)
     ->fieldCondition('commerce_discount_reference', 'target_id', $discount_id)
     ->execute();
-          
+
   return !empty($results['commerce_coupon']);
 }
 
@@ -607,8 +607,8 @@ function commerce_coupon_get_discount_properties($discount, $options, $name) {
           if (!empty($cache->data)) {
             return (int) $cache->data;
           }
-          
-          // If nothing has been cached, run the query. NOTE: when EFQ tries to 
+
+          // If nothing has been cached, run the query. NOTE: when EFQ tries to
           // put an equivalent query together, it ends up super slow, so we use
           // db_select and joins here. It still is not particularly quick.
           $query = db_select('commerce_coupon', 'c')
@@ -620,7 +620,7 @@ function commerce_coupon_get_discount_properties($discount, $options, $name) {
              ->condition('d.deleted', 0)
              ->condition('d.entity_type', 'commerce_coupon');
 
-          return $query->countQuery()->execute()->fetchField();         
+          return $query->countQuery()->execute()->fetchField();
         }
         return 0;
 
@@ -700,28 +700,29 @@ function commerce_coupon_generate_coupon_code($type, $length = NULL) {
  * @param $order
  *   The order on which the coupon should be redeemed.
  * @param $error
- *   Passed by reference. Any resulting error messages will change this 
+ *   Passed by reference. Any resulting error messages will change this
  *   variable.
  *
  * @return CommerceCoupon or NULL
  */
 function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
-  
+
   // Trim trailing spaces.
   $code = trim($code);
   if (!$code) {
     $error = t('Please enter a code.');
     return;
   }
-  
+
   $coupon = commerce_coupon_load_by_code($code);
-  
+
   if ($coupon) {
     // The same coupon cannot be added twice.
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
     foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
       if ($order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
         $error = t('The coupon you have entered has already been applied to your order');
+        return;
       }
     }
 
@@ -731,18 +732,18 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
       // Add the coupon to the order.
       $order_wrapper->commerce_coupons[] = $coupon_wrapper->value();
 
-      commerce_order_save($order_wrapper->value());      
+      commerce_order_save($order_wrapper->value());
       return $coupon;
     }
     else {
-      // If the coupon was not added, check the static error variable - one of 
-      // the coupon conditions may have set something specific.      
+      // If the coupon was not added, check the static error variable - one of
+      // the coupon conditions may have set something specific.
       $error = &drupal_static('commerce_coupon_error_' . strtolower($code));
 
       if (!$error) {
         // If no condition has specified an error message, set a default one.
         $error = t('Unable to redeem coupon.');
-      }  
+      }
     }
   }
   else {
@@ -752,7 +753,7 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
 
 /**
  * Run the condition component for a coupon
- * 
+ *
  * @param type $coupon
  */
 function commerce_coupon_evaluate_conditions($coupon_wrapper, $order_wrapper, $data = array()) {
@@ -762,10 +763,10 @@ function commerce_coupon_evaluate_conditions($coupon_wrapper, $order_wrapper, $d
     'order' => $order_wrapper,
     'data' => $data
   );
-  
+
   // Allow other modules to alter the outcome.
   drupal_alter('commerce_coupon_condition_outcome', $outcome, $context);
-  
+
   return $outcome;
 }
 
@@ -782,7 +783,7 @@ function commerce_coupon_load_by_code($code, $type = NULL) {
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'commerce_coupon')
       ->propertyCondition('code', $code);
-  
+
   if ($type) {
     $query->propertyCondition('type', $type);
   }
@@ -1188,7 +1189,7 @@ function commerce_coupon_remove_coupon_from_order($order, $coupon, $save = TRUE)
 function commerce_coupon_module_implements_alter(&$implementations, $hook) {
   if ($hook == 'commerce_cart_order_refresh') {
     // Move our implementation to the end of the list. Its job is to clean up
-    // order-coupon references where the coupon's discount no longer exists on 
+    // order-coupon references where the coupon's discount no longer exists on
     // the order.
     $group = $implementations['commerce_coupon'];
     unset($implementations['commerce_coupon']);
@@ -1205,7 +1206,7 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
     // Invalidate coupons that exist on the order without their discount
     // present, meaning an inline condition on the discount was not satisfied.
-    // Free shipping discounts often do not apply immediately. For this reason, 
+    // Free shipping discounts often do not apply immediately. For this reason,
     // do not remove coupon codes that exclusively grant free shipping.
     if ($coupon && $coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order) && !_commerce_coupon_free_shipping_single_discount($coupon)) {
       // Remove invalid coupons.
@@ -1213,7 +1214,7 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
 
       $error = &drupal_static('commerce_coupon_error_' . strtolower($coupon->code));
       if (!$error) {
-        // Set a generic error message unless something has 
+        // Set a generic error message unless something has
         $error = t('Unable to redeem coupon.');
       }
     }
@@ -1222,14 +1223,14 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
 
 /**
  * Determine whether a coupon grants free shipping.
- * 
+ *
  * @param $exclusive
- *  If set, this function will return TRUE only if the caller is requesting 
+ *  If set, this function will return TRUE only if the caller is requesting
  *  only coupons that exclusively grant free shipping.
  */
 function _commerce_coupon_free_shipping_single_discount($coupon, $exclusive = TRUE) {
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-  
+
   if ($coupon->type == 'discount_coupon') {
     foreach ($coupon_wrapper->commerce_discount_reference as $discount_wrapper) {
       if ($discount_wrapper->commerce_discount_offer->value() && $discount_wrapper->commerce_discount_offer->type->value() == 'free_shipping') {
@@ -1242,7 +1243,7 @@ function _commerce_coupon_free_shipping_single_discount($coupon, $exclusive = TR
       }
     }
   }
-  
+
   return isset($discount) ? $discount : FALSE;
 }
 
@@ -1262,7 +1263,7 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
   // coupons attached to this discount.
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $form_state['commerce_discount']);
   $coupon_count = isset($form_state['coupons']) ? count($form_state['coupons']) : $discount_wrapper->coupon_count->value();
-  
+
   // Establish a container
   $form['coupons'] = array(
     '#type' => 'fieldset',
@@ -1272,20 +1273,20 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
     '#suffix' => '</div>',
     '#attached' => array('css' => array(drupal_get_path('module', 'commerce_coupon') . '/css/commerce_coupon.css'))
   );
-  
+
   if ($coupon_count > 100) {
-    // If there are too many coupons on this discount, do not try to manage 
+    // If there are too many coupons on this discount, do not try to manage
     // them all on the discount page.
     $form['coupons']['count_message'] = array(
       '#markup' => t('Currently there are @n coupons attached to this discount. Manage them through the ', array('@n' => $coupon_count)) . l('coupons UI', 'admin/commerce/coupons')
     );
-    
+
     return;
   }
-  
+
   $form['#validate'][] = 'commerce_coupon_form_attach_coupons_validate';
-  $form['#submit'][] = 'commerce_coupon_form_attach_coupons';  
-  
+  $form['#submit'][] = 'commerce_coupon_form_attach_coupons';
+
   // Keep track of coupons that have been added if there is a reasonably small
   // amount.
   if (!isset($form_state['coupons'])) {
@@ -1408,7 +1409,7 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
           '#type' => 'container',
           '#parents' => array('coupons', 'manage_coupons', $delta, 'coupon_form')
         );
-        
+
         commerce_coupon_attach_ajax_coupon_entity_form(
           $form['coupons']['manage_coupons'][$delta]['coupon_form'],
           $form_state,
@@ -1474,7 +1475,7 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
           $delta = !$coupon_wrapper->commerce_discount_reference->value() ? 0 : $coupon_wrapper->commerce_discount_reference->count();
           $coupon->commerce_discount_reference[LANGUAGE_NONE][$delta]['target_id'] = $form_state['commerce_discount']->discount_id;
         }
-        
+
         // Save coupon.
         commerce_coupon_save($coupon);
       }
@@ -1511,9 +1512,9 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
 }
 
 /**
- * Calculate and store the coupon count for a discount. For discounts with a 
+ * Calculate and store the coupon count for a discount. For discounts with a
  * very large number of coupons, this operation can be a bit slow.
- * 
+ *
  * @param type $discount
  * @return type
  */
@@ -1522,13 +1523,13 @@ function commerce_coupon_cache_coupon_count($discount) {
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
   cache_clear_all('discount_coupon_count_' . $discount->discount_id, 'cache');
   $cache = cache_set('discount_coupon_count_' . $discount->discount_id, $discount_wrapper->coupon_count->value());
-  
+
   return $cache;
 }
 
 /**
  * Determine whether a coupon has a particular discount
- * 
+ *
  * @param EntityDrupalWrapper $coupon_wrapper
  *  The coupon to check
  * @param string $discount_name
@@ -1552,7 +1553,7 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
   if (isset($form_state['edit_coupon'])) {
     $coupon = $form_state['edit_coupon'];
   }
-  
+
   // Determine whether it is the "add new" form or an edit form
   if (isset($coupon)) {
     if (isset($coupon->delta)) {
@@ -1562,13 +1563,13 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
     else {
       $coupon_fields_form =& $form['coupons']['coupon_form']['commerce_coupon_fields'];
       $coupon_values = $form_state['values']['coupons']['coupon_form'];
-    }  
+    }
   }
-    
+
   if (isset($coupon_fields_form) && $trigger != 'cancel_coupon' && $trigger != 'add_existing') {
     // Validate fields
     field_attach_form_validate('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
-  }  
+  }
 
   switch ($trigger) {
     case 'add_coupon':
@@ -1600,7 +1601,7 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
         $coupon->uid = $coupon_values['uid'];
 
         field_attach_submit('commerce_coupon', $coupon, $coupon_fields_form, $form_state);
-        
+
         // Add it to the list of coupons that we save.
         if (isset($coupon->delta)) {
           $form_state['coupons'][$coupon->delta] = $coupon;
@@ -1627,7 +1628,7 @@ function commerce_coupon_form_attach_coupons_validate(&$form, &$form_state) {
       unset($form_state['edit_coupon']);
 
       break;
-    case 'add_existing_coupon':      
+    case 'add_existing_coupon':
       $code = $form_state['values']['coupons']['find_coupon_code'];
       $coupon = commerce_coupon_load_by_code($code, 'discount_coupon');
       if (!$coupon) {
@@ -1715,7 +1716,7 @@ function commerce_coupon_code_validate_staged($element, &$form_state) {
  */
 function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon, $show_discounts_field = FALSE) {
   global $user;
-  
+
   // Coupon code
   $form['code'] = array(
     '#type' => 'textfield',
@@ -1737,10 +1738,10 @@ function commerce_coupon_attach_coupon_entity_form(&$form, &$form_state, $coupon
     '#type' => 'value',
     '#value' => !empty($coupon->is_new) ? $user->uid : $coupon->uid
   );
-  
+
   $field_parents = !empty($form['#parents']) ? $form['#parents'] : array();
   $field_parents[] = 'commerce_coupon_fields';
-  
+
   $form['commerce_coupon_fields'] = array(
     '#type' => 'container',
     '#parents' => $field_parents
@@ -1778,16 +1779,16 @@ function theme_commerce_coupon_manage_discount_coupons($variables) {
     if (isset($element['edit_coupon']) && isset($element['remove_coupon'])) {
       $edit_button = $element['edit_coupon'];
       $remove_button = $element['remove_coupon'];
-      
+
       $edit_button_cell = array(
         'data' => drupal_render($edit_button),
         'class' => array('commerce-coupon-discount-coupon-edit-cell')
       );
-      
+
       $remove_button_cell = array(
         'data' => drupal_render($remove_button),
         'class' => array('commerce-coupon-discount-coupon-remove-cell')
-      );      
+      );
 
       $row = array(check_plain($element['#coupon']->code), $edit_button_cell, $remove_button_cell);
     }
@@ -1863,7 +1864,7 @@ function _commerce_coupon_install_inline_conditions_field() {
       'entity_types' => array('commerce_coupon'),
       'field_name' => 'commerce_coupon_conditions',
       'type' => 'inline_conditions',
-      'cardinality' => FIELD_CARDINALITY_UNLIMITED,        
+      'cardinality' => FIELD_CARDINALITY_UNLIMITED,
     );
     field_create_field($field);
   }
@@ -1876,16 +1877,16 @@ function _commerce_coupon_install_inline_conditions_field() {
         'entity_type' => 'commerce_coupon',
         'settings'    => array(
           'entity_type' => 'commerce_coupon',
-        ),        
+        ),
         'bundle' => $machine_name,
         'label' => t('Conditions'),
         'widget'      => array(
           'type' => 'inline_conditions',
           'weight' => 10,
-        ),        
+        ),
       );
       field_create_instance($instance);
-    }  
+    }
   }
 }
 
@@ -1919,31 +1920,31 @@ function commerce_coupon_commerce_checkout_form_review_validate(&$form, &$form_s
   if (end($form_state['triggering_element']['#array_parents']) == 'continue' && !form_get_errors()) {
     $order = $form_state['order'];
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-    
+
     // Allow modules to perform a final validation after checkout is done, but
     // before the review checkout panes (most importantly the payment module
-    // panes) fire their checkout validate/submit functions. This is for the 
+    // panes) fire their checkout validate/submit functions. This is for the
     // benefit of modules that do coupon-related transactions such as usage and
     // giftcards.
     foreach (module_implements('commerce_coupon_final_checkout_validate') as $module) {
       $transaction_ids = module_invoke($module, 'commerce_coupon_final_checkout_validate', $form, $form_state, $order_wrapper);
       if (!empty($transaction_ids)) {
-        // We need to prepare the form to roll back any coupon-related 
-        // transactions if it rebuilds again due to errors in future 
+        // We need to prepare the form to roll back any coupon-related
+        // transactions if it rebuilds again due to errors in future
         // validate/submit events such as requests to the payment gateway.
         $form_state['coupon_transaction_ids'][$module] = $transaction_ids;
       }
     }
   }
 }
-              
+
 /*
  * Implements hook_commerce_coupon_update_parameters().
  */
 function commerce_coupon_commerce_coupon_legacy_mapping($coupon) {
   $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-  
-  // Return all of the necessary parameters for converting the coupon into a 
+
+  // Return all of the necessary parameters for converting the coupon into a
   // discount and an offer.
   switch ($coupon->type) {
     case 'commerce_coupon_pct':
@@ -1992,6 +1993,6 @@ function commerce_coupon_update_dependencies() {
   $dependencies['commerce_coupon'][7200] = array(
     'commerce_discount' => 7104
   );
-  
+
   return $dependencies;
 }
