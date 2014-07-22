@@ -74,7 +74,7 @@ function commerce_coupon_install_helper() {
       $instance = array(
         'field_name' => 'commerce_coupons',
         'entity_type' => 'commerce_order',
-        'bundle' => 'commerce_order',
+        'bundle' => $bundle,
         'label' => t('Coupons'),
         'required' => FALSE,
         'widget' => array(
