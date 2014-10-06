@@ -157,6 +157,10 @@ function commerce_coupon_pane_review($form, $form_state, $checkout_pane, $order)
     // Extract the View and display keys from the cart contents pane setting.
     list($view_id, $display_id) = explode('|', variable_get('commerce_coupon_review_pane_view', 'order_coupon_list|checkout'));
 
-    return commerce_embed_view($view_id, $display_id, array($order->order_id));
+    $view = views_get_view($view_id); //check for view
+    
+    if($view) {  //if view exisits then proceed
+      return commerce_embed_view($view_id, $display_id, array($order->order_id));
+    }
   }
 }
