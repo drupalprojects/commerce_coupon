@@ -43,7 +43,7 @@ function commerce_coupon_usage_schema() {
         'description' => 'The Unix timestamp when the usage record was created.',
         'type' => 'int',
         'not null' => TRUE,
-        'unsigned' => TRUE,          
+        'unsigned' => TRUE,
         'default' => 0,
       ),
     ),
@@ -60,10 +60,10 @@ function commerce_coupon_usage_schema() {
       'order_id' => array(
         'table' => 'commerce_order',
         'column' => array('order_id' => 'order_id')
-      ),           
-    ),      
+      ),
+    ),
   );
-  
+
   return $schema;
 }
 
@@ -84,35 +84,35 @@ function commerce_coupon_usage_update_7001() {
 /**
  * Add usage records for legacy orders with coupons.
  */
-function commerce_coupon_usage_update_7002(&$sandbox) {  
+function commerce_coupon_usage_update_7002(&$sandbox) {
   $statuses = array_merge(commerce_order_statuses(array('state' => 'completed')), commerce_order_statuses(array('state' => 'pending')));
-  
+
   $query = new EntityFieldQuery;
   $query
     ->entityCondition('entity_type', 'commerce_order')
     ->fieldCondition('commerce_coupons', 'target_id', 'NULL', '!=')
     ->propertyCondition('status', array_keys($statuses));
-  
-  if (!isset($sandbox['progress'])) {    
+
+  if (!isset($sandbox['progress'])) {
     $count_query = clone $query;
     $sandbox['progress'] = 0;
     $sandbox['current_id'] = 0;
     $sandbox['max'] = $count_query->count()->execute();
   }
-  
+
   $result = $query
     ->propertyCondition('order_id', $sandbox['current_id'], '>')
     ->range(0, 4)
     ->propertyOrderBy('order_id', 'ASC')
     ->execute();
-  
+
   if (!empty($result['commerce_order'])) {
-    // Ensure that the controller file gets loaded.
-    module_load_include('inc', 'commerce_coupon_usage', 'includes/commerce_coupon_usage.controller');    
-    
+    // Include the module file so that methods are available during update.
+    module_load_include('module', 'commerce_coupon_usage', 'commerce_coupon_usage');
+
     $order_ids = array_keys($result['commerce_order']);
     $orders = commerce_order_load_multiple($order_ids);
-    
+
     foreach ($orders as $order) {
       commerce_coupon_usage_record_usage($order);
     }
@@ -122,7 +122,7 @@ function commerce_coupon_usage_update_7002(&$sandbox) {
     if (function_exists('drush_print')) {
       drush_print(t('Processed @n orders', array('@n' => count($order_ids))));
     }
-    
+
     $sandbox['#finished'] = $sandbox['progress'] / $sandbox['max'];
   }
   else {
