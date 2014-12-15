@@ -137,7 +137,7 @@ function commerce_coupon_add_coupon_callback($form, &$form_state) {
   // Re-render the cart summary.
   list($view_id, $display_id) = explode('|', variable_get('commerce_cart_contents_pane_view', 'commerce_cart_summary|default'));
   $cart_summary = commerce_embed_view($view_id, $display_id, array($form_state['order']->order_id));
-  $commands[] = ajax_command_replace('.view-commerce-cart-summary', $cart_summary);
+  $commands[] = ajax_command_replace('.cart_contents .view', $cart_summary);
 
   // Re-render coupon pane
   $coupon_pane = $form['commerce_coupon'];
