@@ -167,7 +167,7 @@ function commerce_coupon_schema() {
     'foreign keys' => array(
       'uid' => array(
         'table' => 'users',
-        'column' => array('uid' => 'uid')
+        'columns' => array('uid' => 'uid')
       ),
     ),
     'unique keys' => array(
