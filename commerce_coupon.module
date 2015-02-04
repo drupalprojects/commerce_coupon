@@ -1206,21 +1206,85 @@ function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
   $order = $order_wrapper->value();
 
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
-    // Invalidate coupons that exist on the order without their discount
-    // present, meaning an inline condition on the discount was not satisfied.
-    // Free shipping discounts often do not apply immediately. For this reason,
-    // do not remove coupon codes that exclusively grant free shipping.
-    if ($coupon && $coupon->type == 'discount_coupon' && !commerce_coupon_order_coupon_code_discounts($coupon->code, $order) && !_commerce_coupon_free_shipping_single_discount($coupon)) {
-      // Remove invalid coupons.
-      commerce_coupon_remove_coupon_from_order($order, $coupon, FALSE);
 
-      $error = &drupal_static('commerce_coupon_error_' . strtolower($coupon->code));
-      if (!$error) {
-        // Set a generic error message unless something has
-        $error = t('Unable to redeem coupon.');
+    $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+
+    if ($coupon && $coupon->type == 'discount_coupon') {
+      // Part of our check is to see if a discount related to this coupon is still
+      // on the order. However, if the coupon is offering a free shipping
+      // discount, this does not matter.
+      $discount_check_fail = !commerce_coupon_order_coupon_code_discounts($coupon->code, $order) && !_commerce_coupon_free_shipping_single_discount($coupon);
+
+      // Invalidate coupons that exist on the order without their discount
+      // present, meaning an inline condition on the discount was not satisfied.
+      // Free shipping discounts often do not apply immediately, so we have to
+      // simulate their rules execution here.
+      if ($discount_check_fail || !commerce_coupon_simulate_free_shipping_conditions($coupon_wrapper, $order_wrapper)) {
+        // Remove invalid coupons.
+        commerce_coupon_remove_coupon_from_order($order, $coupon, FALSE);
+
+        $error = &drupal_static('commerce_coupon_error_' . strtolower($coupon->code));
+        if (!$error) {
+          // Set a generic error message unless something has
+          $error = t('Unable to redeem coupon.');
+        }
       }
     }
   }
+}
+
+/**
+ * Simulate rules execution for a coupon's discount rule, if the coupon has a
+ * discount offer of type "Free shipping."
+ *
+ * @param $coupon_wrapper
+ *  A coupon entity
+ *
+ * @param $order_wrapper
+ *  An order entity
+ *
+ * @return array|bool|void
+ *  Return TRUE if the shipping discount rule's conditions pass, or if the
+ *  coupon does not have a shipping discount associated with it.
+ */
+function commerce_coupon_simulate_free_shipping_conditions($coupon_wrapper, $order_wrapper) {
+  // Special check for free shipping: we simulate execution of the conditions on
+  // the free shipping rule. Without this, it would be possible to apply free
+  // shipping coupons whose discount conditions will fail on the shipping page.
+  if ($discount = _commerce_coupon_free_shipping_single_discount($coupon_wrapper->value())) {
+    $rule = rules_config_load('commerce_discount_rule_' . $discount->name);
+
+    // Create a temporary component.
+    $variables = array(
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'label' => t('Commerce order')
+      )
+    );
+
+    $component = rules_and($variables);
+
+    $evaluate = FALSE;
+
+    // Add conditions from the discount rule to our temporary component.
+    foreach ($rule->conditions() as $condition) {
+      // Skip the condition that checks to see if the coupon exists on the
+      // order.
+      if ($condition->getElementName() != 'commerce_coupon_discount_coupon_codes_exist_on_order') {
+
+        $component->condition($condition);
+        $evaluate = TRUE;
+      }
+    }
+
+    // Evaluate the rule.
+    if ($evaluate) {
+      $component->processSettings(TRUE);
+      return $component->executeByArgs(array($order_wrapper->value()));
+    }
+  }
+
+  return TRUE;
 }
 
 /**
@@ -1240,7 +1304,9 @@ function _commerce_coupon_free_shipping_single_discount($coupon, $exclusive = TR
       }
       else if ($discount_wrapper->status->value() && $exclusive){
         // If the coupon grants any other kind of enabled discount, the purpose of this
-        // function is to return FALSE.
+        // function is to return FALSE. In this case, the decision of whether or
+        // not to allow redemption of the coupon will follow the normal path
+        // i.e. checking for the presence of the regular discount.
         return;
       }
     }
