@@ -957,6 +957,7 @@ function commerce_coupon_views_api() {
 function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $discount, $order) {
 
   // Common variables
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
   $offer_wrapper = $discount_wrapper->commerce_discount_offer;
   $offer_type = $offer_wrapper->type->value();
@@ -1002,17 +1003,28 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
       $product_text = t('all products');
       $conditions = $discount_wrapper->inline_conditions->value();
 
+      // Get a list of product ids on the order.
+      $order_product_ids = array();
+      foreach ($order_wrapper->commerce_line_items as $commerce_line_item) {
+        if (isset($commerce_line_item->commerce_product)) {
+          $product_id = $commerce_line_item->commerce_product->getIdentifier();
+          $order_product_ids[$product_id] = $product_id;
+        }
+      }
+
       foreach($conditions as $condition) {
         if ($condition['condition_name'] == 'commerce_product_contains_products') {
           foreach ($condition['condition_settings']['sku'] as $data) {
-            $product = commerce_product_load($data['product_id']);
-            if ($product) {
-              $product_names[] = check_plain($product->title);
+            if (isset($order_product_ids[$data['product_id']])) {
+              $product = commerce_product_load($data['product_id']);
+              if ($product) {
+                $product_names[] = check_plain($product->title);
+              }
             }
           }
 
           if (isset($product_names)) {
-            $product_text = implode(', ', $product_names);
+            $product_text = '<em>' . implode('</em>, <em>', $product_names) . '</em>';
           }
           break;
         }
@@ -1110,17 +1122,15 @@ function commerce_coupon_order_discount_ids($order) {
   $order_discount_ids = array();
 
   foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
-    if ($line_item_wrapper->value()) {
-      $data = $line_item_wrapper->commerce_unit_price->data->value();
+    $data = $line_item_wrapper->commerce_unit_price->data->value();
 
-      foreach ($data['components'] as $key => $component) {
-        if (!empty($component['price']['data']['discount_name'])) {
-          $order_discount_name = $component['price']['data']['discount_name'];
-          $order_discount_wrapper = entity_metadata_wrapper('commerce_discount', $order_discount_name);
-          // Make a list of discounts present via the order's line item price
-          // components.
-          $order_discount_ids[] = $order_discount_wrapper->discount_id->value();
-        }
+    foreach ($data['components'] as $key => $component) {
+      if (!empty($component['price']['data']['discount_name'])) {
+        $order_discount_name = $component['price']['data']['discount_name'];
+        $order_discount_wrapper = entity_metadata_wrapper('commerce_discount', $order_discount_name);
+        // Make a list of discounts present via the order's line item price
+        // components.
+        $order_discount_ids[] = $order_discount_wrapper->discount_id->value();
       }
     }
   }
@@ -1533,6 +1543,9 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
  * Form submit callback: save a coupon from the discount UI
  */
 function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
+  // By default don't rebuild rules config.
+  $rebuild_rules = FALSE;
+
   if (!empty($form_state['coupons']) && !empty($form_state['commerce_discount']->discount_id)) {
     // Save coupons
     foreach ($form_state['coupons'] as $coupon) {
@@ -1546,6 +1559,9 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
 
         // Save coupon.
         commerce_coupon_save($coupon);
+
+        // Force rules rebuild.
+        $rebuild_rules = TRUE;
       }
     }
   }
@@ -1570,13 +1586,18 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
 
         if ($delete) {
           commerce_coupon_delete($original_coupon->coupon_id);
+
+          // Force rules rebuild.
+          $rebuild_rules = TRUE;
         }
       }
     }
   }
 
-  // Rebuild the rules again.
-  entity_defaults_rebuild(array('rules_config'));
+  // Rebuild the rules again if coupon added or deleted.
+  if($rebuild_rules) {
+    entity_defaults_rebuild(array('rules_config'));
+  }
 }
 
 /**

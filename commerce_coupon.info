@@ -3,6 +3,7 @@ description = "Coupon functionality for Drupal Commerce"
 package = "Commerce (contrib)"
 core = 7.x
 dependencies[] = commerce_discount
+dependencies[] = commerce_cart
 
 files[] = includes/commerce_coupon.controller.inc
 files[] = includes/views/handlers/commerce_coupon_handler_field_discount_value_display.inc

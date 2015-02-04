@@ -4,32 +4,13 @@
  * Implements hook_views_default_views_alter().
  */
 function commerce_coupon_usage_views_default_views_alter(&$views) {
-  $usage_field = _commerce_coupon_usage_views_get_view_delta();
-
-  $view = &$views['coupons'];
-  $handler = &$view->display['default']->handler;
-
-  if (!is_array($handler->display->display_options['fields'])) {
-    return;
+  if (!empty($views['coupons']) && !empty($views['coupons']->display['default']->handler->display->display_options['fields'])) {
+    /* Field: Commerce Discount: Analytics */
+    $views['coupons']->display['default']->handler->display->display_options['fields']['usage']['id'] = 'usage';
+    $views['coupons']->display['default']->handler->display->display_options['fields']['usage']['table'] = 'commerce_coupon';
+    $views['coupons']->display['default']->handler->display->display_options['fields']['usage']['field'] = 'usage';
+    $views['coupons']->display['default']->handler->display->display_options['fields']['usage']['label'] = 'Usage';
   }
-
-  // Overwrite the original fields array.
-  $handler->display->display_options['fields'] += $usage_field;
-}
-
-/**
- * Helper function to get the Views import.
- */
-function _commerce_coupon_usage_views_get_view_delta() {
-  $handler = new stdClass();
-
-  /* Field: Commerce Discount: Analytics */
-  $handler->display->display_options['fields']['usage']['id'] = 'usage';
-  $handler->display->display_options['fields']['usage']['table'] = 'commerce_coupon';
-  $handler->display->display_options['fields']['usage']['field'] = 'usage';
-  $handler->display->display_options['fields']['usage']['label'] = 'Usage';
-
-  return $handler->display->display_options['fields'];
 }
 
 /**
@@ -113,6 +94,6 @@ function commerce_coupon_usage_views_default_views() {
   $handler->display->display_options['menu']['context_only_inline'] = 0;
 
   $views['coupon_usage'] = $view;
-  
+
   return $views;
 }
