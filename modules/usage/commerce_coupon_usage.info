@@ -9,4 +9,5 @@ files[] = includes/views/handlers/commerce_coupon_usage_views_handler_area_usage
 files[] = includes/views/handlers/commerce_coupon_usage_views_handler_field_usage.inc
 files[] = includes/views/handlers/commerce_coupon_usage_views_handler_field_remove.inc
 
+files[] = includes/views/commerce_coupon_usage.views.inc
 files[] = includes/commerce_coupon_usage.controller.inc
