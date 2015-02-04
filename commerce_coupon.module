@@ -1467,6 +1467,9 @@ function commerce_coupon_form_commerce_discount_form_alter(&$form, &$form_state)
  * Form submit callback: save a coupon from the discount UI
  */
 function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
+  // By default don't rebuild rules config.
+  $rebuild_rules = FALSE;
+
   if (!empty($form_state['coupons']) && !empty($form_state['commerce_discount']->discount_id)) {
     // Save coupons
     foreach ($form_state['coupons'] as $coupon) {
@@ -1480,6 +1483,9 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
 
         // Save coupon.
         commerce_coupon_save($coupon);
+
+        // Force rules rebuild.
+        $rebuild_rules = TRUE;
       }
     }
   }
@@ -1504,13 +1510,18 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
 
         if ($delete) {
           commerce_coupon_delete($original_coupon->coupon_id);
+
+          // Force rules rebuild.
+          $rebuild_rules = TRUE;
         }
       }
     }
   }
 
-  // Rebuild the rules again.
-  entity_defaults_rebuild(array('rules_config'));
+  // Rebuild the rules again if coupon added or deleted.
+  if($rebuild_rules) {
+    entity_defaults_rebuild(array('rules_config'));
+  }
 }
 
 /**
