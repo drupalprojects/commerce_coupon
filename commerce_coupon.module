@@ -1210,6 +1210,37 @@ function commerce_coupon_module_implements_alter(&$implementations, $hook) {
 }
 
 /*
+ * Implements hook_commerce_checkout_router().
+ */
+function commerce_coupon_commerce_checkout_router($order) {
+  // Rollback transactions if the cancel URL was hit. This must be done before
+  // the refresh happens so the checkout_router hook is used.
+  if (arg(3) == 'back' && arg(4) == $order->data['payment_redirect_key']) {
+    commerce_coupon_rollback_order_transactions($order);
+  }
+}
+
+/**
+ * @param $order
+ * @param bool $save
+ */
+function commerce_coupon_rollback_order_transactions($order, $save = FALSE) {
+  foreach (module_implements('commerce_coupon_final_checkout_transaction_rollback') as $module) {
+    if (!empty($order->data['coupon_transaction_ids'][$module])) {
+      foreach ($order->data['coupon_transaction_ids'][$module] as $key => $transaction_id) {
+        // Hand off the rollback to each module's hook implementation.
+        module_invoke($module, 'commerce_coupon_final_checkout_transaction_rollback', $transaction_id);
+        unset($order->data['coupon_transaction_ids'][$module][$key]);
+      }
+
+      if ($save) {
+        commerce_order_save($order);
+      }
+    }
+  }
+}
+
+/*
  * Implements hook_commerce_cart_order_refresh
  */
 function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
@@ -1917,25 +1948,24 @@ function _commerce_coupon_install_inline_conditions_field() {
  * Implements hook_form_FORM_ID_alter().
  */
 function commerce_coupon_form_commerce_checkout_form_alter(&$form, &$form_state) {
-  // We want to target whichever page has the payment pane.
+  // Whenever the payment pane loads, check the order for any transactions that
+  // might need to be rolled back. This is to handle when giftcard validation
+  // was successful but the payment method or some other form element has thrown
+  // an error.
   if (isset($form['commerce_payment'])) {
+    $order = commerce_order_load($form_state['order']->order_id);
 
-    // If the form did not validate, cancel any pending transactions.
-    foreach (module_implements('commerce_coupon_final_checkout_transaction_rollback') as $module) {
-      if (!empty($form_state['coupon_transaction_ids'][$module])) {
-        foreach ($form_state['coupon_transaction_ids'][$module] as $transaction_id) {
-          module_invoke($module, 'commerce_coupon_final_checkout_transaction_rollback', $transaction_id);
-        }
-      }
-    }
+    // Rollback any transactions if necessary. Pass the "save" argument so that
+    // if a rollback is done, it saves the order.
+    commerce_coupon_rollback_order_transactions($order, TRUE);
 
-    // Add our handler as the first validate handler.
-    array_unshift($form['buttons']['continue']['#validate'], 'commerce_coupon_commerce_checkout_form_review_validate');
+     // Add our handler as the first validate handler.
+     array_unshift($form['buttons']['continue']['#validate'], 'commerce_coupon_commerce_checkout_form_review_validate');
   }
 }
 
 /*
- * Form validate callback: validate and record giftcard transactions at the end
+ * Form validate callback: validate and record coupon transactions at the end
  * of checkout.
  */
 function commerce_coupon_commerce_checkout_form_review_validate(&$form, &$form_state) {
@@ -1944,18 +1974,18 @@ function commerce_coupon_commerce_checkout_form_review_validate(&$form, &$form_s
     $order = commerce_order_load($form_state['order']->order_id);
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
-    // Allow modules to perform a final validation after checkout is done, but
-    // before the review checkout panes (most importantly the payment module
-    // panes) fire their checkout validate/submit functions. This is for the
-    // benefit of modules that do coupon-related transactions such as usage and
-    // giftcards.
-    foreach (module_implements('commerce_coupon_final_checkout_validate') as $module) {
-      $transaction_ids = module_invoke($module, 'commerce_coupon_final_checkout_validate', $form, $form_state, $order_wrapper);
-      if (!empty($transaction_ids)) {
-        // We need to prepare the form to roll back any coupon-related
-        // transactions if it rebuilds again due to errors in future
-        // validate/submit events such as requests to the payment gateway.
-        $form_state['coupon_transaction_ids'][$module] = $transaction_ids;
+     // Allow modules to perform a final validation after checkout is done, but
+     // before the payment module processes payment.
+     foreach (module_implements('commerce_coupon_final_checkout_validate') as $module) {
+       // If a module successfully creates a transaction, it must return any
+       // new transaction ids. We store them on the order mostly so that if the
+       // payment form loads again, we can do a rollback. Modules implementing
+       // this hook must do their own error generation using form_set_error.
+       $transaction_ids = module_invoke($module, 'commerce_coupon_final_checkout_validate', $form, $form_state, $order_wrapper);
+       if (!empty($transaction_ids)) {
+         $order->data['coupon_transaction_ids'][$module] = $transaction_ids;
+
+         commerce_order_save($order);
       }
     }
   }
