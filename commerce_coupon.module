@@ -1021,7 +1021,7 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
           foreach ($condition['condition_settings']['sku'] as $data) {
             if (isset($order_product_ids[$data['product_id']])) {
               $product = commerce_product_load($data['product_id']);
-              if ($product) {
+              if ($product && empty($condition['condition_negate'])) {
                 $product_names[] = check_plain($product->title);
               }
             }
