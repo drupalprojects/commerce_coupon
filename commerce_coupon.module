@@ -342,6 +342,10 @@ function commerce_coupon_permission() {
     'title' => t('Redeem any coupon')
   );
 
+  $permissions['administer coupon types'] = array(
+    'title' => t('Administer coupon types')
+  );
+
   foreach (commerce_coupon_get_types() as $type => $info) {
     $permissions['redeem coupons of type ' . $type] = array(
       'title' => t('Redeem any %type coupon', array('%type' => $info['label']))
