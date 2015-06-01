@@ -1512,22 +1512,31 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
         // attached to no other discounts, delete it completely.
         $remove_coupon = commerce_coupon_load_by_code($original_coupon->code);
         $wrapper = entity_metadata_wrapper('commerce_coupon', $remove_coupon);
-        $delete = TRUE;
 
         if (!empty($form_state['commerce_discount']->discount_id)) {
-          foreach ($wrapper->commerce_discount_reference->value() as $discount) {
-            if ($discount->discount_id != $form_state['commerce_discount']->discount_id) {
-              $delete = FALSE;
+          foreach ($wrapper->commerce_discount_reference->value() as $delta => $discount) {
+            if ($discount->discount_id == $form_state['commerce_discount']->discount_id) {
+              // Break the reference from this coupon to the discount currently
+              // being edited in the form. @TODO: why is the wrapper not working
+              // here?
+              $language = field_language('commerce_coupon', $remove_coupon, 'commerce_discount_reference');
+              unset($remove_coupon->commerce_discount_reference[$language][$delta]);
             }
           }
         }
 
-        if ($delete) {
+        // If no discounts remain, delete the coupon.
+        if (empty($remove_coupon->commerce_discount_reference[$language])) {
           commerce_coupon_delete($original_coupon->coupon_id);
-
-          // Force rules rebuild.
-          $rebuild_rules = TRUE;
         }
+        else {
+          // If we are not deleting, save the coupon since we eliminated one or
+          // more of its discount references.
+          $wrapper->save();
+        }
+
+        // Force rules rebuild.
+        $rebuild_rules = TRUE;
       }
     }
   }
