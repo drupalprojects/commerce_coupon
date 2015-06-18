@@ -1126,15 +1126,17 @@ function commerce_coupon_order_discount_ids($order) {
   $order_discount_ids = array();
 
   foreach ($order_wrapper->commerce_line_items as $line_item_wrapper) {
-    $data = $line_item_wrapper->commerce_unit_price->data->value();
+    if ($line_item_wrapper->value()) {
+      $data = $line_item_wrapper->commerce_unit_price->data->value();
 
-    foreach ($data['components'] as $key => $component) {
-      if (!empty($component['price']['data']['discount_name'])) {
-        $order_discount_name = $component['price']['data']['discount_name'];
-        $order_discount_wrapper = entity_metadata_wrapper('commerce_discount', $order_discount_name);
-        // Make a list of discounts present via the order's line item price
-        // components.
-        $order_discount_ids[] = $order_discount_wrapper->discount_id->value();
+      foreach ($data['components'] as $key => $component) {
+        if (!empty($component['price']['data']['discount_name'])) {
+          $order_discount_name = $component['price']['data']['discount_name'];
+          $order_discount_wrapper = entity_metadata_wrapper('commerce_discount', $order_discount_name);
+          // Make a list of discounts present via the order's line item price
+          // components.
+          $order_discount_ids[] = $order_discount_wrapper->discount_id->value();
+        }
       }
     }
   }
