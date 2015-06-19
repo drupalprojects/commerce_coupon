@@ -10,9 +10,12 @@ class commerce_coupon_handler_field_coupon_order_remove extends commerce_coupon_
     // If there's an ajax form in the page, get the right destination url.
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest')  {
       $dest = str_replace($GLOBALS['base_url'] . '/', '', $_SERVER['HTTP_REFERER']);
+      // Remove language prefix if one exists.
+      list(, $dest) = language_url_split_prefix($dest, language_list());
     }
     else {
-      $dest = current_path();
+      $destination = drupal_get_destination();
+      $dest = $destination['destination'];
     }
     
     $text = !empty($this->options['text']) ? $this->options['text'] : t('Remove');
