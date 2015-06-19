@@ -119,7 +119,8 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
   }
 
   // Display any new status messages added by this pane within the pane's area.
-  if (drupal_get_messages(NULL, FALSE)) {
+  if (isset($form_state['triggering_element']) && $form_state['triggering_element']['#name'] == 'coupon_add'
+    && drupal_get_messages(NULL, FALSE)) {
     $pane_form['status_messages'] = array(
       '#type' => 'markup',
       '#markup' => theme('status_messages'),
