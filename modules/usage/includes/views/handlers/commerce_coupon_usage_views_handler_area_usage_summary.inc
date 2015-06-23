@@ -1,9 +1,19 @@
 <?php
 
-/*
+/**
+ * @file
+ */
+
+/**
  * Render a usage summary for a view with a coupon id as its argument.
  */
+/**
+ *
+ */
 class commerce_coupon_usage_views_handler_area_usage_summary extends views_handler_area {
+  /**
+   *
+   */
   function render($empty = FALSE) {
     if (!$empty || !empty($this->options['empty'])) {
       // First look for an order_id argument.
@@ -15,14 +25,15 @@ class commerce_coupon_usage_views_handler_area_usage_summary extends views_handl
             if (is_numeric($coupon_id) && $coupon_id) {
               $variables = array(
                 'coupon_id' => $coupon_id,
-                'details_link_text' => FALSE
+                'details_link_text' => FALSE,
               );
 
               return theme('commerce_coupon_usage_summary', $variables);
             }
-          } 
+          }
         }
       }
     }
   }
+
 }

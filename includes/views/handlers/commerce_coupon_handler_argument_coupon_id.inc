@@ -1,9 +1,16 @@
 <?php
 
+/**
+ * @file
+ */
+/**
+ *
+ */
 class commerce_coupon_handler_argument_coupon_id extends views_handler_argument_numeric {
-  /*
+  /**
    * Override the behavior of title(). Get the coupon code.
    */
+
   function title_query() {
     $titles = array();
 
@@ -15,4 +22,5 @@ class commerce_coupon_handler_argument_coupon_id extends views_handler_argument_
 
     return $titles;
   }
+
 }

@@ -1,17 +1,32 @@
 <?php
 
+/**
+ * @file
+ */
+/**
+ *
+ */
 abstract class commerce_coupon_handler_field_coupon_link extends views_handler_field {
+  /**
+   *
+   */
   function construct() {
     parent::construct();
 
     $this->additional_fields['coupon_id'] = 'coupon_id';
   }
 
+  /**
+   *
+   */
   function query() {
     $this->ensure_my_table();
     $this->add_additional_fields();
   }
 
+  /**
+   *
+   */
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
 
@@ -22,6 +37,9 @@ abstract class commerce_coupon_handler_field_coupon_link extends views_handler_f
     );
   }
 
+  /**
+   *
+   */
   function check_access($coupon_id, $op) {
     $coupon = commerce_coupon_create('discount');
     $coupon->coupon_id = $coupon_id;
@@ -30,4 +48,5 @@ abstract class commerce_coupon_handler_field_coupon_link extends views_handler_f
       return TRUE;
     }
   }
+
 }

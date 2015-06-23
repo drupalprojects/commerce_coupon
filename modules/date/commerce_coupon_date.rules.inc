@@ -1,11 +1,13 @@
 <?php
 
-/*
+/**
+ * @file
  * Implements hook_rules_condition_info().
  */
+
 function commerce_coupon_date_rules_condition_info() {
   $inline_conditions = inline_conditions_get_info();
-  
+
   $conditions['commerce_coupon_date_evaluate_date'] = array(
     'label' => t('Coupon dates'),
     'description' => t('Enter a start and/or end date during which this coupon is valid.'),
@@ -22,13 +24,13 @@ function commerce_coupon_date_rules_condition_info() {
       'end' => array(
         'type' => 'date',
         'label' => t('End date'),
-        'optional' => TRUE,          
-      )        
+        'optional' => TRUE,
+      ),
     ),
     'callbacks' => array(
       'execute' => $inline_conditions['commerce_coupon_date_evaluate_date']['callbacks']['build'],
-    )
+    ),
   );
-  
+
   return $conditions;
 }

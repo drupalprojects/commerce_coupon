@@ -1,6 +1,10 @@
 <?php
 
 /**
+ * @file
+ */
+
+/**
  * Implements hook_views_default_views_alter().
  */
 function commerce_coupon_usage_views_default_views_alter(&$views) {

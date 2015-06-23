@@ -1,8 +1,10 @@
 <?php
 
-/*
- * Form callback: general settings form
+/**
+ * @file
+ * Form callback: general settings form.
  */
+
 function commerce_coupon_type_settings_form($form, &$form_state, $coupon_type) {
   $name = $coupon_type['type'];
   $form['commerce_coupon_' . $name . '_default_code_size'] = array(
@@ -15,9 +17,10 @@ function commerce_coupon_type_settings_form($form, &$form_state, $coupon_type) {
   return system_settings_form($form);
 }
 
-/*
+/**
  * Menu callback: display an overview of available types.
  */
+
 function commerce_coupon_types_overview_page() {
   $header = array(
     t('Name'),
@@ -34,7 +37,7 @@ function commerce_coupon_types_overview_page() {
 
     // Add the product type's row to the table's rows array.
     $rows[] = array(
-      theme('commerce_coupon_type_admin_overview', array('coupon_type' => $coupon_type, )),
+      theme('commerce_coupon_type_admin_overview', array('coupon_type' => $coupon_type)),
       theme('links', array('links' => $links, 'attributes' => array('class' => 'links inline operations'))),
     );
   }
@@ -42,9 +45,10 @@ function commerce_coupon_types_overview_page() {
   return theme('table', array('header' => $header, 'rows' => $rows));
 }
 
-/*
+/**
  * Menu callback: display a list of product types that the user can create.
  */
+
 function commerce_coupon_add_page() {
   $item = menu_get_item();
   $content = system_admin_menu_block($item);
@@ -101,9 +105,10 @@ function theme_commerce_coupon_type_admin_overview($variables) {
   return $output;
 }
 
-/*
- * Form callback: coupon add/edit form
+/**
+ * Form callback: coupon add/edit form.
  */
+
 function commerce_coupon_form($form, &$form_state, $coupon) {
   // Ensure this include file is loaded when the form is rebuilt from the cache.
   $form_state['build_info']['files']['form'] = drupal_get_path('module', 'commerce_coupon') . '/includes/commerce_coupon.admin.inc';
@@ -114,8 +119,8 @@ function commerce_coupon_form($form, &$form_state, $coupon) {
   // Add responsive disabling of code element based on state of generate.
   $form['code']['#states'] = array(
     'disabled' => array(
-      ':input[name="generate"]' => array('checked' => TRUE)
-    )
+      ':input[name="generate"]' => array('checked' => TRUE),
+    ),
   );
 
   $form['actions'] = array(
@@ -132,15 +137,16 @@ function commerce_coupon_form($form, &$form_state, $coupon) {
   return $form;
 }
 
-/*
- * Form submit callback: submit coupon entity form
+/**
+ * Form submit callback: submit coupon entity form.
  */
+
 function commerce_coupon_form_submit(&$form, &$form_state) {
   $coupon = &$form_state['commerce_coupon'];
   $coupon->code = !empty($form_state['values']['code']) ? $form_state['values']['code'] : commerce_coupon_generate_coupon_code($coupon->type);
   $coupon->status = $form_state['values']['status'];
 
-  // Attach fields
+  // Attach fields.
   field_attach_submit('commerce_coupon', $coupon, $form, $form_state);
 
   // Save the coupon.
@@ -154,9 +160,10 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
   drupal_set_message(t('Coupon saved.'));
 }
 
-/*
- * Form callback: coupon delete confirmation form
+/**
+ * Form callback: coupon delete confirmation form.
  */
+
 function commerce_coupon_delete_form($form, &$form_state, $coupon) {
   $form_state['commerce_coupon'] = $coupon;
 
@@ -181,9 +188,10 @@ function commerce_coupon_delete_form($form, &$form_state, $coupon) {
   return $form;
 }
 
-/*
+/**
  * Submit callback for commerce_coupon_delete_form().
  */
+
 function commerce_coupon_delete_form_submit($form, &$form_state) {
   $coupon = $form_state['commerce_coupon'];
   $code = $coupon->code;
@@ -201,9 +209,10 @@ function commerce_coupon_delete_form_submit($form, &$form_state) {
   $form_state['redirect'] = 'admin/commerce/coupons';
 }
 
-/*
- * Form validate callback: validate coupon entity form
+/**
+ * Form validate callback: validate coupon entity form.
  */
+
 function commerce_coupon_form_validate($form, &$form_state) {
   field_attach_form_validate('commerce_coupon', $form_state['commerce_coupon'], $form, $form_state);
 }

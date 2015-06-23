@@ -1,13 +1,17 @@
 <?php
 
-// Define how many orders/coupons get processed per batch.
+/**
+ * @file
+ * Define how many orders/coupons get processed per batch.
+ */
 define('COMMERCE_COUPON_ORDER_IMPORT_RATE', 15);
 define('COMMERCE_COUPON_COUPON_IMPORT_RATE', 5);
 
 /**
  * Update four coupons at a time.
- * 
- * @param type $sandbox
+ *
+ * @param string or int or object... $sandbox
+ *
  * @return type
  */
 function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
@@ -16,8 +20,8 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
     $sandbox['coupons']['current_id'] = 0;
     $sandbox['coupons']['max'] = db_query('SELECT COUNT(DISTINCT coupon_id) FROM {commerce_coupon}')->fetchField();
   }
-  
-  // Get the next four coupon ids
+
+  // Get the next four coupon ids.
   $coupon_ids = db_select('commerce_coupon', 'c')
      ->fields('c', array('coupon_id'))
      ->condition('coupon_id', $sandbox['coupons']['current_id'], '>')
@@ -25,15 +29,15 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
      ->orderBy('coupon_id', 'ASC')
      ->execute()
      ->fetchCol();
-  
-  // Update the coupons
+
+  // Update the coupons.
   if ($coupon_ids) {
     $coupons = commerce_coupon_load_multiple($coupon_ids);
 
     foreach ($coupons as $coupon) {
       $original_coupon = clone $coupon;
       $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
-      
+
       // Update code column.
       if (empty($coupon->code)) {
         $code = $coupon_wrapper->commerce_coupon_code->value();
@@ -42,10 +46,10 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
 
       // Find update information about this coupon type.
       $parameters = module_invoke_all('commerce_coupon_legacy_mapping', $coupon);
-      
+
       if (!empty($parameters)) {
         // Determine if there is a suitable discount to use.
-        $query = new EntityFieldQuery;
+        $query = new EntityFieldQuery();
         $results = $query
           ->entityCondition('entity_type', 'commerce_discount')
           ->propertyCondition('type', 'order_discount')
@@ -73,7 +77,7 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
             'type' => 'order_discount',
             'name' => $parameters['discount name'],
             'label' => $parameters['label'],
-            'component_title' => $parameters['label']
+            'component_title' => $parameters['label'],
           ));
 
           $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
@@ -86,12 +90,12 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
         if ($discount) {
           $conditions = array();
           if (module_exists('commerce_coupon_usage') && !empty($coupon->commerce_coupon_number_of_uses)) {
-            // Add an inline condition for number of uses. 
+            // Add an inline condition for number of uses.
             $conditions[] = array(
               'condition_name' => 'commerce_coupon_usage_evaluate_usage',
               'condition_settings' => array(
-                'max_usage' => $coupon_wrapper->commerce_coupon_number_of_uses->value()
-              )
+                'max_usage' => $coupon_wrapper->commerce_coupon_number_of_uses->value(),
+              ),
             );
           }
 
@@ -100,8 +104,8 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
 
           // Set inline conditions field. The wrapper just gets too confused here
           // b/c of the bundle change so we do not use it.
-          if (!empty($conditions)) {          
-            $lang = field_language('commerce_coupon', $coupon, 'commerce_coupon_conditions');          
+          if (!empty($conditions)) {
+            $lang = field_language('commerce_coupon', $coupon, 'commerce_coupon_conditions');
             $coupon->commerce_coupon_conditions[$lang] = $conditions;
           }
 
@@ -117,25 +121,25 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
       $sandbox['coupons']['progress']++;
       $sandbox['coupons']['current_id'] = $coupon->coupon_id;
     }
-    
+
     if ($drush) {
       drush_print(t('Processed @n coupons', array('@n' => count($coupon_ids))));
-    }      
+    }
   }
   else {
     $sandbox['coupons']['#finished'] = 1;
   }
-    
+
   $sandbox['coupons']['#finished'] = empty($sandbox['coupons']['max']) ? 1 : ($sandbox['coupons']['progress'] / $sandbox['coupons']['max']);
 }
 
 /**
- * Update four orders at a
- * 
- * @param type $sandbox
+ * Update four orders at a.
+ *
+ * @param string or int or object... $sandbox
  */
 function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
-  $query = new EntityFieldQuery;
+  $query = new EntityFieldQuery();
   $query
     ->entityCondition('entity_type', 'commerce_order')
     ->fieldCondition('commerce_coupon_order_reference', 'target_id', 'NULL', '!=');
@@ -143,18 +147,18 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
   if (!isset($sandbox['orders']['progress'])) {
     $sandbox['orders']['progress'] = 0;
     $sandbox['orders']['current_id'] = 0;
-    
+
     // Calculate the number of orders to need to be processed.
-    $count_query = clone $query;    
+    $count_query = clone $query;
     $sandbox['orders']['max'] = $count_query->count()->execute();
   }
 
   $results = $query
     ->propertyCondition('order_id', $sandbox['orders']['current_id'], '>')
-    ->range(0, COMMERCE_COUPON_ORDER_IMPORT_RATE)       
+    ->range(0, COMMERCE_COUPON_ORDER_IMPORT_RATE)
     ->propertyOrderBy('order_id', 'ASC')
     ->execute();
-  
+
   if (!empty($results['commerce_order'])) {
     $order_ids = $results['commerce_order'];
     $orders = commerce_order_load_multiple(array_keys($results['commerce_order']));
@@ -168,28 +172,28 @@ function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
 
         // Allow modules to alter the order before it is saved.
         drupal_alter('commerce_coupon_update_order_pre_update', $original_order, $order);
-                
+
         if (module_exists('commerce_coupon_usage')) {
           $statuses = array_merge(commerce_order_statuses(array('state' => 'pending')), commerce_order_statuses(array('state' => 'completed')));
 
           // If the order is complete or pending, record a use of the coupon.
           if (in_array($order->status, array_keys($statuses))) {
             commerce_coupon_usage_record_usage($order);
-          }        
+          }
         }
         $order_wrapper->save();
       }
       $sandbox['orders']['progress']++;
       $sandbox['orders']['current_id'] = $order->order_id;
     }
-    
+
     if ($drush) {
       drush_print(t('Processed @n orders', array('@n' => count($order_ids))));
-    }    
+    }
   }
   else {
     $sandbox['orders']['#finished'] = 1;
   }
-  
+
   $sandbox['orders']['#finished'] = empty($sandbox['orders']['max']) ? 1 : ($sandbox['orders']['progress'] / $sandbox['orders']['max']);
 }

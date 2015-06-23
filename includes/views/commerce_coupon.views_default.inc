@@ -1,8 +1,10 @@
 <?php
 
-/*
+/**
+ * @file
  * Implements hook_views_default_views().
  */
+
 function commerce_coupon_views_default_views() {
 
   /*

@@ -41,7 +41,7 @@ function commerce_coupon_views_data_alter(&$data) {
       ),
     );
 
-    // uid relationship
+    // Uid relationship.
     $data['commerce_coupon']['uid']['relationship'] = array(
       'handler' => 'views_handler_relationship',
       'base' => 'users',
@@ -49,7 +49,7 @@ function commerce_coupon_views_data_alter(&$data) {
       'label' => t('Recipient'),
     );
 
-    // Change created into a date field
+    // Change created into a date field.
     $data['commerce_coupon']['created'] = array(
       'title' => t('Created date'),
       'help' => t('The date the order was created.'),
@@ -65,14 +65,14 @@ function commerce_coupon_views_data_alter(&$data) {
       ),
     );
 
-    // Add a special code argument handler
+    // Add a special code argument handler.
     $data['commerce_coupon']['code']['argument'] = array(
-      'handler' => 'commerce_coupon_handler_argument_coupon_code'
+      'handler' => 'commerce_coupon_handler_argument_coupon_code',
     );
 
-    // Add a special coupon id argument handler
+    // Add a special coupon id argument handler.
     $data['commerce_coupon']['coupon_id']['argument'] = array(
-      'handler' => 'commerce_coupon_handler_argument_coupon_id'
+      'handler' => 'commerce_coupon_handler_argument_coupon_id',
     );
   }
 }
@@ -81,6 +81,7 @@ function commerce_coupon_views_data_alter(&$data) {
  * Get the argument order if present.
  *
  * @param $handler
+ *
  * @return bool|mixed
  */
 function _commerce_coupon_load_argument_order($handler) {
