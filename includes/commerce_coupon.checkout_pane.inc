@@ -2,9 +2,12 @@
 
 /**
  * @file
- * Checkout pane callback: coupon settings.
+ * Commerce Checkout pane implementations.
  */
 
+/**
+ * Checkout pane callback: coupon settings.
+ */
 function commerce_coupon_pane_settings_form($checkout_pane) {
   $form = array();
 
@@ -24,7 +27,7 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
   $form['commerce_coupon_checkout_pane_view'] = array(
     '#type' => 'select',
     '#title' => t('Coupons Checkout Pane View'),
-    '#description' => t('Specify the View to use in the checkout pane under the coupon form. Select \'none\' to not display anything.'),
+    '#description' => t('Specify the View to use in the checkout pane under the coupon form. Select "none" to not display anything.'),
     '#options' => array('none' => t('None')) + $options,
     '#default_value' => variable_get('commerce_coupon_checkout_pane_view', 'order_coupon_list|checkout'),
   );
@@ -43,7 +46,6 @@ function commerce_coupon_pane_settings_form($checkout_pane) {
 /**
  * Checkout pane callback: coupon checkout form.
  */
-
 function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane, $order) {
   // Allow to replace pane content with ajax calls.
   $pane_form = array(
@@ -137,7 +139,6 @@ function commerce_coupon_pane_checkout_form($form, &$form_state, $checkout_pane,
 /**
  * Ajax callback: coupon add button.
  */
-
 function commerce_coupon_add_coupon_callback($form, &$form_state) {
   // Re-render the cart summary.
   list($view_id, $display_id) = explode('|', variable_get('commerce_cart_contents_pane_view', 'commerce_cart_summary|default'));
@@ -157,7 +158,6 @@ function commerce_coupon_add_coupon_callback($form, &$form_state) {
 /**
  * Checkout pane callback: coupon checkout review.
  */
-
 function commerce_coupon_pane_review($form, $form_state, $checkout_pane, $order) {
   if (!empty($order->commerce_coupons)) {
     // Extract the View and display keys from the cart contents pane setting.

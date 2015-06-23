@@ -2,6 +2,7 @@
 
 /**
  * @file
+ * Default views configuration for Commerce Coupon Usage.
  */
 
 /**

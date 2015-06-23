@@ -1,13 +1,18 @@
 <?php
 
-/*
+/**
+ * @file
+ * Installation procedure for Commerce Coupon Usage.
+ */
+
+/**
  * Implements hook_install().
  */
 function commerce_coupon_usage_install() {
   _commerce_coupon_install_inline_conditions_field();
 }
 
-/*
+/**
  * Implements hook_schema().
  */
 function commerce_coupon_usage_schema() {

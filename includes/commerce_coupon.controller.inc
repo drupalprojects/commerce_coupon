@@ -4,8 +4,9 @@
  * @file
  * Coupon controller class.
  */
+
 /**
- *
+ * Commerce Coupon controller class.
  */
 class CommerceCouponEntityController extends DrupalCommerceEntityController {
 
@@ -27,7 +28,8 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
    * @param array $values
    *   An array of values to set, keyed by property name.
    *
-   * @return object A product object with all default fields initialized.
+   * @return object
+   *   A coupon object with all default fields initialized.
    */
   public function create(array $values = array()) {
     $values += array(
@@ -45,24 +47,25 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
   /**
    * Saves a coupon.
    *
-   * @param $entity
-   *   The full coupon object to save
+   * @param object $coupon
+   *   The full coupon object to save.
    * @param \DatabaseTransaction $transaction
    *   An optional transaction object.
    *
-   * @return bool|int SAVED_NEW or SAVED_UPDATED depending on the operation performed.
+   * @return bool|int
+   *   SAVED_NEW or SAVED_UPDATED depending on the operation performed.
    */
-  public function save($entity, DatabaseTransaction $transaction = NULL) {
-    if (empty($entity->{$this->idKey}) || !empty($entity->is_new)) {
+  public function save($coupon, DatabaseTransaction $transaction = NULL) {
+    if (empty($coupon->{$this->idKey}) || !empty($coupon->is_new)) {
       // Set the creation timestamp if not set, for new entities.
-      if (empty($entity->created)) {
-        $entity->created = REQUEST_TIME;
+      if (empty($coupon->created)) {
+        $coupon->created = REQUEST_TIME;
       }
     }
 
     // Set the "changed" field.
-    $entity->changed = REQUEST_TIME;
-    return parent::save($entity);
+    $coupon->changed = REQUEST_TIME;
+    return parent::save($coupon);
   }
 
 }

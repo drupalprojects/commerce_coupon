@@ -2,9 +2,12 @@
 
 /**
  * @file
- * Implements hook_rules_condition_info().
+ * Rules definitions for Commerce Coupon.
  */
 
+/**
+ * Implements hook_rules_condition_info().
+ */
 function commerce_coupon_rules_condition_info() {
   $conditions['commerce_coupon_discount_coupon_codes_exist_on_order'] = array(
     'label' => t('Coupon code for a particular discount has been added to an order'),
@@ -63,7 +66,6 @@ function commerce_coupon_rules_condition_info() {
 /**
  * Implements hook_rules_event_info().
  */
-
 function commerce_coupon_rules_event_info() {
   $events['commerce_coupon_applied_to_cart'] = array(
     'label' => t('User has applied a coupon to a cart order'),
@@ -86,26 +88,27 @@ function commerce_coupon_rules_event_info() {
 /**
  * Rules condition callback: evaluate a coupon's inline conditions.
  */
-
 function commerce_coupon_evaluate_coupon_inline_conditions_rule($coupon_wrapper, $continuous_only = FALSE) {
   return commerce_coupon_evaluate_inline_conditions($coupon_wrapper, $continuous_only);
 }
 
 /**
- * Rules condition callback: evaluate whether the current user has the required
- * permissions to redeem a coupon.
+ * Rules condition callback.
+ *
+ * Evaluate whether the current user has the required permissions to redeem a
+ * coupon.
  */
-
 function commerce_coupon_current_user_may_redeem($coupon_wrapper) {
   $coupon = $coupon_wrapper->value();
   return commerce_coupon_access('redeem', $coupon);
 }
 
 /**
- * Rules condition callback: determine whether a coupon code attached to a
- * particular discount has been saved on an order.
+ * Rules condition callback.
+ *
+ * Determine whether a coupon code attached to a particular discount has been
+ * saved on an order.
  */
-
 function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $discount_name) {
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount_name);
 

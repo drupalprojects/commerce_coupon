@@ -1,5 +1,10 @@
 <?php
 
+/**
+ * @file
+ * Installation tasks for Commerce Coupon Date.
+ */
+
 /*
  * Implements hook_install().
  */

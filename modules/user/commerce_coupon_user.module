@@ -1,11 +1,16 @@
 <?php
 
-/*
+/**
+ * @file
+ * Provides coupon-to-user relationship for Commerce Coupon.
+ */
+
+/**
  * Implements hook_permission().
  */
 function commerce_coupon_user_permission() {
   $permissions = array();
-  
+
   // Add "own" type permissions for all coupon types.
   foreach (commerce_coupon_get_types() as $type => $info) {
     $permissions['redeem received coupons of type ' . $type] = array(
@@ -13,18 +18,18 @@ function commerce_coupon_user_permission() {
     );
     $permissions['redeem non user specific coupons of type ' . $type] = array(
       'title' => t('Redeem non-user-specific %type coupon', array('%type' => $info['label']))
-    );    
+    );
     $permissions['view received coupons of type ' . $type] = array(
       'title' => t('View received %type coupon', array('%type' => $info['label']))
     );
     $permissions['view non user specific coupons of type ' . $type] = array(
       'title' => t('View non-user-specific %type coupon', array('%type' => $info['label']))
-    );  
+    );
   }
   return $permissions;
 }
 
-/*
+/**
  * Implements hook_flush_caches().
  */
 function commerce_coupon_user_flush_caches() {
@@ -32,7 +37,7 @@ function commerce_coupon_user_flush_caches() {
   _commerce_coupon_user_install_helper();
 }
 
-/*
+/**
  * Implements hook_commerce_coupon_access_query_substitute().
  */
 function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $base_table = NULL, $account = NULL) {
@@ -42,8 +47,8 @@ function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $b
   if (!isset($account) && !$account = $query->getMetaData('account')) {
     $account = $user;
   }
-  
-  $tables = &$query->getTables();  
+
+  $tables = &$query->getTables();
 
   // Read the base table from the query if available or default to the first
   // table in the query's tables array.
@@ -62,7 +67,7 @@ function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $b
       break;
     }
   }
-  
+
   if (!isset($recipient_table)) {
     $recipient_table = 'field_data_commerce_coupon_recipient';
     $join_condition = $recipient_table . '.commerce_coupon_recipient_target_id=:uid AND ' . $recipient_table. '.entity_id=' . $base_table . '.coupon_id';
@@ -91,10 +96,10 @@ function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $b
     }
     else {
       $really_restricted = TRUE;
-      
+
       // "View own coupon of type"
       if ($account->uid && user_access('view own commerce_coupon entities of bundle ' . $bundle_name, $account)) {
-        
+
         // Add an AND condition group that grants access if the entity specified
         // by the view query matches the same bundle and belongs to the user.
         $conditions->condition(db_and()
@@ -102,7 +107,7 @@ function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $b
           ->condition($base_table . '.uid', $account->uid)
         );
       }
-      
+
       // "View received coupon of type"
       if (isset($recipient_table)) {
         if ($account->uid && user_access('view received coupons of type ' . $bundle_name, $account)) {
@@ -112,7 +117,7 @@ function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $b
           );
         }
 
-        // "View non-user-specific coupon of type"        
+        // "View non-user-specific coupon of type"
         if (user_access('view non user specific coupons of type ' . $bundle_name, $account)) {
           $conditions->condition(db_and()
             ->condition($base_table . '.type', $bundle_name)
@@ -163,18 +168,18 @@ function commerce_coupon_user_commerce_coupon_access_query_substitute($query, $b
     // we falsify this query. View checks are access grants, not access denials.
     $query->where('1 = 0');
   }
-  
+
   return $query;
 }
 
-/*
+/**
  * Implements hook_commerce_coupon_access_redeem().
  */
 function commerce_coupon_user_commerce_coupon_access_redeem($coupon, $account = NULL) {
   return commerce_coupon_user_received_coupon_access('redeem', $coupon, $account = NULL);
 }
 
-/*
+/**
  * Implements hook_commerce_coupon_access_view().
  */
 function commerce_coupon_user_commerce_coupon_access_view($coupon, $account = NULL) {
@@ -183,24 +188,23 @@ function commerce_coupon_user_commerce_coupon_access_view($coupon, $account = NU
 
 /**
  * Evaluate access per operation for coupons based on user-coupon permissions.
- * 
+ *
  * @param string $op
  *  Either "view" or "redeem"
- * 
- * @param CommerceCoupon $coupon
+ * @param object $coupon
  *  Commerce coupon entity
- * 
+ *
  * @param object $account
  *  User entity
- * 
- * @return boolean
+ *
+ * @return bool
  */
 function commerce_coupon_user_received_coupon_access($op, $coupon, $account = NULL) {
   if (user_access($op . ' coupons of type ' . $coupon->type) || user_access('redeem any coupon')) {
     return TRUE;
   }
-    
-  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);  
+
+  $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
   // If the coupon does not specify a recipient and the user is allowed to
   // redeem non-user-specific coupons of this type:
   if (!$coupon_wrapper->commerce_coupon_recipient->value() && user_access($op . ' non user specific coupons of type ' . $coupon->type)) {
@@ -222,7 +226,7 @@ function commerce_coupon_user_received_coupon_access($op, $coupon, $account = NU
   }
 }
 
-/*
+/**
  * Implements hook_commerce_coupon_coupon_entity_form_alter().
  */
 function commerce_coupon_user_commerce_coupon_coupon_entity_form_alter(&$form, &$form_state, $coupon) {

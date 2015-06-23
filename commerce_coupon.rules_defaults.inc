@@ -1,10 +1,12 @@
 <?php
-
 /**
  * @file
- * Implements hook_default_rules_configuration().
+ * Default rules for Commerce Coupon.
  */
 
+/**
+ * Implements hook_default_rules_configuration().
+ */
 function commerce_coupon_default_rules_configuration() {
   $rules = array();
 

@@ -1,11 +1,14 @@
 <?php
-
 /**
  * @file
- * Implements hook_entity_property_info_alter().
+ * Entity property info definitions for Commerce Coupon.
  */
 
+/**
+ * Implements hook_entity_property_info_alter().
+ */
 function commerce_coupon_entity_property_info_alter(&$info) {
+
   if (isset($info['commerce_discount'])) {
     $info['commerce_discount']['properties']['coupons'] = array(
       'type' => 'list<commerce_coupon>',
@@ -26,9 +29,10 @@ function commerce_coupon_entity_property_info_alter(&$info) {
 class CommerceCouponMetadataController extends EntityDefaultMetadataController {
 
   /**
-   *
+   * Overrides parent::entityPropertyInfo().
    */
   public function entityPropertyInfo() {
+
     $info = parent::entityPropertyInfo();
     $properties = &$info[$this->type]['properties'];
 

@@ -3,13 +3,12 @@
 /**
  * Returns the number of uses for this coupon.
  *
- * @param $coupon_id
+ * @param int $coupon_id
  *   Coupon id to check.
- *
- * @param $exclude_cart boolean
+ * @param bool $exclude_cart
  *   Exclude usage related to the current cart.
  *
- * @return integer
+ * @return int
  *   Returns number of uses of the coupon in all orders.
  */
 function commerce_coupon_usage_get_usage($coupon_id, $exclude_cart = FALSE) {
@@ -34,8 +33,11 @@ function commerce_coupon_usage_get_usage($coupon_id, $exclude_cart = FALSE) {
 /**
  * Get the maximum allowed uses for a particular coupon.
  *
- * @param type $coupon_id
- * @return type
+ * @param int $coupon_id
+ *   A coupon id.
+ *
+ * @return int
+ *   Max usage integer.
  */
 function commerce_coupon_usage_get_max_usage($coupon_id) {
   $coupon = commerce_coupon_load($coupon_id);
@@ -62,11 +64,12 @@ function commerce_coupon_usage_get_max_usage($coupon_id) {
   return $usage;
 }
 
-/*
- * Entity metadata property getter callback: get usage-related information about
- * a coupon
+/**
+ * Entity metadata property getter callback.
+ *
+ * Get usage-related information about a coupon.
  */
-function commerce_coupon_usage_property_getter($coupon, $options, $name) {
+function commerce_coupon_usage_property_getter($coupon, array $options, $name) {
   switch ($name) {
     case 'usage':
       return commerce_coupon_usage_get_usage($coupon->coupon_id);
@@ -76,14 +79,14 @@ function commerce_coupon_usage_property_getter($coupon, $options, $name) {
   }
 }
 
-/*
+/**
  * Implements hook_flush_caches().
  */
 function commerce_coupon_usage_flush_caches() {
   _commerce_coupon_install_inline_conditions_field();
 }
 
-/*
+/**
  * Implements hook_inline_conditions_info().
  */
 function commerce_coupon_usage_inline_conditions_info() {
@@ -101,8 +104,8 @@ function commerce_coupon_usage_inline_conditions_info() {
   return $conditions;
 }
 
-/*
- * Inline conditions build callback: evaluate max usage for coupon
+/**
+ * Inline conditions build callback: evaluate max usage for coupon.
  */
 function commerce_coupon_usage_evaluate_usage_build($coupon, $max_usage) {
   // Set the exclude_cart argument.
@@ -118,8 +121,8 @@ function commerce_coupon_usage_evaluate_usage_build($coupon, $max_usage) {
   }
 }
 
-/*
- * Inline conditions configure callback: evaluate max usage for coupon
+/**
+ * Inline conditions configure callback: evaluate max usage for coupon.
  */
 function commerce_coupon_usage_evaluate_usage_configure($settings) {
   if (is_string($settings)) {
@@ -137,7 +140,7 @@ function commerce_coupon_usage_evaluate_usage_configure($settings) {
   return $form;
 }
 
-/*
+/**
  * Implements hook_commerce_coupon_final_checkout_transaction_rollback().
  */
 function commerce_coupon_usage_commerce_coupon_final_checkout_transaction_rollback($transaction_id) {
@@ -145,7 +148,7 @@ function commerce_coupon_usage_commerce_coupon_final_checkout_transaction_rollba
   commerce_coupon_usage_transaction_delete($transaction_id);
 }
 
-/*
+/**
  * Implements hook_commerce_coupon_final_checkout_validate().
  */
 function commerce_coupon_usage_commerce_coupon_final_checkout_validate($form, $form_state, EntityDrupalWrapper $order_wrapper) {
@@ -164,7 +167,7 @@ function commerce_coupon_usage_commerce_coupon_final_checkout_validate($form, $f
   return $transaction_ids;
 }
 
-/*
+/**
  * Implements hook_entity_info().
  */
 function commerce_coupon_usage_entity_info() {
@@ -193,9 +196,17 @@ function commerce_coupon_usage_entity_info() {
 /**
  * Write a new commerce coupon usage transaction record
  *
- * @param type $coupon_id
- * @param type $amount
- * @return type
+ * @param $coupon_id
+ *   A coupon id.
+ * @param $order_id
+ *   An order id.
+ * @param null $uid
+ *   A user id.
+ * @param int $date
+ *   A date.
+ *
+ * @return int|null
+ *   A transaction id or NULL.
  */
 function commerce_coupon_usage_transaction_write($coupon_id, $order_id, $uid = NULL, $date = 0) {
   $values = array(
@@ -228,7 +239,8 @@ function commerce_coupon_usage_transaction_write($coupon_id, $order_id, $uid = N
 /**
  * Create a stub coupon usage transaction entity.
  *
- * @return type
+ * @return object
+ *   A coupon usage transaction entity.
  */
 function commerce_coupon_usage_transaction_new($values) {
   return entity_get_controller('commerce_coupon_usage_transaction')->create($values);
@@ -237,7 +249,8 @@ function commerce_coupon_usage_transaction_new($values) {
 /**
  * Save a coupon usage transaction entity.
  *
- * @return type
+ * @return object
+ *   A coupon usage transaction entity.
  */
 function commerce_coupon_usage_transaction_save($transaction) {
   return entity_get_controller('commerce_coupon_usage_transaction')->save($transaction);
@@ -246,9 +259,13 @@ function commerce_coupon_usage_transaction_save($transaction) {
 /**
  * Load a coupon usage transaction entity
  *
- * @param type $transaction_id
- * @param type $reset
- * @return type
+ * @param int $transaction_id
+ *   A usage transaction id.
+ * @param bool $reset
+ *   Whether or not to reset the entity cache.
+ *
+ * @return object
+ *   A usage transaction entity.
  */
 function commerce_coupon_usage_transaction_load($transaction_id, $reset = FALSE) {
   $transactions = commerce_coupon_usage_transaction_load_multiple(array($transaction_id), array(), $reset);
@@ -258,13 +275,13 @@ function commerce_coupon_usage_transaction_load($transaction_id, $reset = FALSE)
 /**
  * Load multiple coupon usage transaction entities based on certain conditions.
  *
- * @param $commerce_coupon_ids
- *   An array of coupon IDs.
- * @param $conditions
+ * @param array $transaction_ids
+ *   An array of transaction IDs.
+ * @param array $conditions
  *   An array of conditions to match against the {commerce_coupon} table.
- * @param $reset
+ * @param bool $reset
  *   A boolean indicating that the internal cache should be reset.
- * @return
+ * @return array
  *   An array of coupon objects, indexed by coupon id.
  *
  * @see entity_load()
@@ -280,10 +297,10 @@ function commerce_coupon_usage_transaction_load_multiple($transaction_ids = arra
 /**
  * Deletes a coupon usage transaction by ID.
  *
- * @param $product_id
+ * @param int $product_id
  *   The ID of the product to delete.
  *
- * @return
+ * @return bool
  *   TRUE on success, FALSE otherwise.
  */
 function commerce_coupon_usage_transaction_delete($transaction_id) {
@@ -293,10 +310,10 @@ function commerce_coupon_usage_transaction_delete($transaction_id) {
 /**
  * Deletes coupon usage transaction by ID.
  *
- * @param $transaction_ids
+ * @param array $transaction_ids
  *   An array of product IDs to delete.
  *
- * @return
+ * @return bool
  *   TRUE on success, FALSE otherwise.
  */
 function commerce_coupon_usage_transaction_delete_multiple($transaction_ids) {
@@ -313,7 +330,7 @@ function commerce_coupon_usage_views_api() {
   );
 }
 
-/*
+/**
  * Implements hook_theme().
  */
 function commerce_coupon_usage_theme() {
@@ -324,10 +341,10 @@ function commerce_coupon_usage_theme() {
   );
 }
 
-/*
+/**
  * Render a usage summary for a coupon
  */
-function theme_commerce_coupon_usage_summary($variables) {
+function theme_commerce_coupon_usage_summary(array $variables) {
   $coupon_id = $variables['coupon_id'];
   $link_text = $variables['details_link_text'];
 
@@ -348,13 +365,14 @@ function theme_commerce_coupon_usage_summary($variables) {
 }
 
 /**
- * Record coupon usage for an order. Uses the order's created date, not
- * REQUEST_TIME. Use this function for recording transactions for orders created
- * with coupons before usage tracking was enabled since date is just a best
- * guess.
+ * Record coupon usage for an order.
  *
- * @param $order
- *  Order to record usage for
+ * Uses the order's created date, not REQUEST_TIME. Use this function for
+ * recording transactions for orders created with coupons before usage tracking
+ * was enabled since date is just a best guess.
+ *
+ * @param object $order
+ *  Order to record usage for.
  */
 function commerce_coupon_usage_record_usage($order) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
@@ -368,7 +386,7 @@ function commerce_coupon_usage_record_usage($order) {
   }
 }
 
-/*
+/**
  * Implements hook_commerce_order_update().
  */
 function commerce_coupon_usage_commerce_order_update($order) {
@@ -420,13 +438,12 @@ function commerce_coupon_usage_commerce_order_update($order) {
   }
 }
 
-/*
+/**
  * Implements hook_commerce_order_insert().
  */
 function commerce_coupon_usage_commerce_order_insert($order) {
   // Supports tracking coupon usage when orders are created in completed or
   // pending statuses.
-
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   if (in_array($order->status, commerce_coupon_usage_tracked_order_statuses())) {
     foreach ($order_wrapper->commerce_coupons as $coupon_wrapper) {
@@ -440,7 +457,7 @@ function commerce_coupon_usage_commerce_order_insert($order) {
   }
 }
 
-/*
+/**
  * Implements hook_commerce_order_delete().
  */
 function commerce_coupon_usage_commerce_order_delete($order) {
@@ -448,8 +465,7 @@ function commerce_coupon_usage_commerce_order_delete($order) {
 }
 
 /**
- * Fetch order statuses that indicate order coupons should have their usage
- * tracked.
+ * Fetch order statuses indicating order coupons should have usage tracked.
  */
 function commerce_coupon_usage_tracked_order_statuses() {
   $statuses = array_merge(commerce_order_statuses(array('state' => 'completed')), commerce_order_statuses(array('state' => 'pending')));
@@ -459,8 +475,10 @@ function commerce_coupon_usage_tracked_order_statuses() {
 /**
  * Remove usage records related to a set of orders or a set of coupons or both.
  *
- * @param type $order_id
- * @param type $coupon_id
+ * @param int $order_id
+ *   An order id.
+ * @param int $coupon_id
+ *   A coupon id.
  */
 function commerce_coupon_reset_usage($order_ids = FALSE, $coupon_ids = FALSE) {
   $query = db_delete('commerce_coupon_usage_transaction');
@@ -479,8 +497,11 @@ function commerce_coupon_reset_usage($order_ids = FALSE, $coupon_ids = FALSE) {
 /**
  * Load all coupon usage records associated with an order.
  *
- * @param type $order_id
- * @return type
+ * @param int $order_id
+ *   An order id.
+ *
+ * @return array
+ *   A list of usage transaction entities.
  */
 function commerce_coupon_usage_record_exists($order_id, $coupon_id) {
   $query = new EntityFieldQuery;

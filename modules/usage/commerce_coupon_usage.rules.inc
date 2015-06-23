@@ -1,10 +1,12 @@
 <?php
-
 /**
  * @file
- * Implements hook_rules_condition_info().
+ * Rules definitions for Commerce Coupon Usage.
  */
 
+/**
+ * Implements hook_rules_condition_info().
+ */
 function commerce_coupon_usage_rules_condition_info() {
   $inline_conditions = inline_conditions_get_info();
 

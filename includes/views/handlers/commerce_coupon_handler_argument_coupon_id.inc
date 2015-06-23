@@ -2,15 +2,16 @@
 
 /**
  * @file
+ * Coupon id argument views handler.
  */
+
 /**
- *
+ * Coupon id argument views handler.
  */
 class commerce_coupon_handler_argument_coupon_id extends views_handler_argument_numeric {
   /**
-   * Override the behavior of title(). Get the coupon code.
+   * Overrides parent::title_query().
    */
-
   function title_query() {
     $titles = array();
 

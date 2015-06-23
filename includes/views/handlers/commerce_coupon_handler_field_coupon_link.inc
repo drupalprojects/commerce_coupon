@@ -2,13 +2,15 @@
 
 /**
  * @file
+ * Base class for coupon links.
  */
+
 /**
- *
+ * Base class for coupon links.
  */
 abstract class commerce_coupon_handler_field_coupon_link extends views_handler_field {
   /**
-   *
+   * Overrides parent::construct().
    */
   function construct() {
     parent::construct();
@@ -17,7 +19,7 @@ abstract class commerce_coupon_handler_field_coupon_link extends views_handler_f
   }
 
   /**
-   *
+   * Overrides parent::query().
    */
   function query() {
     $this->ensure_my_table();
@@ -25,7 +27,7 @@ abstract class commerce_coupon_handler_field_coupon_link extends views_handler_f
   }
 
   /**
-   *
+   * Overrides parent::options_form().
    */
   function options_form(&$form, &$form_state) {
     parent::options_form($form, $form_state);
@@ -38,7 +40,7 @@ abstract class commerce_coupon_handler_field_coupon_link extends views_handler_f
   }
 
   /**
-   *
+   * Overrides parent::check_access().
    */
   function check_access($coupon_id, $op) {
     $coupon = commerce_coupon_create('discount');

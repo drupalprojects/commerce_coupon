@@ -80,11 +80,13 @@ function commerce_coupon_views_data_alter(&$data) {
 /**
  * Get the argument order if present.
  *
- * @param $handler
+ * @param views_handler $handler
+ *   A views handler.
  *
- * @return bool|mixed
+ * @return bool|object
+ *   Either an order entity or FALSE.
  */
-function _commerce_coupon_load_argument_order($handler) {
+function _commerce_coupon_load_argument_order(views_handler $handler) {
   // Determine if there is an order id argument. If multiple are present, use
   // the first found.
   if (isset($handler->view->argument)) {

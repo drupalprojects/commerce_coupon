@@ -1,14 +1,11 @@
 <?php
-
 /**
  * @file
+ * Views plugin and data definitions for Commerce Coupon Usage.
  */
 
 /**
- * Commerce discount entity Views definitions.
- */
-/**
- *
+ * Commerce Coupon usage transaction entity Views definitions.
  */
 class CommerceCouponUsageTransactionViewsController extends EntityDefaultViewsController {
 
@@ -69,7 +66,7 @@ class CommerceCouponUsageTransactionViewsController extends EntityDefaultViewsCo
 }
 
 /**
- *
+ * Implements hook_views_data_alter().
  */
 function commerce_coupon_usage_views_data_alter(&$data) {
   if (isset($data['commerce_coupon'])) {

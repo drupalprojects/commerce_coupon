@@ -2,6 +2,10 @@
 
 /**
  * @file
+ * 1.x to 2.x update coverage.
+ */
+
+/**
  * Define how many orders/coupons get processed per batch.
  */
 define('COMMERCE_COUPON_ORDER_IMPORT_RATE', 15);
@@ -10,11 +14,10 @@ define('COMMERCE_COUPON_COUPON_IMPORT_RATE', 5);
 /**
  * Update four coupons at a time.
  *
- * @param string or int or object... $sandbox
- *
- * @return type
+ * @param array $sandbox
+ *   A persistent context store for batch updates.
  */
-function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
+function _commerce_coupon_update_coupons_multipass(array &$sandbox, $drush) {
   if (!isset($sandbox['coupons']['progress'])) {
     $sandbox['coupons']['progress'] = 0;
     $sandbox['coupons']['current_id'] = 0;
@@ -134,9 +137,10 @@ function _commerce_coupon_update_coupons_multipass(&$sandbox, $drush) {
 }
 
 /**
- * Update four orders at a.
+ * Update four orders at a time.
  *
- * @param string or int or object... $sandbox
+ * @param array $sandbox
+ *   A persistent context store for batch updates.
  */
 function _commerce_coupon_update_orders_multipass(&$sandbox, $drush) {
   $query = new EntityFieldQuery();

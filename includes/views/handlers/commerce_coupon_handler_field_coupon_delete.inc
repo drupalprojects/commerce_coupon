@@ -2,13 +2,16 @@
 
 /**
  * @file
+ * Delete coupon link field handler.
  */
+
 /**
- *
+ * Delete coupon link field handler.
  */
 class commerce_coupon_handler_field_coupon_delete extends commerce_coupon_handler_field_coupon_link {
+
   /**
-   *
+   * Overrides parent::render($values).
    */
   function render($values) {
     $coupon_id = $this->get_value($values, 'coupon_id');

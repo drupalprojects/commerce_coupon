@@ -4,8 +4,9 @@
  * @file
  * Coupon usage transaction controller class.
  */
+
 /**
- *
+ * Coupon usage transaction controller class.
  */
 class CommerceCouponUsageTransactionEntityController extends DrupalCommerceEntityController {
 
@@ -26,7 +27,7 @@ class CommerceCouponUsageTransactionEntityController extends DrupalCommerceEntit
    * @param array $values
    *   An array of values to set, keyed by property name.
    *
-   * @return
+   * @return object
    *   A product object with all default fields initialized.
    */
   public function create(array $values = array()) {
@@ -44,12 +45,12 @@ class CommerceCouponUsageTransactionEntityController extends DrupalCommerceEntit
   /**
    * Saves a usage transaction.
    *
-   * @param $commerce_coupon
-   *   The full coupon object to save.
-   * @param $transaction
+   * @param object $entity
+   *   The full coupon object to reference.
+   * @param DatabaseTransaction $transaction
    *   An optional transaction object.
    *
-   * @return
+   * @return mixed
    *   SAVED_NEW or SAVED_UPDATED depending on the operation performed.
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {

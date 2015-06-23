@@ -2,14 +2,16 @@
 
 /**
  * @file
+ * Remove coupon form order link views field handler.
  */
+
 /**
- *
+ * Remove coupon form order link views field handler.
  */
 class commerce_coupon_handler_field_coupon_order_remove extends commerce_coupon_handler_field_coupon_link {
 
   /**
-   *
+   * Overrides parent::render().
    */
   public function render($values) {
     $coupon_id = $this->get_value($values, 'coupon_id');
@@ -31,7 +33,12 @@ class commerce_coupon_handler_field_coupon_order_remove extends commerce_coupon_
     return l(
       $text,
       'commerce/coupons/order/remove/' . $coupon_id . '/' . $order->order_id,
-      array('query' => array('destination' => $dest, 'token' => drupal_get_token('commerce_coupon_remove_checkout:' . $coupon_id . ':' . $order->order_id)))
+      array(
+        'query' => array(
+          'destination' => $dest,
+          'token' => drupal_get_token('commerce_coupon_remove_checkout:' . $coupon_id . ':' . $order->order_id),
+        ),
+      ),
     );
   }
 

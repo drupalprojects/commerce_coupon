@@ -2,9 +2,12 @@
 
 /**
  * @file
- * Form callback: general settings form.
+ * Administrative forms and callbacks for Commerce Coupon.
  */
 
+/**
+ * Form callback: general settings form.
+ */
 function commerce_coupon_type_settings_form($form, &$form_state, $coupon_type) {
   $name = $coupon_type['type'];
   $form['commerce_coupon_' . $name . '_default_code_size'] = array(
@@ -20,7 +23,6 @@ function commerce_coupon_type_settings_form($form, &$form_state, $coupon_type) {
 /**
  * Menu callback: display an overview of available types.
  */
-
 function commerce_coupon_types_overview_page() {
   $header = array(
     t('Name'),
@@ -48,7 +50,6 @@ function commerce_coupon_types_overview_page() {
 /**
  * Menu callback: display a list of product types that the user can create.
  */
-
 function commerce_coupon_add_page() {
   $item = menu_get_item();
   $content = system_admin_menu_block($item);
@@ -90,13 +91,13 @@ function theme_commerce_coupon_add_list($variables) {
 /**
  * Builds an overview of a product type for display to an administrator.
  *
- * @param $variables
+ * @param array $variables
  *   An array of variables used to generate the display; by default includes the
- *     type key with a value of the product type array.
+ *   type key with a value of the product type array.
  *
  * @ingroup themeable
  */
-function theme_commerce_coupon_type_admin_overview($variables) {
+function theme_commerce_coupon_type_admin_overview(array $variables) {
   $coupon_type = $variables['coupon_type'];
 
   $output = check_plain($coupon_type['label']);
@@ -108,7 +109,6 @@ function theme_commerce_coupon_type_admin_overview($variables) {
 /**
  * Form callback: coupon add/edit form.
  */
-
 function commerce_coupon_form($form, &$form_state, $coupon) {
   // Ensure this include file is loaded when the form is rebuilt from the cache.
   $form_state['build_info']['files']['form'] = drupal_get_path('module', 'commerce_coupon') . '/includes/commerce_coupon.admin.inc';
@@ -140,7 +140,6 @@ function commerce_coupon_form($form, &$form_state, $coupon) {
 /**
  * Form submit callback: submit coupon entity form.
  */
-
 function commerce_coupon_form_submit(&$form, &$form_state) {
   $coupon = &$form_state['commerce_coupon'];
   $coupon->code = !empty($form_state['values']['code']) ? $form_state['values']['code'] : commerce_coupon_generate_coupon_code($coupon->type);
@@ -163,7 +162,6 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
 /**
  * Form callback: coupon delete confirmation form.
  */
-
 function commerce_coupon_delete_form($form, &$form_state, $coupon) {
   $form_state['commerce_coupon'] = $coupon;
 
@@ -191,7 +189,6 @@ function commerce_coupon_delete_form($form, &$form_state, $coupon) {
 /**
  * Submit callback for commerce_coupon_delete_form().
  */
-
 function commerce_coupon_delete_form_submit($form, &$form_state) {
   $coupon = $form_state['commerce_coupon'];
   $code = $coupon->code;
@@ -212,7 +209,6 @@ function commerce_coupon_delete_form_submit($form, &$form_state) {
 /**
  * Form validate callback: validate coupon entity form.
  */
-
 function commerce_coupon_form_validate($form, &$form_state) {
   field_attach_form_validate('commerce_coupon', $form_state['commerce_coupon'], $form, $form_state);
 }

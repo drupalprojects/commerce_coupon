@@ -2,13 +2,15 @@
 
 /**
  * @file
+ * Discount value display views field handler.
  */
+
 /**
- *
+ * Discount value display views field handler.
  */
 class commerce_coupon_handler_field_discount_value_display extends views_handler_field {
   /**
-   *
+   * Overrides parent::construct().
    */
   function construct() {
     parent::construct();
@@ -17,7 +19,7 @@ class commerce_coupon_handler_field_discount_value_display extends views_handler
   }
 
   /**
-   *
+   * Overrides parent::query().
    */
   function query() {
     $this->ensure_my_table();
@@ -25,7 +27,7 @@ class commerce_coupon_handler_field_discount_value_display extends views_handler
   }
 
   /**
-   *
+   * Overrides parent::render().
    */
   function render($values) {
     // Determine if there is an order id argument. If multiple are present, use
@@ -46,9 +48,9 @@ class commerce_coupon_handler_field_discount_value_display extends views_handler
       if ($discounts) {
         $items = array();
 
-        // Coupon codes may be linked to multiple discounts, so we have a hook that
-        // lets discount type/offer modules define what value gets shown for each
-        // coupon that has a discount.
+        // Coupon codes may be linked to multiple discounts, so we have a hook
+        // that lets discount type/offer modules define what value gets shown
+        // for each coupon that has a discount.
         foreach ($discounts as $discount) {
           $display = '';
           drupal_alter('commerce_coupon_discount_value_display', $display, $discount, $order);

@@ -1,7 +1,12 @@
 <?php
 
 /**
- * Field setup
+ * @file
+ * Installation hooks and procedures for Commerce Coupon.
+ */
+
+/**
+ * Field setup.
  */
 function commerce_coupon_install_helper() {
   field_info_cache_clear();
@@ -22,7 +27,7 @@ function commerce_coupon_install_helper() {
       'settings' => array(
         'handler' => 'base',
         'target_type' => 'commerce_discount',
-        'handler_setting' => array()
+        'handler_setting' => array(),
       ),
       'field_name' => 'commerce_discount_reference',
       'type' => 'entityreference',
@@ -31,7 +36,7 @@ function commerce_coupon_install_helper() {
     field_create_field($field);
   }
 
-  // Add discount reference to discount coupon
+  // Add discount reference to discount coupon.
   if (empty($instances['commerce_coupon']['discount_coupon']['commerce_discount_reference'])) {
     $instance = array(
       'field_name' => 'commerce_discount_reference',
@@ -67,7 +72,7 @@ function commerce_coupon_install_helper() {
     field_create_field($field);
   }
 
-  // Add coupons fields to all order bundles
+  // Add coupons fields to all order bundles.
   $order_entity_info = entity_get_info('commerce_order');
   foreach (array_keys($order_entity_info['bundles']) as $bundle) {
     if (empty($instances['commerce_order'][$bundle]['commerce_coupons'])) {
@@ -87,7 +92,7 @@ function commerce_coupon_install_helper() {
   }
 }
 
-/*
+/**
  * Implements hook_install().
  */
 function commerce_coupon_install() {
@@ -95,7 +100,7 @@ function commerce_coupon_install() {
   commerce_coupon_install_helper();
 }
 
-/*
+/**
  * Implements hook_schema().
  */
 function commerce_coupon_schema() {
@@ -150,7 +155,7 @@ function commerce_coupon_schema() {
         'description' => 'Whether or not this coupon is enabled.',
         'type' => 'int',
         'not null' => TRUE,
-        'default' => 0
+        'default' => 0,
       ),
       'data' => array(
         'type' => 'blob',
@@ -167,12 +172,12 @@ function commerce_coupon_schema() {
     'foreign keys' => array(
       'uid' => array(
         'table' => 'users',
-        'columns' => array('uid' => 'uid')
+        'columns' => array('uid' => 'uid'),
       ),
     ),
     'unique keys' => array(
-      'code' => array('code')
-    )
+      'code' => array('code'),
+    ),
   );
 
   return $schema;
@@ -182,7 +187,7 @@ function commerce_coupon_schema() {
  * Clear cache to rebuild rules and views.
  */
 function commerce_coupon_update_7201() {
-  // Make sure rules and views get rebuilt
+  // Make sure rules and views get rebuilt.
   drupal_flush_all_caches();
 }
 
@@ -215,7 +220,7 @@ function commerce_coupon_update_7202() {
   }
 }
 
-/*
+/**
  * Implements hook_uninstall().
  */
 function commerce_coupon_uninstall() {
@@ -224,7 +229,7 @@ function commerce_coupon_uninstall() {
   // Delete any field instance attached to a coupon type.
   commerce_delete_instances('commerce_coupon');
 
-  // Remove coupon reference field instance on order
+  // Remove coupon reference field instance on order.
   if ($instance = field_info_instance('commerce_order', 'commerce_coupons', 'commerce_order')) {
     commerce_delete_instance($instance);
   }
@@ -254,20 +259,24 @@ function commerce_coupon_update_7200(&$sandbox) {
     // Change "is active" field to "status".
     db_change_field('commerce_coupon', 'is_active', 'status', $fields['status']);
 
-    // Add all the new columns
+    // Add all the new columns.
     db_add_field('commerce_coupon', 'bulk', $fields['bulk']);
     db_add_field('commerce_coupon', 'code', $fields['code']);
     db_add_field('commerce_coupon', 'uid', $fields['uid']);
 
-    // Indexes
+    // Indexes.
     db_add_index('commerce_coupon', 'code', array('code'));
     db_add_index('commerce_coupon', 'uid', array('uid'));
 
-    // Disable coupons ui module
+    // Disable coupons ui module.
     module_disable(array('commerce_coupon_ui'));
 
-    // Enable dependencies
-    module_enable(array('commerce_discount', 'inline_conditions', 'commerce_coupon_usage'));
+    // Enable dependencies.
+    module_enable(array(
+      'commerce_discount',
+      'inline_conditions',
+      'commerce_coupon_usage',
+    ));
 
     // Install coupon fields.
     commerce_coupon_install_helper();
@@ -280,10 +289,10 @@ function commerce_coupon_update_7200(&$sandbox) {
 
   $drush = function_exists('drush_print');
 
-  // Update coupon entities
+  // Update coupon entities.
   _commerce_coupon_update_coupons_multipass($sandbox, $drush);
 
-  // Update order entities
+  // Update order entities.
   _commerce_coupon_update_orders_multipass($sandbox, $drush);
 
   $sandbox['#finished'] = $sandbox['coupons']['#finished'] >= 1 && $sandbox['orders']['#finished'] >= 1;
