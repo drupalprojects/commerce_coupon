@@ -38,7 +38,7 @@ class commerce_coupon_handler_field_coupon_order_remove extends commerce_coupon_
           'destination' => $dest,
           'token' => drupal_get_token('commerce_coupon_remove_checkout:' . $coupon_id . ':' . $order->order_id),
         ),
-      ),
+      )
     );
   }
 
