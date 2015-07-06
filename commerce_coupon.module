@@ -632,25 +632,27 @@ function commerce_coupon_code_grants_discount($code, $discount_id) {
 function commerce_coupon_get_discount_properties($discount, $options, $name) {
   switch ($name) {
     case 'coupons':
-        if (!empty($discount->discount_id)) {
+      if (!empty($discount->discount_id)) {
         // Load coupons that reference this discount.
         $query = new EntityFieldQuery();
         $results = $query
-            ->entityCondition('entity_type', 'commerce_coupon')
-            ->fieldCondition('commerce_discount_reference', 'target_id', $discount->discount_id)
-            ->execute();
+          ->entityCondition('entity_type', 'commerce_coupon')
+          ->fieldCondition('commerce_discount_reference', 'target_id', $discount->discount_id)
+          ->execute();
 
         if (isset($results['commerce_coupon'])) {
           return array_keys($results['commerce_coupon']);
         }
-        }
+      }
       return array();
 
     case 'coupon_count':
-        if (!empty($discount->discount_id)) {
+      if (!empty($discount->discount_id)) {
         // First, look for a value in the cache.
-        $cache = cache_get('discount_coupon_count_' . $discount->discount_id);
-        if (!empty($cache->data)) {
+        $cid = 'discount_coupon_count_' . $discount->discount_id;
+        $cache = cache_get($cid);
+
+        if (!empty($cache)) {
           return (int) $cache->data;
         }
 
@@ -658,16 +660,21 @@ function commerce_coupon_get_discount_properties($discount, $options, $name) {
         // put an equivalent query together, it ends up super slow, so we use
         // db_select and joins here. It still is not particularly quick.
         $query = db_select('commerce_coupon', 'c')
-             ->fields('c', array('coupon_id'));
+           ->fields('c', array('coupon_id'));
         $query->join('field_data_commerce_discount_reference', 'd', 'c.coupon_id=d.entity_id');
         $query
-             ->condition('c.status', 1)
-             ->condition('d.commerce_discount_reference_target_id', $discount->discount_id)
-             ->condition('d.deleted', 0)
-             ->condition('d.entity_type', 'commerce_coupon');
+           ->condition('c.status', 1)
+           ->condition('d.commerce_discount_reference_target_id', $discount->discount_id)
+           ->condition('d.deleted', 0)
+           ->condition('d.entity_type', 'commerce_coupon');
 
-        return $query->countQuery()->execute()->fetchField();
-        }
+        $value = (int) $query->countQuery()->execute()->fetchField();
+
+        // Set cache to speed up next call.
+        cache_set($cid, $value);
+
+        return $value;
+      }
       return 0;
 
   }
@@ -1710,9 +1717,18 @@ function commerce_coupon_cache_coupon_count($discount) {
   // Cache a coupon count for this discount.
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
   cache_clear_all('discount_coupon_count_' . $discount->discount_id, 'cache');
-  $cache = cache_set('discount_coupon_count_' . $discount->discount_id, $discount_wrapper->coupon_count->value());
+  // Fill cache with new value.
+  $cache = $discount_wrapper->coupon_count->value();
 
   return $cache;
+}
+
+/**
+ * Implements hook_commerce_discount_delete().
+ */
+function commerce_coupon_commerce_discount_delete($discount) {
+  // When we delete a coupon, remove the cached coupon count for that discount.
+  cache_clear_all('discount_coupon_count_' . $discount->discount_id, 'cache');
 }
 
 /**
