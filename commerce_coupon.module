@@ -768,7 +768,7 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
     // The same coupon cannot be added twice.
     $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
     foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
-      if ($order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
+      if ($order_coupon_wrapper->value() && $order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
         $error = t('The coupon you have entered has already been applied to your order');
         return;
       }

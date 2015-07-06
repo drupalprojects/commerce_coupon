@@ -126,7 +126,7 @@ function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $d
     // At least one of the coupon codes granting this discount must be 1) active
     // and 2) pass its inline conditions.
     foreach ($order_wrapper->commerce_coupons as $coupon_wrapper) {
-      if (commerce_coupon_code_grants_discount($coupon_wrapper->code->value(), $discount_wrapper->discount_id->value())) {
+      if ($coupon_wrapper->value() && commerce_coupon_code_grants_discount($coupon_wrapper->code->value(), $discount_wrapper->discount_id->value())) {
         $has_coupons = TRUE;
         $outcome = FALSE;
 
