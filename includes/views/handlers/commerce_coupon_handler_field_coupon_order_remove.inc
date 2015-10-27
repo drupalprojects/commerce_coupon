@@ -20,7 +20,7 @@ class commerce_coupon_handler_field_coupon_order_remove extends commerce_coupon_
     // If there's an ajax form in the page, get the right destination url.
     if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest') {
       $dest = str_replace($GLOBALS['base_url'] . '/', '', $_SERVER['HTTP_REFERER']);
-      if (module_exists('language')) {
+      if (drupal_multilingual()) {
         // Remove language prefix if one exists.
         list(, $dest) = language_url_split_prefix($dest, language_list());
       }
