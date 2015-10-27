@@ -115,7 +115,7 @@ function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $d
   // It is possible for the order to be null. This happens if we are dealing
   // with a dummy line item created just to run pricing rules. In this case we
   // do not let the discount proceed.
-  if (!$order_wrapper->value() || !$discount_wrapper->value()) {
+  if (!$order_wrapper->value() || !$discount_wrapper->value() || !commerce_coupon_order_allows_coupons($order_wrapper->value())) {
     return;
   }
 

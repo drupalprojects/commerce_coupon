@@ -761,6 +761,11 @@ function commerce_coupon_generate_coupon_code($type, $length = NULL) {
  *   entity.
  */
 function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  if (!commerce_coupon_order_allows_coupons($order)) {
+    return;
+  }
 
   // Trim trailing spaces.
   $code = trim($code);
@@ -773,7 +778,7 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
 
   if ($coupon) {
     // The same coupon cannot be added twice.
-    $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
     foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
       if ($order_coupon_wrapper->value() && $order_coupon_wrapper->coupon_id->value() == $coupon->coupon_id) {
         $error = t('The coupon you have entered has already been applied to your order');
@@ -804,6 +809,18 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
   else {
     $error = t('Your coupon code is not valid.');
   }
+}
+
+/**
+ * Determine whether an order has the commerce coupon field.
+ *
+ * @param $order
+ * @return mixed
+ */
+function commerce_coupon_order_allows_coupons($order) {
+  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
+
+  return $order_wrapper->__isset('commerce_coupons');
 }
 
 /**
@@ -1014,6 +1031,7 @@ function commerce_coupon_get_number_of_uses($coupon_id) {
  * @return bool
  *   Returns TRUE if the coupon is in the order, otherwise return FALSE.
  */
+/*
 function commerce_coupon_code_is_in_order($code, $order) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
   foreach ($order_wrapper->commerce_coupon_order_reference as $coupon_wrapper) {
@@ -1022,7 +1040,7 @@ function commerce_coupon_code_is_in_order($code, $order) {
     }
   }
   return FALSE;
-}
+}*/
 
 /**
  * Implements hook_views_api().
@@ -1204,6 +1222,10 @@ function commerce_coupon_order_has_discount($order, $discount) {
 function commerce_coupon_order_has_coupon_code($code, $order) {
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
+  if (!commerce_coupon_order_allows_coupons($order)) {
+    return;
+  }
+
   foreach ($order_wrapper->commerce_coupons as $delta => $coupon_wrapper) {
     if (strcasecmp($coupon_wrapper->code->value(), $code) == 0) {
       return TRUE;
@@ -1290,6 +1312,10 @@ function commerce_coupon_load_coupon_code_discounts($code) {
  *   Whether or not to save the order.
  */
 function commerce_coupon_remove_coupon_from_order($order, $coupon, $save = TRUE) {
+  if (!commerce_coupon_order_allows_coupons($order)) {
+    return;
+  }
+
   $original_order = clone $order;
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
@@ -1358,6 +1384,10 @@ function commerce_coupon_rollback_order_transactions($order, $save = FALSE) {
  */
 function commerce_coupon_commerce_cart_order_refresh($order_wrapper) {
   $order = $order_wrapper->value();
+
+  if (!commerce_coupon_order_allows_coupons($order)) {
+    return;
+  }
 
   foreach ($order_wrapper->commerce_coupons->value() as $coupon) {
     // Invalidate coupons that exist on the order without their discount

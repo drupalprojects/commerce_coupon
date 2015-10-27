@@ -152,6 +152,10 @@ function commerce_coupon_usage_commerce_coupon_final_checkout_transaction_rollba
  * Implements hook_commerce_coupon_final_checkout_validate().
  */
 function commerce_coupon_usage_commerce_coupon_final_checkout_validate($form, $form_state, EntityDrupalWrapper $order_wrapper) {
+  if (!commerce_coupon_order_allows_coupons($order_wrapper->value())) {
+    return;
+  }
+
   $transaction_ids = array();
   foreach ($order_wrapper->commerce_coupons as $coupon_wrapper) {
     // Attempt to use the coupon.
@@ -375,6 +379,10 @@ function theme_commerce_coupon_usage_summary(array $variables) {
  *  Order to record usage for.
  */
 function commerce_coupon_usage_record_usage($order) {
+  if (!commerce_coupon_order_allows_coupons($order)) {
+    return;
+  }
+
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
 
   foreach($order_wrapper->commerce_coupons as $coupon_wrapper) {
@@ -390,6 +398,10 @@ function commerce_coupon_usage_record_usage($order) {
  * Implements hook_commerce_order_update().
  */
 function commerce_coupon_usage_commerce_order_update($order) {
+  if (!commerce_coupon_order_allows_coupons($order)) {
+    return;
+  }
+
   // This hook implementation mostly supports keeping track of coupon usage
   // as completed/pending orders are changed from the order admin UI.
 
@@ -442,6 +454,10 @@ function commerce_coupon_usage_commerce_order_update($order) {
  * Implements hook_commerce_order_insert().
  */
 function commerce_coupon_usage_commerce_order_insert($order) {
+  if (!commerce_coupon_order_allows_coupons($order)) {
+    return;
+  }
+
   // Supports tracking coupon usage when orders are created in completed or
   // pending statuses.
   $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
