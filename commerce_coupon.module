@@ -1021,28 +1021,6 @@ function commerce_coupon_get_number_of_uses($coupon_id) {
 }
 
 /**
- * Finds out if a given coupon code is present in an order.
- *
- * @param string $code
- *   Coupon code to check.
- * @param object $order
- *   Commerce order object.
- *
- * @return bool
- *   Returns TRUE if the coupon is in the order, otherwise return FALSE.
- */
-/*
-function commerce_coupon_code_is_in_order($code, $order) {
-  $order_wrapper = entity_metadata_wrapper('commerce_order', $order);
-  foreach ($order_wrapper->commerce_coupon_order_reference as $coupon_wrapper) {
-    if (strcasecmp($coupon_wrapper->code->value(), $code) == 0) {
-      return TRUE;
-    }
-  }
-  return FALSE;
-}*/
-
-/**
  * Implements hook_views_api().
  */
 function commerce_coupon_views_api() {
