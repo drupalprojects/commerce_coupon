@@ -1053,11 +1053,7 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
           break;
 
         case 'percentage':
-          $rate = $offer_wrapper->commerce_percentage->value();
-          if ($rate < 1) {
-            $rate = $rate * 100;
-          }
-          $text = $rate . '% ' . t('off order');
+          $text = t('@percentage% off order', array('@percentage' => $offer_wrapper->commerce_percentage->value()));
 
           break;
 
@@ -1121,11 +1117,7 @@ function commerce_coupon_commerce_coupon_discount_value_display_alter(&$text, $d
           break;
 
         case 'percentage':
-          $rate = $offer_wrapper->commerce_percentage->value();
-          if ($rate < 1) {
-            $rate = $rate * 100;
-          }
-          $offer_text = $rate . '%';
+          $offer_text = t('@percentage%', array('@percentage' => $offer_wrapper->commerce_percentage->value()));
 
           break;
       }
