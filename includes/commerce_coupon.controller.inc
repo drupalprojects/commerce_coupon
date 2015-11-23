@@ -68,4 +68,16 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
     return parent::save($coupon);
   }
 
+  /**
+   * Unserialize the data property of loaded coupons.
+   */
+  public function attachLoad(&$queried_coupons, $revision_id = FALSE) {
+    foreach ($queried_coupons as $coupon_id => &$commerce_coupon) {
+      $commerce_coupon->data = unserialize($commerce_coupon->data);
+    }
+
+    // Call the default attachLoad().
+    parent::attachLoad($queried_coupons, $revision_id);
+  }
+
 }
