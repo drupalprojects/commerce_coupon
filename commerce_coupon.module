@@ -202,13 +202,13 @@ function commerce_coupon_menu() {
       'title' => $coupon_type['label'],
       'page callback' => 'drupal_get_form',
       'page arguments' => array('commerce_coupon_type_settings_form', $coupon_type),
-      'access arguments' => array('administer coupons'),
+      'access arguments' => array('administer commerce_coupon entities'),
       'file' => 'includes/commerce_coupon.admin.inc',
     );
 
     $items['admin/commerce/coupons/types/' . $type_arg . '/edit'] = array(
       'title' => 'Edit',
-      'access arguments' => array('administer coupons'),
+      'access arguments' => array('administer commerce_coupon entities'),
       'type' => MENU_DEFAULT_LOCAL_TASK,
       'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
     );
@@ -229,7 +229,7 @@ function commerce_coupon_menu() {
     $items['admin/commerce/coupons/types/' . $type_arg . '/conditions'] = array(
       'title' => 'Edit conditions component',
       'description' => 'Add or remove conditions from the component that is evaluated to determine coupon eligibility',
-      'access arguments' => array('administer coupons'),
+      'access arguments' => array('administer commerce_coupon entities'),
       'page callback' => 'drupal_goto',
       'page arguments' => array('admin/config/workflow/rules/components/manage/' . commerce_coupon_conditions_component_name($type)),
       'type' => MENU_LOCAL_TASK,
