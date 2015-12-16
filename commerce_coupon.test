@@ -235,4 +235,13 @@ class CommerceCouponTest extends CommerceCouponTestBase {
 
   }
 
+  public function testCommerceCouponTypeAccess() {
+    // Login with store admin.
+    $this->drupalLogin($this->store_admin);
+
+    $this->drupalGet('admin/commerce/coupons/types/discount-coupon');
+    $this->assertResponse(200, 'The store admin has access to coupons of the discount-coupon type.');
+    $this->drupalPost(NULL, array(), t('Save configuration'));
+    $this->assertText(t('The configuration options have been saved.'));
+  }
 }
