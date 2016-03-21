@@ -13,6 +13,7 @@ function commerce_coupon_date_rules_condition_info() {
   $conditions['commerce_coupon_date_evaluate_date'] = array(
     'label' => t('Coupon dates'),
     'description' => t('Enter a start and/or end date during which this coupon is valid.'),
+    'group' => t('Commerce Coupon'),
     'parameter' => array(
       'commerce_coupon' => array(
         'type' => 'commerce_coupon',

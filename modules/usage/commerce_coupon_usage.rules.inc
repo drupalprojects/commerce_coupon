@@ -13,6 +13,7 @@ function commerce_coupon_usage_rules_condition_info() {
   $conditions['commerce_coupon_usage_evaluate_usage'] = array(
     'label' => t('Coupon usage'),
     'description' => t('Enter the maximum number of times a coupon may be used.'),
+    'group' => t('Commerce Coupon'),
     'parameter' => array(
       'commerce_coupon' => array(
         'type' => 'commerce_coupon',
