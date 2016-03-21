@@ -13,5 +13,6 @@ files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_edit.inc
 files[] = includes/views/handlers/commerce_coupon_handler_field_coupon_link.inc
 files[] = includes/views/handlers/commerce_coupon_handler_argument_coupon_id.inc
 files[] = includes/views/handlers/commerce_coupon_handler_argument_coupon_code.inc
+files[] = includes/views/handlers/commerce_coupon_handler_area_cart_form.inc
 files[] = commerce_coupon.info.inc
 files[] = commerce_coupon.test

@@ -235,6 +235,44 @@ class CommerceCouponTest extends CommerceCouponTestBase {
 
   }
 
+  public function testCommerceCouponUICartForm() {
+    // Login as administrator and add the field to the footer of the cart View.
+    $this->drupalLogin($this->store_admin);
+    $view = views_get_view('commerce_cart_form');
+    $view->add_item('default', 'footer', 'commerce_order', 'coupon_cart_form');
+    $view->save();
+
+    // Create a cart order and ensure we can see the code form on the cart
+    // management page.
+    $this->createDummyOrder($this->store_admin->uid, array($this->product->product_id => 1), $status = 'cart');
+    $this->drupalGet('cart');
+    $this->assertFieldByName('coupon_code', NULL, 'Coupon code field is present on cart management page.');
+    $this->assertFieldByName('coupon_add', NULL, 'Coupon add submit button is present on cart management page.');
+
+    // Test coupon code validation.
+    $this->drupalPost(NULL, array(), t('Add coupon'));
+    $this->assertText(t('Please enter a coupon code.'), 'Validation message for missing code.');
+    // Load a fresh form.
+    $this->drupalGet('cart');
+    $values = array('coupon_code' => 'BLAH');
+    $this->drupalPost(NULL, $values, t('Add coupon'));
+    $this->assertText(t('Please enter a valid coupon code.'), 'Validation message for code that doesn\'t exist.');
+
+    // Create a discount and add a coupon to it. Test it applies correctly.
+    $discount = $this->createDiscount('order_discount', 'fixed_amount', 300);
+    $coupon = commerce_coupon_create('discount_coupon');
+    $coupon->code = 'HALF OFF';
+    $coupon->commerce_discount_reference['und'][0]['target_id'] = $discount->discount_id;
+    commerce_coupon_save($coupon);
+    // Load a fresh form.
+    $this->drupalGet('cart');
+    $values = array('coupon_code' => 'HALF OFF');
+    $this->drupalPost(NULL, $values, t('Add coupon'));
+    $this->assertText(t('Coupon code applied.'), 'Coupon applied message for valid code.');
+
+
+  }
+
   public function testCommerceCouponTypeAccess() {
     // Login with store admin.
     $this->drupalLogin($this->store_admin);
