@@ -798,7 +798,7 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
     else {
       // If the coupon was not added, check the static error variable - one of
       // the coupon conditions may have set something specific.
-      $error = &drupal_static('commerce_coupon_error_' . strtolower($code));
+      $error = drupal_static('commerce_coupon_error_' . strtolower($code));
 
       if (!$error) {
         // If no condition has specified an error message, set a default one.
