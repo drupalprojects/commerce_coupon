@@ -22,7 +22,7 @@ function commerce_coupon_date_inline_conditions_info() {
 function commerce_coupon_date_evaluate_date_build($coupon, $start = NULL, $end = NULL) {
   // We want end to be the end of the day on whatever day they choose.
   if ($end) {
-    $end += 86400;
+    $end = strtotime('+1 day', $end);
   }
 
   // Error message building blocks.
