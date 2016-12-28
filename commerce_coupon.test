@@ -282,4 +282,35 @@ class CommerceCouponTest extends CommerceCouponTestBase {
     $this->drupalPost(NULL, array(), t('Save configuration'));
     $this->assertText(t('The configuration options have been saved.'));
   }
+
+  public function testCommerceCouponCouponCount() {
+    // Login with store admin.
+    $this->drupalLogin($this->store_admin);
+
+    // Create a discount and make a legit coupon.
+    $discount = $this->createDiscount('order_discount', 'fixed_amount', 300);
+    $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
+
+    // Load a fresh form.
+    $this->drupalGet('admin/commerce/coupons/add');
+
+    $values = array(
+      'code' => 'TEST_COUPON',
+      'commerce_discount_reference[und][0][target_id]' => $discount->label . ' (' . $discount->internalIdentifier() . ')',
+    );
+    $this->drupalPost(NULL, $values, t('Save coupon'));
+
+    // Enabled coupons contribute to the discount coupon count.
+    $this->assertEqual($discount_wrapper->coupon_count->value(), 1, 'Enabled discount coupon contributes to discount coupon count.');
+
+    $coupon = commerce_coupon_load(1);
+    $coupon->status = 0;
+    commerce_coupon_save($coupon);
+    // We need to save the discount to clear the coupon count cache.
+    entity_save('commerce_discount', $discount);
+    $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount);
+
+    // Disabled coupons also contribute to the discount coupon count.
+    $this->assertEqual($discount_wrapper->coupon_count->value(), 1, 'Disabled discount coupon contributes to discount coupon count.');
+  }
 }

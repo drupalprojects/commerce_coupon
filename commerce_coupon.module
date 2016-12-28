@@ -662,9 +662,7 @@ function commerce_coupon_get_discount_properties($discount, $options, $name) {
         $query = db_select('commerce_coupon', 'c')
            ->fields('c', array('coupon_id'));
         $query->join('field_data_commerce_discount_reference', 'd', 'c.coupon_id=d.entity_id');
-        $query
-           ->condition('c.status', 1)
-           ->condition('d.commerce_discount_reference_target_id', $discount->discount_id)
+        $query->condition('d.commerce_discount_reference_target_id', $discount->discount_id)
            ->condition('d.deleted', 0)
            ->condition('d.entity_type', 'commerce_coupon');
 
@@ -776,7 +774,7 @@ function commerce_coupon_redeem_coupon_code($code, $order, &$error) {
 
   $coupon = commerce_coupon_load_by_code($code);
 
-  if ($coupon) {
+  if ($coupon && $coupon->status) {
     // The same coupon cannot be added twice.
 
     foreach ($order_wrapper->commerce_coupons as $order_coupon_wrapper) {
