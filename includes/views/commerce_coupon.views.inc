@@ -75,6 +75,19 @@ function commerce_coupon_views_data_alter(&$data) {
       'handler' => 'commerce_coupon_handler_argument_coupon_id',
     );
 
+    // Add coupon code handlers.
+    $data['commerce_coupon']['code'] = array(
+      'title' => t('Code'),
+      'help' => t('The coupon code.'),
+      'field' => array(
+        'handler' => 'views_handler_field',
+        'click sortable' => TRUE,
+      ),
+      'filter' => array(
+        'handler' => 'views_handler_filter_string',
+      ),
+    );
+
     // Expose the coupon form on the cart form.
     $data['commerce_order']['coupon_cart_form'] = array(
       'title' => t('Coupon cart form'),
