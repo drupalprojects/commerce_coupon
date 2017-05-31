@@ -484,8 +484,13 @@ function commerce_coupon_usage_commerce_order_delete($order) {
  * Fetch order statuses indicating order coupons should have usage tracked.
  */
 function commerce_coupon_usage_tracked_order_statuses() {
-  $statuses = array_merge(commerce_order_statuses(array('state' => 'completed')), commerce_order_statuses(array('state' => 'pending')));
-  return array_keys($statuses);
+  $statuses = &drupal_static(__FUNCTION__);
+  if (empty($statuses)) {
+    $statuses = array_merge(commerce_order_statuses(array('state' => 'completed')), commerce_order_statuses(array('state' => 'pending')));
+    $statuses = array_keys($statuses);
+    drupal_alter('commerce_coupon_usage_tracked_order_statuses', $statuses);
+  }
+  return $statuses;
 }
 
 /**
