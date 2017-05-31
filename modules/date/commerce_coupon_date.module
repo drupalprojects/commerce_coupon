@@ -22,7 +22,7 @@ function commerce_coupon_date_inline_conditions_info() {
 function commerce_coupon_date_evaluate_date_build($coupon, $start = NULL, $end = NULL) {
   // We want end to be the end of the day on whatever day they choose.
   if ($end) {
-    $end = strtotime('+1 day', $end);
+    $end_timestamp = strtotime('+1 day', $end);
   }
 
   // Error message building blocks.
@@ -30,7 +30,7 @@ function commerce_coupon_date_evaluate_date_build($coupon, $start = NULL, $end =
 
   // Comparisons
   $lower_pass = REQUEST_TIME >= $start;
-  $upper_pass = REQUEST_TIME <= $end;
+  $upper_pass = REQUEST_TIME <= $end_timestamp;
 
   if ($start && $end) {
     $outcome = $lower_pass && $upper_pass;
@@ -38,11 +38,11 @@ function commerce_coupon_date_evaluate_date_build($coupon, $start = NULL, $end =
   }
   else if ($end) {
     $outcome = $upper_pass;
-    $message = t('Unfortunately, this coupon is only valid until %end.',   array('%end' => format_date($end, 'custom', $date_format)));
+    $message = t('Unfortunately, this coupon is only valid until %end.', array('%end' => format_date($end, 'custom', $date_format)));
   }
   else if ($start) {
     $outcome = $lower_pass;
-    $message = t('Unfortunately, this coupon is only valid starting %start.',  array('%start' => format_date($start, 'custom', $date_format)));
+    $message = t('Unfortunately, this coupon is only valid starting %start.', array('%start' => format_date($start, 'custom', $date_format)));
   }
 
   if (!$outcome) {
