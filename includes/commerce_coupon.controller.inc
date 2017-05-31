@@ -65,6 +65,9 @@ class CommerceCouponEntityController extends DrupalCommerceEntityController {
 
     // Set the "changed" field.
     $coupon->changed = REQUEST_TIME;
+
+    // Trim the code.
+    $coupon->code = trim($coupon->code);
     return parent::save($coupon);
   }
 

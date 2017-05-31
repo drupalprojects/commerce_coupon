@@ -220,7 +220,8 @@ class CommerceCouponTest extends CommerceCouponTestBase {
     $this->drupalGet('admin/commerce/coupons/add');
 
     $values = array(
-      'code' => 'TEST_COUPON',
+      // Add a trailing space to test trimming.
+      'code' => 'TEST_COUPON ',
       'commerce_discount_reference[und][0][target_id]' => $discount->label . ' (' . $discount->internalIdentifier() . ')',
     );
     $this->drupalPost(NULL, $values, t('Save coupon'));
@@ -270,7 +271,11 @@ class CommerceCouponTest extends CommerceCouponTestBase {
     $this->drupalPost(NULL, $values, t('Add coupon'));
     $this->assertText(t('Coupon code applied.'), 'Coupon applied message for valid code.');
 
-
+    // Load a fresh form and try to apply the same code with a trailing space.
+    $this->drupalGet('cart');
+    $values = array('coupon_code' => 'HALF OFF ');
+    $this->drupalPost(NULL, $values, t('Add coupon'));
+    $this->assertText(t('The coupon you have entered has already been applied to your order'), 'Coupon applied message for valid code.');
   }
 
   public function testCommerceCouponTypeAccess() {

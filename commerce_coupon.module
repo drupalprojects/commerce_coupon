@@ -2058,7 +2058,7 @@ function commerce_coupon_validate_code($element, &$form_state) {
       return;
     }
 
-    $code = $element['#value'];
+    $code = trim($element['#value']);
 
     // Do not allow existing coupon codes, unless it is merely saving itself.
     $coupon = commerce_coupon_load_by_code($code);
