@@ -318,4 +318,55 @@ class CommerceCouponTest extends CommerceCouponTestBase {
     // Disabled coupons also contribute to the discount coupon count.
     $this->assertEqual($discount_wrapper->coupon_count->value(), 1, 'Disabled discount coupon contributes to discount coupon count.');
   }
+
+}
+
+/**
+ * Testing commerce coupon UI and functionality.
+ */
+class CommerceCouponLoadCouponCodeDiscountsTest extends CommerceCouponTestBase {
+
+  /**
+   * Implementation of getInfo().
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Coupons commerce_coupon_load_coupon_code_discounts',
+      'description' => 'Test commerce_coupon_load_coupon_code_discounts',
+      'group' => 'Commerce Coupon',
+    );
+  }
+
+  public function testCommerceCouponLoadCouponCodeDiscounts() {
+    // Login with store admin.
+    $this->drupalLogin($this->store_admin);
+
+    // Create a discount and make a legit coupon.
+    $discount = $this->createDiscount('order_discount', 'fixed_amount', 300);
+
+    // Load a fresh form.
+    $this->drupalGet('admin/commerce/coupons/add');
+
+    $values = array(
+      'code' => 'TEST_COUPON',
+      'commerce_discount_reference[und][0][target_id]' => $discount->label . ' (' . $discount->internalIdentifier() . ')',
+    );
+    $this->drupalPost(NULL, $values, t('Save coupon'));
+
+    $discounts = commerce_coupon_load_coupon_code_discounts('TEST_COUPON');
+    $this->assertTrue(!empty($discounts));
+    $this->assertEqual(1, count($discounts));
+
+    // Test the discount returned.
+    $returned_discount = reset($discounts);
+    $this->assertTrue($returned_discount !== FALSE);
+    $this->assertEqual($discount->label, $returned_discount->label);
+
+    $discount->status = 0;
+    $discount->save();
+
+    $discounts = commerce_coupon_load_coupon_code_discounts('TEST_COUPON');
+    $this->assertEqual(0, count($discounts));
+  }
+
 }

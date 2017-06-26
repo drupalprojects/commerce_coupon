@@ -1256,16 +1256,19 @@ function commerce_coupon_load_coupon_code_discounts($code) {
   $discounts = array();
   $coupon = commerce_coupon_load_by_code($code);
 
-  $query = new EntityFieldQuery();
-  $results = $query
-    ->entityCondition('entity_type', 'commerce_discount')
-    ->fieldCondition('commerce_coupon_reference', 'target_id', $coupon->coupon_id)
-    ->propertyCondition('enabled', 1)
-    ->execute();
-
-  if (!empty($results['commerce_discount'])) {
-    $discounts = entity_load('commerce_discount', array_keys($results['commerce_discount']));
+  if ($coupon) {
+    /** @var \EntityDrupalWrapper $coupon_wrapper */
+    $coupon_wrapper = entity_metadata_wrapper('commerce_coupon',$coupon);
+    if ($coupon_wrapper->getBundle() == 'discount_coupon') {
+      /** @var CommerceDiscount $discount */
+      foreach ($coupon_wrapper->commerce_discount_reference->value() as $discount) {
+        if ($discount->status) {
+          $discounts[] = $discount;
+        }
+      }
+    }
   }
+
   return $discounts;
 }
 
