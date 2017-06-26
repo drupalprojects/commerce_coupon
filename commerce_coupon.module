@@ -1941,6 +1941,7 @@ function commerce_coupon_attach_coupon_entity_form(array &$form, array &$form_st
     '#default_value' => $coupon->code,
     '#coupon_id' => isset($coupon->coupon_id) ? $coupon->coupon_id : '',
     '#element_validate' => array('commerce_coupon_validate_code'),
+    '#weight' => -10,
   );
 
   // Generate code.
@@ -1949,6 +1950,7 @@ function commerce_coupon_attach_coupon_entity_form(array &$form, array &$form_st
     '#title' => t('Generate code'),
     '#description' => t('If you check this, a random code will be generated.'),
     '#default_value' => FALSE,
+    '#weight' => -8,
   );
 
   // Set user id.
@@ -1957,6 +1959,7 @@ function commerce_coupon_attach_coupon_entity_form(array &$form, array &$form_st
   $form['uid'] = array(
     '#type' => 'value',
     '#value' => $uid,
+    '#weight' => -7,
   );
 
   $coupon->uid = $uid;
@@ -1966,6 +1969,7 @@ function commerce_coupon_attach_coupon_entity_form(array &$form, array &$form_st
   $form['commerce_coupon_fields'] = array(
     '#type' => 'container',
     '#parents' => $field_parents,
+    '#weight' => -6,
   );
 
   // Attach fields.
@@ -1981,6 +1985,7 @@ function commerce_coupon_attach_coupon_entity_form(array &$form, array &$form_st
     '#type' => 'checkbox',
     '#title' => t('Enabled'),
     '#default_value' => $coupon->status,
+    '#weight' => -6,
   );
 
   // Allow other modules to alter this form whereever it appears.
