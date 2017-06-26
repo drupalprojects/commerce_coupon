@@ -2123,7 +2123,7 @@ function commerce_coupon_form_commerce_checkout_form_alter(&$form, &$form_state)
   // might need to be rolled back. This is to handle when giftcard validation
   // was successful but the payment method or some other form element has thrown
   // an error.
-  if (isset($form['commerce_payment'])) {
+  if (isset($form['commerce_payment']) && isset($form['buttons']['continue'])) {
     $order = commerce_order_load($form_state['order']->order_id);
 
     // Rollback any transactions if necessary. Pass the "save" argument so that
