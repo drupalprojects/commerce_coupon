@@ -134,7 +134,7 @@ function hook_commerce_coupon_coupon_entity_form_alter($form, $form_state, $coup
  *   - coupon: the coupon
  *   - data: an arbitrary array of contextual data. Not currently used.
  */
-function commerce_coupon_condition_outcome(&$outcome, $context) {
+function hook_commerce_coupon_condition_outcome_alter(&$outcome, $context) {
   if ($context['coupon']->type == 'mytype') {
     $outcome = FALSE;
   }
