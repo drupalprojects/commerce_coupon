@@ -134,6 +134,7 @@ function commerce_coupon_form($form, &$form_state, $coupon) {
     '#weight' => 40,
   );
 
+  $form['#original'] = $coupon;
   return $form;
 }
 
@@ -151,9 +152,19 @@ function commerce_coupon_form_submit(&$form, &$form_state) {
   // Save the coupon.
   commerce_coupon_save($coupon);
   $form_state['redirect'] = 'admin/commerce/coupons';
+  $discounts = array();
 
-  // Rebuild rules defaults so that discount rules get updated.
-  entity_defaults_rebuild(array('rules_config'));
+  // Rebuild the discount rules for the discounts we're referencing and we
+  // used to reference.
+  foreach (array($coupon, $form['#original']) as $coupon_instance) {
+    if (!empty($coupon_instance->commerce_discount_reference)) {
+      $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon_instance);
+      $discounts = array_merge($discounts, $coupon_wrapper->commerce_discount_reference->value());
+    }
+  }
+  if (!empty($discounts)) {
+    _commerce_discount_rebuild_rules_config($discounts);
+  }
 
   // Redirect based on the button clicked.
   drupal_set_message(t('Coupon saved.'));
@@ -192,11 +203,19 @@ function commerce_coupon_delete_form($form, &$form_state, $coupon) {
 function commerce_coupon_delete_form_submit($form, &$form_state) {
   $coupon = $form_state['commerce_coupon'];
   $code = $coupon->code;
+  $discounts = array();
+
+  // Collect the discount to rebuild.
+  if (!empty($coupon->commerce_discount_reference)) {
+    $coupon_wrapper = entity_metadata_wrapper('commerce_coupon', $coupon);
+    $discounts = $coupon_wrapper->commerce_discount_reference->value();
+  }
 
   if (commerce_coupon_delete($coupon->coupon_id)) {
-    // Rebuild rules defaults so that discount rules get updated.
-    entity_defaults_rebuild(array('rules_config'));
-
+    // Rebuild the Rules for the referenced discounts.
+    if ($discounts) {
+      _commerce_discount_rebuild_rules_config($discounts);
+    }
     drupal_set_message(t('%code has been deleted.', array('%code' => $code)));
     watchdog('commerce_coupon', 'Deleted coupon %code.', array('%code' => $code), WATCHDOG_NOTICE);
   }

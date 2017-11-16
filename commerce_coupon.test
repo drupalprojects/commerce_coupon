@@ -369,4 +369,51 @@ class CommerceCouponLoadCouponCodeDiscountsTest extends CommerceCouponTestBase {
     $this->assertEqual(0, count($discounts));
   }
 
+  public function testCommerceCouponUIEditCoupon() {
+    // Login with store admin.
+    $this->drupalLogin($this->store_admin);
+
+    // Create two discounts.
+    $discount1 = $this->createDiscount('order_discount', 'fixed_amount', 300, 'discount1');
+    $discount2 = $this->createDiscount('order_discount', 'fixed_amount', 400, 'discount2');
+    $this->assertFalse($this->discountRuleHasCouponCondition($discount1->name), t('discount1 rule has no coupon condition initially.'));
+    $this->assertFalse($this->discountRuleHasCouponCondition($discount2->name), t('discount2 rule has no coupon condition initially.'));
+    // Load a fresh form.
+    $this->drupalGet('admin/commerce/coupons/add');
+
+    // Create a coupon for discount1.
+    $values = array(
+      'code' => 'TEST_COUPON',
+      'commerce_discount_reference[und][0][target_id]' => $discount1->label . ' (' . $discount1->internalIdentifier() . ')',
+    );
+    $this->drupalPost(NULL, $values, t('Save coupon'));
+    $this->assertTrue($this->discountRuleHasCouponCondition($discount1->name), t('discount1 rule has coupon condition after adding a coupon to it.'));
+    $this->assertFalse($this->discountRuleHasCouponCondition($discount2->name), t('discount2 rule has no coupon condition after adding a coupon to discount1.'));
+
+    // Move the coupon to discount2.
+    $coupon = commerce_coupon_load_by_code('TEST_COUPON');
+    $this->drupalGet('/admin/commerce/coupons/' . $coupon->coupon_id . '/edit');
+    $values = array(
+      'commerce_discount_reference[und][0][target_id]' => $discount2->label . ' (' . $discount2->internalIdentifier() . ')',
+    );
+    $this->drupalPost(NULL, $values, t('Save coupon'));
+    $this->assertFalse($this->discountRuleHasCouponCondition($discount1->name), t('discount1 rule has no coupon condition after moving the coupon to discount2.'));
+    $this->assertTrue($this->discountRuleHasCouponCondition($discount2->name), t('discount2 rule has a coupon condition after moving the coupon from discount1 to discount2.'));
+  }
+
+  protected function discountRuleHasCouponCondition($discount_name) {
+    $rule_name = commerce_discount_build_rule_machine_name($discount_name);
+    // Need to clear all entity static caches, since a rule is nasty.
+    drupal_static_reset();
+    /** @var RulesReactionRule $rule */
+    $rule = entity_load_unchanged('rules_config', $rule_name);
+    /** @var RulesAnd $condition */
+    foreach ($rule->conditions() as $condition) {
+      if ($condition->getPluginName() === 'condition commerce_coupon_discount_coupon_codes_exist_on_order') {
+        return TRUE;
+      }
+    }
+    return FALSE;
+  }
+
 }

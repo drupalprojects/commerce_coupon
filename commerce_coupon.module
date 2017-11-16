@@ -1697,8 +1697,10 @@ function commerce_coupon_form_attach_coupons(&$form, &$form_state) {
   }
 
   // Rebuild the rules again if coupon added or deleted.
-  if ($rebuild_rules) {
-    entity_defaults_rebuild(array('rules_config'));
+  if ($rebuild_rules && !empty($form_state['commerce_discount']->discount_id)) {
+    if ($discount = entity_load_single('commerce_discount', $form_state['commerce_discount']->discount_id)) {
+      _commerce_discount_rebuild_rules_config(array($discount));
+    }
   }
 }
 
