@@ -6,6 +6,36 @@
  */
 
 /**
+ * Implements hook_rules_action_info().
+ */
+function commerce_coupon_rules_action_info() {
+  $actions['commerce_coupon_discount_get_coupons_list'] = array(
+    'label' => t('List of all coupon codes related referencing this discount.'),
+    'group' => t('Commerce Coupon'),
+    'parameter' => array(
+      'commerce_order' => array(
+        'type' => 'commerce_order',
+        'wrapped' => TRUE,
+        'label' => t('Order'),
+      ),
+      'commerce_discount' => array(
+        'label' => t('Commerce Discount'),
+        'type' => 'token',
+        'options list' => 'commerce_discount_entity_list',
+      ),
+    ),
+    'provides' => array(
+      'discount_coupons' => array(
+        'type' => 'list<commerce_coupon>',
+        'label' => t('List of coupons of this discount'),
+        'save' => FALSE,
+      ),
+    ),
+  );
+  return $actions;
+}
+
+/**
  * Implements hook_rules_condition_info().
  */
 function commerce_coupon_rules_condition_info() {
@@ -104,24 +134,45 @@ function commerce_coupon_current_user_may_redeem($coupon_wrapper) {
 }
 
 /**
- * Rules condition callback.
+ * Fetches the coupons related to a discount from an order.
  *
- * Determine whether a coupon code attached to a particular discount has been
- * saved on an order.
+ * If the bool parameter is set the function will return TRUE if there are any
+ * valid coupons for the discount on the order.
+ *
+ * @param EntityMetadataWrapper $order_wrapper
+ *   The wrapped order.
+ * @param string $discount_name
+ *   The discount name to look for.
+ * @param bool $bool
+ *   Whether or not to return just a boolean to indicate that there's a valid
+ *   coupon for the discount on the order.
+ *
+ * @return array|bool
+ *   By default a list of valid coupons on the order for the discount is
+ *   returned. But If the bool parameter is set the function will return a
+ *   boolean to indicate if there are any valid coupons on the order.
  */
-function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $discount_name) {
+function commerce_coupon_discount_extract_coupons($order_wrapper, $discount_name, $bool = FALSE) {
+  $discount_coupons = array();
+  // Create list of coupons related to this discount if the condition matches.
   $discount_wrapper = entity_metadata_wrapper('commerce_discount', $discount_name);
 
   // It is possible for the order to be null. This happens if we are dealing
   // with a dummy line item created just to run pricing rules. In this case we
   // do not let the discount proceed.
   if (!$order_wrapper->value() || !$discount_wrapper->value() || !commerce_coupon_order_allows_coupons($order_wrapper->value())) {
-    return FALSE;
+    if ($bool) {
+      return FALSE;
+    }
+    return $discount_coupons;
   }
 
   // Determine if this discount uses coupons. If not, this condition passes.
   if (!$discount_wrapper->coupon_count->value()) {
-    return TRUE;
+    if ($bool) {
+      return TRUE;
+    }
+    return $discount_coupons;
   }
 
   if ($order_wrapper->commerce_coupons->value()) {
@@ -136,8 +187,33 @@ function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $d
       // The condition passes if the code grants the discount being looked at,
       // and if the coupon-specific conditions pass.
       if (commerce_coupon_code_grants_discount($code, $discount_id) && commerce_coupon_evaluate_conditions($coupon_wrapper, $order_wrapper)) {
-        return TRUE;
+        $discount_coupons[] = $coupon_wrapper->getIdentifier();
+        if ($bool) {
+          return TRUE;
+        }
       }
     }
   }
+  if ($bool) {
+    return FALSE;
+  }
+  return $discount_coupons;
 }
+
+/**
+ * Assert the list of coupons related to this discount.
+ */
+function commerce_coupon_discount_get_coupons_list($order_wrapper, $discount_name) {
+  return array('discount_coupons' => commerce_coupon_discount_extract_coupons($order_wrapper, $discount_name));
+}
+
+/**
+ * Rules condition callback.
+ *
+ * Determine whether a coupon code attached to a particular discount has been
+ * saved on an order.
+ */
+function commerce_coupon_discount_coupon_codes_exist_on_order($order_wrapper, $discount_name) {
+  return commerce_coupon_discount_extract_coupons($order_wrapper, $discount_name, TRUE);
+}
+

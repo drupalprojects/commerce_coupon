@@ -90,6 +90,43 @@ function commerce_coupon_install_helper() {
       field_create_instance($instance);
     }
   }
+
+  // Discount coupon handling strategy.
+  if (empty($fields['commerce_coupon_strategy'])) {
+    // Create coupon handling strategy field.
+    $field = array(
+      'type' => 'list_text',
+      'field_name' => 'commerce_coupon_strategy',
+      'locked' => TRUE,
+      'settings' => array(
+        'allowed_values' => array(),
+        'allowed_values_function' => 'commerce_coupon_handling_strategies',
+      ),
+    );
+    field_create_field($field);
+  }
+
+  foreach (commerce_discount_types() as $type => $value) {
+    if (empty($instances['commerce_discount'][$type]['commerce_coupon_strategy'])) {
+      $instance = array(
+        'field_name' => 'commerce_coupon_strategy',
+        'bundle' => $type,
+        'entity_type' => 'commerce_discount',
+        'label' => t('Coupon strategy'),
+        'description' => t('Using "multi" strategy might cause problems with some offer types.'),
+        'required' => TRUE,
+        'widget' => array(
+          'weight' => -10,
+          'type' => 'options_buttons',
+          'module' => 'options',
+        ),
+        'default_value' => array(
+          0 => array('value' => 'once'),
+        ),
+      );
+      field_create_instance($instance);
+    }
+  }
 }
 
 /**
@@ -299,4 +336,12 @@ function commerce_coupon_update_7200(&$sandbox) {
   if ($sandbox['#finished'] == TRUE) {
     module_disable(array('commerce_coupon_pct', 'commerce_coupon_fixed_amount'));
   }
+}
+
+/**
+ * Add new configuration field to support different coupon handling strategies.
+ */
+function commerce_coupon_update_7203() {
+  commerce_coupon_install_helper();
+  return t('Field added to support different coupon handling strategies.');
 }

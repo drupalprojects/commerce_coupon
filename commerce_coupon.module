@@ -533,8 +533,30 @@ function commerce_coupon_commerce_discount_rule_build($rule, $discount) {
       $rule->condition('commerce_coupon_discount_coupon_codes_exist_on_order', array(
         'commerce_order:select' => $map[$discount->type],
         'commerce_discount' => $discount->name,
-      )
-      );
+      ));
+
+      // If this discount uses the multi strategy we need a different structure.
+      // Get all coupons related to this discount and apply the discount action
+      // for every coupon.
+      if ($discount->type == 'order_discount' && !empty($discount->commerce_coupon_strategy) && $discount_wrapper->commerce_coupon_strategy->value() == 'multi') {
+        // Fetch the existing actions to wrap them later into a loop.
+        $existing_actions = $rule->actions();
+
+        $rule->action('commerce_coupon_discount_get_coupons_list', array(
+          'commerce_order:select' => $map[$discount->type],
+          'commerce_discount' => $discount->name,
+          'weight' => -1,
+        ));
+        $coupon_loop = rules_loop(array(
+          'list:select' => 'discount_coupons',
+          'item:var' => 'coupon',
+          'item:label' => 'Coupon',
+        ));
+        $coupon_loop->setParent($rule);
+        foreach ($existing_actions as $existing_action) {
+          $existing_action->setParent($coupon_loop);
+        }
+      }
     }
   }
 }
@@ -2227,4 +2249,28 @@ function commerce_coupon_update_dependencies() {
   );
 
   return $dependencies;
+}
+
+/**
+ * Return the available handling strategies for coupons.
+ */
+function commerce_coupon_handling_strategies() {
+  return array(
+    'once' => t('Once: Discount applied once.'),
+    'multi' => t('Multi: Discount is applied for every matching coupon code.'),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+function commerce_coupon_field_widget_form_alter(&$element, &$form_state, $context) {
+  // Strategy for coupon handling is only valid for order discounts.
+  if (!empty($element['#field_name']) && $element['#field_name'] == 'commerce_coupon_strategy') {
+    $element['#states'] = array(
+      'visible' => array(
+        ':input[name="commerce_discount_type"]' => array('value' => 'order_discount'),
+      ),
+    );
+  }
 }

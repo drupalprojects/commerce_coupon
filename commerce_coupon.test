@@ -99,11 +99,13 @@ abstract class CommerceCouponTestBase extends CommerceBaseTestCase {
    *   Discount name - Optional. If given, CANNOT start with a number.
    * @param string $component_title
    *   Component title - Optional.
+   * @param string $coupon_strategy
+   *   Coupon strategy. Either 'once' or 'multi'. Defaults to 'once'.
    *
    * @return CommerceDiscount
    *   The newly created commerce_discount entity.
    */
-  protected function createDiscount($discount_type, $offer_type, $amount, $name = '', $component_title = '', $sort_order = 10) {
+  protected function createDiscount($discount_type, $offer_type, $amount, $name = '', $component_title = '', $sort_order = 10, $coupon_strategy = 'once') {
     // Create the discount offer.
     $commerce_discount_offer = entity_create('commerce_discount_offer', array('type' => $offer_type));
     $offer_wrapper = entity_metadata_wrapper('commerce_discount_offer', $commerce_discount_offer);
@@ -142,6 +144,7 @@ abstract class CommerceCouponTestBase extends CommerceBaseTestCase {
     $commerce_discount = entity_create('commerce_discount', $values);
     $discount_wrapper = entity_metadata_wrapper('commerce_discount', $commerce_discount);
     $discount_wrapper->commerce_discount_offer = $commerce_discount_offer;
+    $discount_wrapper->commerce_coupon_strategy = $coupon_strategy;
     $discount_wrapper->save();
 
     return $discount_wrapper->value();
@@ -276,6 +279,41 @@ class CommerceCouponTest extends CommerceCouponTestBase {
     $values = array('coupon_code' => 'HALF OFF ');
     $this->drupalPost(NULL, $values, t('Add coupon'));
     $this->assertText(t('The coupon you have entered has already been applied to your order'), 'Coupon applied message for valid code.');
+  }
+
+  public function testMultipleCouponsSameDiscount() {
+    // Login as administrator and add the field to the footer of the cart View.
+    $this->drupalLogin($this->store_admin);
+
+    // Create a discount with 'multi' coupon strateg and add two coupons to it.
+    $discount = $this->createDiscount('order_discount', 'fixed_amount', 300, '', '', 10, 'multi');
+    $coupon = commerce_coupon_create('discount_coupon');
+    $coupon->code = 'HALF OFF';
+    $coupon->commerce_discount_reference[LANGUAGE_NONE][0]['target_id'] = $discount->discount_id;
+    commerce_coupon_save($coupon);
+
+    // Add another coupon to the same discount.
+    $coupon = commerce_coupon_create('discount_coupon');
+    $coupon->code = 'HALF OFF 2';
+    $coupon->commerce_discount_reference[LANGUAGE_NONE][0]['target_id'] = $discount->discount_id;
+    commerce_coupon_save($coupon);
+    _commerce_discount_rebuild_rules_config(array($discount));
+
+    // Create a cart order and ensure we can see the code form on the cart
+    // management page.
+    $this->createDummyOrder($this->store_admin->uid, array($this->product->product_id => 1), $status = 'cart');
+    $this->drupalGet('checkout');
+
+    // Test coupon code validation.
+    $values = array('commerce_coupon[coupon_code]' => 'HALF OFF');
+    $this->drupalPost(NULL, $values, t('Add coupon'));
+    $this->drupalGet('checkout');
+    $this->assertText(t('$7.00'), 'Order total decreased with coupon value.');
+
+    $values = array('commerce_coupon[coupon_code]' => 'HALF OFF 2');
+    $this->drupalPost(NULL, $values, t('Add coupon'));
+    $this->drupalGet('checkout');
+    $this->assertText(t('$4.00'), 'Order total decreased with second coupon value.');
   }
 
   public function testCommerceCouponTypeAccess() {
